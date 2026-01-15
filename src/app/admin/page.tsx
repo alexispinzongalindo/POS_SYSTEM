@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
 
+ const SETUP_COMPLETE_KEY = "pos_setup_complete";
+
 export default function AdminPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -31,6 +33,12 @@ export default function AdminPage() {
         router.replace("/login");
         return;
       }
+
+       const isComplete = localStorage.getItem(SETUP_COMPLETE_KEY) === "true";
+       if (!isComplete) {
+         router.replace("/setup");
+         return;
+       }
 
       setEmail(data.session.user.email ?? null);
       setLoading(false);
@@ -118,6 +126,15 @@ export default function AdminPage() {
               We’ll build the setup wizard here:
               restaurant, location, Puerto Rico taxes, and menu.
             </p>
+
+             <div className="mt-4">
+               <button
+                 onClick={() => router.push("/setup")}
+                 className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+               >
+                 Continue setup
+               </button>
+             </div>
           </div>
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
