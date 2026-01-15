@@ -1,22 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<"sign_in" | "sign_up">("sign_in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const title = useMemo(
-    () => (mode === "sign_in" ? "Sign in" : "Create account"),
-    [mode],
-  );
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,19 +18,11 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      if (mode === "sign_in") {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (signInError) throw signInError;
-      } else {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        if (signUpError) throw signUpError;
-      }
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (signInError) throw signInError;
 
       router.push("/admin");
       router.refresh();
@@ -53,7 +39,7 @@ export default function LoginPage() {
       <div className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-6 py-12">
         <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
           <div className="mb-8">
-            <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
               Restaurant POS — Admin access
             </p>
@@ -79,7 +65,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoComplete={mode === "sign_in" ? "current-password" : "new-password"}
+                autoComplete="current-password"
                 required
                 minLength={8}
               />
@@ -99,24 +85,13 @@ export default function LoginPage() {
               disabled={loading}
               className="mt-2 inline-flex h-11 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
             >
-              {loading ? "Please wait..." : mode === "sign_in" ? "Sign in" : "Create account"}
-            </button>
-
-            <button
-              type="button"
-              className="text-sm text-zinc-600 underline underline-offset-4 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-              onClick={() => setMode((m) => (m === "sign_in" ? "sign_up" : "sign_in"))}
-            >
-              {mode === "sign_in"
-                ? "Need an account? Create one"
-                : "Already have an account? Sign in"}
+              {loading ? "Please wait..." : "Sign in"}
             </button>
           </form>
         </div>
 
         <p className="mt-6 text-center text-xs text-zinc-500 dark:text-zinc-500">
-          If you enabled email confirmations in Supabase, new users may need to
-          confirm their email before signing in.
+          Your account must be created by the system owner.
         </p>
       </div>
     </div>

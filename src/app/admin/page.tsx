@@ -10,6 +10,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteStatus, setInviteStatus] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,6 +53,40 @@ export default function AdminPage() {
     router.replace("/login");
   }
 
+  async function inviteUser() {
+    setInviteStatus(null);
+    setError(null);
+
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
+
+    if (!accessToken) {
+      router.replace("/login");
+      return;
+    }
+
+    const res = await fetch("/api/admin/invite-user", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ email: inviteEmail }),
+    });
+
+    const json = (await res.json().catch(() => null)) as
+      | { invited?: boolean; error?: string }
+      | null;
+
+    if (!res.ok || json?.error) {
+      setError(json?.error ?? "Invite failed");
+      return;
+    }
+
+    setInviteEmail("");
+    setInviteStatus("Invite sent.");
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
@@ -82,6 +118,37 @@ export default function AdminPage() {
               We’ll build the setup wizard here:
               restaurant, location, Puerto Rico taxes, and menu.
             </p>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <h2 className="text-base font-semibold">Invite user</h2>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              Only the system owner can invite new users.
+            </p>
+
+            <div className="mt-4 flex flex-col gap-3">
+              <input
+                className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
+                type="email"
+                placeholder="user@email.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+              />
+
+              <button
+                onClick={inviteUser}
+                disabled={!inviteEmail}
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+              >
+                Send invite
+              </button>
+
+              {inviteStatus ? (
+                <div className="text-sm text-emerald-600 dark:text-emerald-400">
+                  {inviteStatus}
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
