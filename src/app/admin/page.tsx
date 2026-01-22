@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
-
- const SETUP_COMPLETE_KEY = "pos_setup_complete";
+import { getOrCreateAppConfig } from "@/lib/appConfig";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -34,11 +33,19 @@ export default function AdminPage() {
         return;
       }
 
-       const isComplete = localStorage.getItem(SETUP_COMPLETE_KEY) === "true";
-       if (!isComplete) {
-         router.replace("/setup");
-         return;
-       }
+      const userId = data.session.user.id;
+      const cfg = await getOrCreateAppConfig(userId);
+      if (cancelled) return;
+      if (cfg.error) {
+        setError(cfg.error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (!cfg.data?.setup_complete) {
+        router.replace("/setup");
+        return;
+      }
 
       setEmail(data.session.user.email ?? null);
       setLoading(false);
@@ -121,10 +128,9 @@ export default function AdminPage() {
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <h2 className="text-base font-semibold">Next step</h2>
+            <h2 className="text-base font-semibold">Settings</h2>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              We’ll build the setup wizard here:
-              restaurant, location, Puerto Rico taxes, and menu.
+              Update business info, location, taxes, and products.
             </p>
 
              <div className="mt-4">
@@ -132,9 +138,25 @@ export default function AdminPage() {
                  onClick={() => router.push("/setup")}
                  className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
                >
-                 Continue setup
+                 Edit setup
                </button>
              </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <h2 className="text-base font-semibold">POS</h2>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              Create orders using your menu.
+            </p>
+
+            <div className="mt-4">
+              <button
+                onClick={() => router.push("/pos")}
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+              >
+                Open POS
+              </button>
+            </div>
           </div>
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">

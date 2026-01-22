@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
-
-const SETUP_COMPLETE_KEY = "pos_setup_complete";
+import { getOrCreateAppConfig } from "@/lib/appConfig";
 
 export default function SetupPage() {
   const router = useRouter();
@@ -32,8 +31,16 @@ export default function SetupPage() {
         return;
       }
 
-      const isComplete = localStorage.getItem(SETUP_COMPLETE_KEY) === "true";
-      if (isComplete) {
+      const userId = data.session.user.id;
+      const cfg = await getOrCreateAppConfig(userId);
+      if (cancelled) return;
+      if (cfg.error) {
+        setError(cfg.error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (cfg.data?.setup_complete) {
         router.replace("/admin");
         return;
       }
@@ -53,11 +60,6 @@ export default function SetupPage() {
       authListener.subscription.unsubscribe();
     };
   }, [router]);
-
-  function markComplete() {
-    localStorage.setItem(SETUP_COMPLETE_KEY, "true");
-    router.replace("/admin");
-  }
 
   if (loading) {
     return (
@@ -84,41 +86,42 @@ export default function SetupPage() {
         ) : null}
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <h2 className="text-base font-semibold">1) Restaurant</h2>
+          <button
+            onClick={() => router.push("/setup/restaurant")}
+            className="rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-sm hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+          >
+            <h2 className="text-base font-semibold">1) Business</h2>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
               Name, branding, contact info.
             </p>
-          </div>
+          </button>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <button
+            onClick={() => router.push("/setup/location")}
+            className="rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-sm hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+          >
             <h2 className="text-base font-semibold">2) Location</h2>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
               Address, timezone, business hours.
             </p>
-          </div>
+          </button>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <h2 className="text-base font-semibold">3) Puerto Rico taxes</h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              IVU settings.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <h2 className="text-base font-semibold">4) Menu</h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Categories, items, modifiers.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-8">
           <button
-            onClick={markComplete}
-            className="inline-flex h-11 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+            onClick={() => router.push("/setup/taxes")}
+            className="rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-sm hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
           >
-            Mark setup complete (temporary)
+            <h2 className="text-base font-semibold">3) Taxes</h2>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Tax settings (IVU).</p>
+          </button>
+
+          <button
+            onClick={() => router.push("/setup/menu")}
+            className="rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-sm hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+          >
+            <h2 className="text-base font-semibold">4) Products</h2>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              Categories and items.
+            </p>
           </button>
         </div>
       </div>

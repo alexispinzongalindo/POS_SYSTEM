@@ -1,0 +1,1103 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+
+import { supabase } from "@/lib/supabaseClient";
+import {
+  createOrder,
+  getOrderReceipt,
+  getOrderItems,
+  listRecentOrders,
+  listRecentOrdersFiltered,
+  listPaidOrdersForSummary,
+  loadPosMenuData,
+  markOrderPaid,
+  refundOrder,
+  updateOrderStatus,
+  updateOrder,
+  type OrderSummary,
+  type OrderReceipt,
+  type PosMenuData,
+  type SalesSummaryRow,
+} from "@/lib/posData";
+
+type CartLine = {
+  id: string;
+  name: string;
+  unitPrice: number;
+  qty: number;
+};
+
+export default function PosPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [placing, setPlacing] = useState(false);
+
+  const [scanCode, setScanCode] = useState<string>("");
+
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "ath_movil" | "other">("cash");
+  const [amountTendered, setAmountTendered] = useState<string>("");
+
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receiptLoading, setReceiptLoading] = useState(false);
+  const [receipt, setReceipt] = useState<OrderReceipt | null>(null);
+
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refundReason, setRefundReason] = useState<string>("");
+
+  const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "open" | "paid" | "canceled" | "refunded">(
+    "all",
+  );
+  const [orderDateFilter, setOrderDateFilter] = useState<"all" | "today" | "7d" | "30d">("all");
+  const [orderSearch, setOrderSearch] = useState<string>("");
+
+  const [summaryRange, setSummaryRange] = useState<"today" | "7d" | "30d">("today");
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryRows, setSummaryRows] = useState<SalesSummaryRow[]>([]);
+
+  const [data, setData] = useState<PosMenuData | null>(null);
+  const [cart, setCart] = useState<Record<string, CartLine>>({});
+  const [orders, setOrders] = useState<OrderSummary[]>([]);
+  const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
+  const [activeOrderStatus, setActiveOrderStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      setError(null);
+      setSuccess(null);
+
+      const res = await loadPosMenuData();
+      if (cancelled) return;
+
+      if (res.error) {
+        if (res.error.message.toLowerCase().includes("signed")) {
+          router.replace("/login");
+          return;
+        }
+        if (res.error.message.toLowerCase().includes("setup")) {
+          router.replace("/setup");
+          return;
+        }
+        setError(res.error.message);
+        setLoading(false);
+        return;
+      }
+
+      setData(res.data);
+
+      const history = await listRecentOrders(res.data.restaurantId, 20);
+      if (cancelled) return;
+      if (history.error) {
+        setError(history.error.message);
+        setLoading(false);
+        return;
+      }
+      setOrders(history.data ?? []);
+
+      setLoading(false);
+    }
+
+    void load();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) router.replace("/login");
+    });
+
+    return () => {
+      cancelled = true;
+      authListener.subscription.unsubscribe();
+    };
+  }, [router]);
+
+  useEffect(() => {
+    if (!data) return;
+    if (loading) return;
+
+    const now = new Date();
+    const since =
+      summaryRange === "today"
+        ? new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
+        : summaryRange === "7d"
+          ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
+          : new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const t = window.setTimeout(() => {
+      void (async () => {
+        setSummaryLoading(true);
+        try {
+          const res = await listPaidOrdersForSummary(data.restaurantId, { since });
+          if (res.error) throw res.error;
+          setSummaryRows(res.data ?? []);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "Failed to load sales summary";
+          setError(msg);
+        } finally {
+          setSummaryLoading(false);
+        }
+      })();
+    }, 250);
+
+    return () => window.clearTimeout(t);
+  }, [data, loading, summaryRange]);
+
+  const salesSummary = useMemo(() => {
+    const gross = summaryRows.reduce((sum, r) => sum + Number(r.total), 0);
+    const tax = summaryRows.reduce((sum, r) => sum + Number(r.tax), 0);
+    const net = summaryRows.reduce((sum, r) => sum + Number(r.subtotal), 0);
+    const ticketCount = summaryRows.length;
+    const byMethod: Record<string, { gross: number; count: number }> = {};
+    for (const r of summaryRows) {
+      const key = (r.payment_method ?? "unknown").toLowerCase();
+      byMethod[key] = byMethod[key] ?? { gross: 0, count: 0 };
+      byMethod[key].gross += Number(r.total);
+      byMethod[key].count += 1;
+    }
+    const methods = Object.entries(byMethod).sort((a, b) => b[1].gross - a[1].gross);
+    return { gross, tax, net, ticketCount, methods };
+  }, [summaryRows]);
+
+  const cartLines = useMemo(() => Object.values(cart), [cart]);
+
+  const totals = useMemo(() => {
+    const subtotal = cartLines.reduce((sum, it) => sum + it.unitPrice * it.qty, 0);
+    const ivuRate = data?.ivuRate ?? 0;
+    const pricesIncludeTax = data?.pricesIncludeTax ?? false;
+
+    if (pricesIncludeTax) {
+      const total = subtotal;
+      const tax = ivuRate > 0 ? total - total / (1 + ivuRate) : 0;
+      const net = total - tax;
+      return { subtotal: net, tax, total };
+    }
+
+    const tax = subtotal * ivuRate;
+    const total = subtotal + tax;
+    return { subtotal, tax, total };
+  }, [cartLines, data]);
+
+  const tenderedNumber = Number(amountTendered);
+  const isCashPayment = paymentMethod === "cash";
+  const cashTenderedValid =
+    !isCashPayment || (Number.isFinite(tenderedNumber) && tenderedNumber >= totals.total);
+  const changeDueDisplay =
+    isCashPayment && Number.isFinite(tenderedNumber) ? Math.max(0, tenderedNumber - totals.total) : 0;
+
+  function normalizeCode(value: string) {
+    return value.trim().toLowerCase();
+  }
+
+  function addByCode(code: string) {
+    if (!data) return;
+    const q = normalizeCode(code);
+    if (!q) return;
+
+    const matches = data.items.filter((it) => {
+      const barcode = normalizeCode(it.barcode ?? "");
+      const sku = normalizeCode(it.sku ?? "");
+      return (barcode && barcode === q) || (sku && sku === q);
+    });
+
+    if (matches.length === 0) {
+      setError(`No product found for code: ${code}`);
+      return;
+    }
+
+    if (matches.length > 1) {
+      setError(`Multiple products match code: ${code}. Please search by name.`);
+      return;
+    }
+
+    const it = matches[0];
+    addItem(it.id, it.name, Number(it.price));
+    setSuccess(`Added: ${it.name}`);
+  }
+
+  function addItem(id: string, name: string, unitPrice: number) {
+    setCart((prev) => {
+      const existing = prev[id];
+      const qty = (existing?.qty ?? 0) + 1;
+      return { ...prev, [id]: { id, name, unitPrice, qty } };
+    });
+  }
+
+  function decItem(id: string) {
+    setCart((prev) => {
+      const existing = prev[id];
+      if (!existing) return prev;
+      const qty = existing.qty - 1;
+      if (qty <= 0) {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      }
+      return { ...prev, [id]: { ...existing, qty } };
+    });
+  }
+
+  function clearCart() {
+    setCart({});
+    setActiveOrderId(null);
+    setActiveOrderStatus(null);
+  }
+
+  const refreshOrders = useCallback(
+    async (restaurantId: string) => {
+    const now = new Date();
+    const since =
+      orderDateFilter === "today"
+        ? new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
+        : orderDateFilter === "7d"
+          ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
+          : orderDateFilter === "30d"
+            ? new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
+            : undefined;
+
+    const history =
+      orderStatusFilter === "all" && !since
+        ? await listRecentOrders(restaurantId, 20)
+        : await listRecentOrdersFiltered(restaurantId, {
+            limit: 50,
+            status: orderStatusFilter === "all" ? undefined : orderStatusFilter,
+            since,
+          });
+    if (history.error) {
+      setError(history.error.message);
+      return;
+    }
+    setOrders(history.data ?? []);
+    },
+    [orderDateFilter, orderStatusFilter],
+  );
+
+  useEffect(() => {
+    if (!data) return;
+    if (loading) return;
+
+    const t = window.setTimeout(() => {
+      void refreshOrders(data.restaurantId);
+    }, 250);
+
+    return () => window.clearTimeout(t);
+  }, [data, loading, refreshOrders]);
+
+  const filteredOrders = useMemo(() => {
+    const q = orderSearch.trim().toLowerCase();
+    if (!q) return orders;
+    return orders.filter((o) => {
+      const idMatch = o.id.toLowerCase().includes(q);
+      const ticketMatch = o.ticket_no != null ? String(o.ticket_no).includes(q) : false;
+      return idMatch || ticketMatch;
+    });
+  }, [orders, orderSearch]);
+
+  async function openOrder(orderId: string) {
+    if (!data) return;
+    setError(null);
+    setSuccess(null);
+
+    const summary = orders.find((o) => o.id === orderId);
+    const status = summary?.status ?? null;
+    if (status && status !== "open") {
+      setError(`Only open tickets can be edited (status: ${status})`);
+      setActiveOrderId(null);
+      setActiveOrderStatus(null);
+      setCart({});
+      return;
+    }
+
+    const itemsRes = await getOrderItems(orderId);
+    if (itemsRes.error) {
+      setError(itemsRes.error.message);
+      return;
+    }
+
+    const next: Record<string, CartLine> = {};
+    for (const row of itemsRes.data ?? []) {
+      next[row.menu_item_id] = {
+        id: row.menu_item_id,
+        name: row.name,
+        unitPrice: Number(row.unit_price),
+        qty: row.qty,
+      };
+    }
+
+    setCart(next);
+    setActiveOrderId(orderId);
+    setActiveOrderStatus(status);
+  }
+
+  async function setTicketStatus(nextStatus: "paid" | "canceled") {
+    if (!data || !activeOrderId) return;
+
+    setError(null);
+    setSuccess(null);
+    setPlacing(true);
+
+    try {
+      const res = await updateOrderStatus(activeOrderId, nextStatus);
+      if (res.error) throw res.error;
+
+      clearCart();
+      await refreshOrders(data.restaurantId);
+      setSuccess(`Ticket marked ${nextStatus}`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to update ticket status";
+      setError(msg);
+    } finally {
+      setPlacing(false);
+    }
+  }
+
+  async function openReceipt(orderId: string) {
+    setError(null);
+    setSuccess(null);
+    setReceipt(null);
+    setReceiptLoading(true);
+    setShowReceiptModal(true);
+
+    try {
+      const res = await getOrderReceipt(orderId);
+      if (res.error) throw res.error;
+      setReceipt(res.data);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to load receipt";
+      setError(msg);
+      setShowReceiptModal(false);
+    } finally {
+      setReceiptLoading(false);
+    }
+  }
+
+  async function confirmPayment() {
+    if (!data || !activeOrderId) return;
+
+    const tendered = Number(amountTendered);
+    const isCash = paymentMethod === "cash";
+    const changeDue = isCash && Number.isFinite(tendered) ? tendered - totals.total : 0;
+    if (isCash && (!Number.isFinite(tendered) || tendered < totals.total)) {
+      setError("Cash payment requires amount tendered >= total");
+      return;
+    }
+
+    setError(null);
+    setSuccess(null);
+    setPlacing(true);
+
+    try {
+      const res = await markOrderPaid(activeOrderId, {
+        payment_method: paymentMethod,
+        paid_at: new Date().toISOString(),
+        amount_tendered: isCash ? Number(tendered.toFixed(2)) : null,
+        change_due: isCash ? Number(changeDue.toFixed(2)) : null,
+      });
+      if (res.error) throw res.error;
+
+      setShowPaymentModal(false);
+      clearCart();
+      await refreshOrders(data.restaurantId);
+      setSuccess(`Ticket marked paid (${paymentMethod.replace("_", " ")})`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to mark ticket paid";
+      setError(msg);
+    } finally {
+      setPlacing(false);
+    }
+  }
+
+  async function confirmRefund() {
+    if (!data || !activeOrderId) return;
+
+    setError(null);
+    setSuccess(null);
+    setPlacing(true);
+
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      const userId = sessionData.session?.user.id;
+      if (!userId) {
+        router.replace("/login");
+        return;
+      }
+
+      const res = await refundOrder(activeOrderId, {
+        refunded_by_user_id: userId,
+        refunded_at: new Date().toISOString(),
+        refund_reason: refundReason.trim() ? refundReason.trim() : null,
+      });
+      if (res.error) throw res.error;
+
+      setShowRefundModal(false);
+      setRefundReason("");
+      clearCart();
+      await refreshOrders(data.restaurantId);
+      setSuccess("Ticket refunded");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to refund ticket";
+      setError(msg);
+    } finally {
+      setPlacing(false);
+    }
+  }
+
+  async function placeOrder() {
+    if (!data) return;
+    if (cartLines.length === 0) return;
+
+    setError(null);
+    setSuccess(null);
+    setPlacing(true);
+
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      const userId = sessionData.session?.user.id;
+      if (!userId) {
+        router.replace("/login");
+        return;
+      }
+
+      const items = cartLines.map((it) => ({
+        menu_item_id: it.id,
+        name: it.name,
+        unit_price: it.unitPrice,
+        qty: it.qty,
+        line_total: it.unitPrice * it.qty,
+      }));
+
+      const payload = {
+        restaurant_id: data.restaurantId,
+        created_by_user_id: userId,
+        subtotal: Number(totals.subtotal.toFixed(2)),
+        tax: Number(totals.tax.toFixed(2)),
+        total: Number(totals.total.toFixed(2)),
+        items,
+      };
+
+      const res = activeOrderId
+        ? await updateOrder(activeOrderId, payload)
+        : await createOrder(payload);
+
+      if (res.error) throw res.error;
+
+      clearCart();
+      await refreshOrders(data.restaurantId);
+      router.refresh();
+      const ticketNo = res.data?.ticketNo;
+      setSuccess(
+        activeOrderId
+          ? `Order updated${ticketNo != null ? ` (#${ticketNo})` : ""}: ${res.data?.orderId}`
+          : `Order created${ticketNo != null ? ` (#${ticketNo})` : ""}: ${res.data?.orderId}`,
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to place order";
+      setError(msg);
+    } finally {
+      setPlacing(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+        <div className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+        <div className="text-sm text-zinc-600 dark:text-zinc-400">No data.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+      <div className="mx-auto w-full max-w-6xl px-6 py-10">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-semibold tracking-tight">POS</h1>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">Add items and place an order.</p>
+          </div>
+          <div className="flex gap-2">
+            <div className="hidden md:block">
+              <input
+                value={scanCode}
+                onChange={(e) => setScanCode(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  e.preventDefault();
+                  setError(null);
+                  setSuccess(null);
+                  addByCode(scanCode);
+                  setScanCode("");
+                }}
+                placeholder="Scan barcode / SKU"
+                className="h-10 w-56 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
+              />
+            </div>
+            <button
+              onClick={() => router.push("/admin")}
+              className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+            >
+              Admin
+            </button>
+            <button
+              onClick={clearCart}
+              className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+              disabled={cartLines.length === 0}
+            >
+              Clear
+            </button>
+            <button
+              onClick={() => {
+                clearCart();
+                setError(null);
+                setSuccess(null);
+              }}
+              className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+            >
+              New ticket
+            </button>
+          </div>
+        </div>
+
+        {success ? (
+          <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
+            {success}
+          </div>
+        ) : null}
+
+        {error ? (
+          <div className="mt-6 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50">
+            {error}
+          </div>
+        ) : null}
+
+        <div className="mt-8 grid gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2 flex flex-col gap-4">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-base font-semibold">Sales summary</h2>
+                <select
+                  value={summaryRange}
+                  onChange={(e) => setSummaryRange(e.target.value as typeof summaryRange)}
+                  className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-xs font-medium dark:border-zinc-800 dark:bg-black"
+                >
+                  <option value="today">Today</option>
+                  <option value="7d">Last 7 days</option>
+                  <option value="30d">Last 30 days</option>
+                </select>
+              </div>
+
+              {summaryLoading ? (
+                <div className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">Loading...</div>
+              ) : (
+                <div className="mt-4 grid gap-4">
+                  <div className="grid gap-2 sm:grid-cols-4">
+                    <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-black">
+                      <div className="text-xs text-zinc-600 dark:text-zinc-400">Gross sales</div>
+                      <div className="mt-1 text-sm font-medium">${salesSummary.gross.toFixed(2)}</div>
+                    </div>
+                    <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-black">
+                      <div className="text-xs text-zinc-600 dark:text-zinc-400">Net sales</div>
+                      <div className="mt-1 text-sm font-medium">${salesSummary.net.toFixed(2)}</div>
+                    </div>
+                    <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-black">
+                      <div className="text-xs text-zinc-600 dark:text-zinc-400">Tax</div>
+                      <div className="mt-1 text-sm font-medium">${salesSummary.tax.toFixed(2)}</div>
+                    </div>
+                    <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-black">
+                      <div className="text-xs text-zinc-600 dark:text-zinc-400">Paid tickets</div>
+                      <div className="mt-1 text-sm font-medium">{salesSummary.ticketCount}</div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-black">
+                    <div className="text-sm font-medium">By payment method</div>
+                    <div className="mt-3 grid gap-2">
+                      {salesSummary.methods.length === 0 ? (
+                        <div className="text-sm text-zinc-600 dark:text-zinc-400">No paid orders.</div>
+                      ) : (
+                        salesSummary.methods.map(([method, s]) => (
+                          <div key={method} className="flex items-center justify-between text-sm">
+                            <div className="text-zinc-700 dark:text-zinc-300">
+                              {method.replace("_", " ")} ({s.count})
+                            </div>
+                            <div className="font-medium">${s.gross.toFixed(2)}</div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-base font-semibold">Order history</h2>
+                <button
+                  onClick={() => data && refreshOrders(data.restaurantId)}
+                  className="inline-flex h-9 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                <select
+                  value={orderStatusFilter}
+                  onChange={(e) => setOrderStatusFilter(e.target.value as typeof orderStatusFilter)}
+                  className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                >
+                  <option value="all">All statuses</option>
+                  <option value="open">Open</option>
+                  <option value="paid">Paid</option>
+                  <option value="canceled">Canceled</option>
+                  <option value="refunded">Refunded</option>
+                </select>
+                <select
+                  value={orderDateFilter}
+                  onChange={(e) => setOrderDateFilter(e.target.value as typeof orderDateFilter)}
+                  className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                >
+                  <option value="all">All time</option>
+                  <option value="today">Today</option>
+                  <option value="7d">Last 7 days</option>
+                  <option value="30d">Last 30 days</option>
+                </select>
+                <input
+                  value={orderSearch}
+                  onChange={(e) => setOrderSearch(e.target.value)}
+                  placeholder="Search by ticket # or id"
+                  className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                />
+              </div>
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {filteredOrders.length === 0 ? (
+                  <div className="text-sm text-zinc-600 dark:text-zinc-400">No orders yet.</div>
+                ) : (
+                  filteredOrders.map((o) => (
+                    <div
+                      key={o.id}
+                      className={`rounded-lg border px-3 py-3 text-left dark:bg-black ${
+                        activeOrderId === o.id
+                          ? "border-zinc-900 bg-zinc-50 dark:border-zinc-50"
+                          : "border-zinc-200 bg-white dark:border-zinc-800"
+                      }`}
+                    >
+                      <button
+                        onClick={() => openOrder(o.id)}
+                        className="block w-full text-left hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-md"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-sm font-medium">
+                            {o.ticket_no != null ? `#${o.ticket_no} ` : ""}
+                            {o.status}
+                          </div>
+                          <div className="text-sm">${Number(o.total).toFixed(2)}</div>
+                        </div>
+                        {o.status === "paid" && o.payment_method ? (
+                          <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                            {o.payment_method.replace("_", " ")}
+                            {o.paid_at ? ` • ${new Date(o.paid_at).toLocaleString()}` : ""}
+                            {o.payment_method === "cash" &&
+                            o.amount_tendered != null &&
+                            o.change_due != null
+                              ? ` • Tendered: $${Number(o.amount_tendered).toFixed(2)} • Change: $${Number(o.change_due).toFixed(2)}`
+                              : ""}
+                          </div>
+                        ) : null}
+                        {o.status === "refunded" && o.refunded_at ? (
+                          <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                            {new Date(o.refunded_at).toLocaleString()}
+                            {o.refund_reason ? ` • ${o.refund_reason}` : ""}
+                          </div>
+                        ) : null}
+                        <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                          {new Date(o.created_at).toLocaleString()}
+                        </div>
+                        <div className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-500 break-all">
+                          {o.id}
+                        </div>
+                      </button>
+
+                      {o.status === "paid" ? (
+                        <div className="mt-3 flex justify-end gap-2">
+                          <button
+                            onClick={() => openReceipt(o.id)}
+                            className="inline-flex h-9 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                          >
+                            Receipt
+                          </button>
+                          <button
+                            onClick={() => {
+                              setError(null);
+                              setSuccess(null);
+                              setRefundReason("");
+                              setActiveOrderId(o.id);
+                              setActiveOrderStatus(o.status);
+                              setShowRefundModal(true);
+                            }}
+                            className="inline-flex h-9 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                          >
+                            Refund
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+              <h2 className="text-base font-semibold">Products</h2>
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {data.items.length === 0 ? (
+                  <div className="text-sm text-zinc-600 dark:text-zinc-400">No products. Add products in Setup.</div>
+                ) : (
+                  data.items.map((it) => (
+                    <button
+                      key={it.id}
+                      onClick={() => addItem(it.id, it.name, Number(it.price))}
+                      className="rounded-lg border border-zinc-200 bg-white px-3 py-3 text-left hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm font-medium">{it.name}</div>
+                        <div className="text-sm">${Number(it.price).toFixed(2)}</div>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+              <h2 className="text-base font-semibold">Cart</h2>
+
+              <div className="mt-3 md:hidden">
+                <input
+                  value={scanCode}
+                  onChange={(e) => setScanCode(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key !== "Enter") return;
+                    e.preventDefault();
+                    setError(null);
+                    setSuccess(null);
+                    addByCode(scanCode);
+                    setScanCode("");
+                  }}
+                  placeholder="Scan barcode / SKU"
+                  className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
+                />
+              </div>
+
+              {activeOrderId ? (
+                <div className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+                  Editing ticket:
+                  {orders.find((o) => o.id === activeOrderId)?.ticket_no != null
+                    ? ` #${orders.find((o) => o.id === activeOrderId)?.ticket_no}`
+                    : ""}{" "}
+                  <span className="break-all">{activeOrderId}</span>
+                </div>
+              ) : null}
+
+              <div className="mt-4 flex flex-col gap-2">
+                {cartLines.length === 0 ? (
+                  <div className="text-sm text-zinc-600 dark:text-zinc-400">Cart is empty.</div>
+                ) : (
+                  cartLines.map((line) => (
+                    <div key={line.id} className="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800">
+                      <div>
+                        <div className="text-sm font-medium">{line.name}</div>
+                        <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                          ${line.unitPrice.toFixed(2)} x {line.qty}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => decItem(line.id)}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                        >
+                          -
+                        </button>
+                        <button
+                          onClick={() => addItem(line.id, line.name, line.unitPrice)}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="mt-6 border-t border-zinc-200 pt-4 text-sm dark:border-zinc-800">
+                <div className="flex items-center justify-between">
+                  <div className="text-zinc-600 dark:text-zinc-400">Subtotal</div>
+                  <div>${totals.subtotal.toFixed(2)}</div>
+                </div>
+                <div className="mt-2 flex items-center justify-between">
+                  <div className="text-zinc-600 dark:text-zinc-400">Tax</div>
+                  <div>${totals.tax.toFixed(2)}</div>
+                </div>
+                <div className="mt-2 flex items-center justify-between font-medium">
+                  <div>Total</div>
+                  <div>${totals.total.toFixed(2)}</div>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <button
+                  onClick={placeOrder}
+                  disabled={placing || cartLines.length === 0}
+                  className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+                >
+                  {placing ? "Saving..." : activeOrderId ? "Update ticket" : "Place order"}
+                </button>
+              </div>
+
+              {activeOrderId && (activeOrderStatus ?? "open") === "open" ? (
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => {
+                      setError(null);
+                      setSuccess(null);
+                      setPaymentMethod("cash");
+                      setAmountTendered("");
+                      setShowPaymentModal(true);
+                    }}
+                    disabled={placing}
+                    className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                  >
+                    Close (Paid)
+                  </button>
+                  <button
+                    onClick={() => setTicketStatus("canceled")}
+                    disabled={placing}
+                    className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : null}
+
+              <div className="mt-2 text-xs text-zinc-500 dark:text-zinc-500">
+                Tax settings: {(data.ivuRate * 100).toFixed(2)}%{data.pricesIncludeTax ? " (prices include tax)" : ""}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showPaymentModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="text-base font-semibold">Close ticket as paid</div>
+            <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Select payment method</div>
+
+            <div className="mt-4 grid gap-2">
+              <label className="text-sm font-medium">Payment method</label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)}
+                className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+              >
+                <option value="cash">Cash</option>
+                <option value="card">Card</option>
+                <option value="ath_movil">ATH Móvil</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            {paymentMethod === "cash" ? (
+              <div className="mt-4 grid gap-2">
+                <label className="text-sm font-medium">Amount tendered</label>
+                <input
+                  inputMode="decimal"
+                  value={amountTendered}
+                  onChange={(e) => setAmountTendered(e.target.value)}
+                  placeholder={totals.total.toFixed(2)}
+                  className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                />
+                <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                  Total: ${totals.total.toFixed(2)}
+                  {amountTendered && Number.isFinite(tenderedNumber)
+                    ? ` • Change due: $${changeDueDisplay.toFixed(2)}`
+                    : ""}
+                </div>
+                {amountTendered && !cashTenderedValid ? (
+                  <div className="text-xs text-rose-600 dark:text-rose-300">
+                    Amount tendered must be at least ${totals.total.toFixed(2)}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                disabled={placing}
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmPayment}
+                disabled={placing || !cashTenderedValid}
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+              >
+                {placing ? "Saving..." : "Mark paid"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showReceiptModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-base font-semibold">Receipt</div>
+                <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                  {receipt?.restaurant_name ?? ""}
+                </div>
+              </div>
+              <button
+                onClick={() => setShowReceiptModal(false)}
+                className="inline-flex h-9 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+              >
+                Close
+              </button>
+            </div>
+
+            {receiptLoading ? (
+              <div className="mt-6 text-sm text-zinc-600 dark:text-zinc-400">Loading receipt...</div>
+            ) : receipt ? (
+              <div className="mt-4">
+                <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                  Ticket: {receipt.order.ticket_no != null ? `#${receipt.order.ticket_no}` : ""}
+                </div>
+                <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                  Order: <span className="break-all">{receipt.order.id}</span>
+                </div>
+                <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                  {new Date(receipt.order.created_at).toLocaleString()}
+                </div>
+                <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                  Status: {receipt.order.status}
+                  {receipt.order.payment_method
+                    ? ` • ${receipt.order.payment_method.replace("_", " ")}`
+                    : ""}
+                </div>
+
+                <div className="mt-4 border-t border-zinc-200 pt-3 text-sm dark:border-zinc-800">
+                  <div className="grid gap-2">
+                    {receipt.items.map((it) => (
+                      <div key={it.id} className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="truncate">{it.name}</div>
+                          <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                            ${Number(it.unit_price).toFixed(2)} x {it.qty}
+                          </div>
+                        </div>
+                        <div className="shrink-0">${Number(it.line_total).toFixed(2)}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="text-zinc-600 dark:text-zinc-400">Subtotal</div>
+                      <div>${Number(receipt.order.subtotal).toFixed(2)}</div>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between text-sm">
+                      <div className="text-zinc-600 dark:text-zinc-400">Tax</div>
+                      <div>${Number(receipt.order.tax).toFixed(2)}</div>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between text-sm font-medium">
+                      <div>Total</div>
+                      <div>${Number(receipt.order.total).toFixed(2)}</div>
+                    </div>
+
+                    {receipt.order.payment_method === "cash" &&
+                    receipt.order.amount_tendered != null &&
+                    receipt.order.change_due != null ? (
+                      <div className="mt-3 text-xs text-zinc-600 dark:text-zinc-400">
+                        Tendered: ${Number(receipt.order.amount_tendered).toFixed(2)} • Change: ${Number(receipt.order.change_due).toFixed(2)}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={() => window.print()}
+                    className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+                  >
+                    Print
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-6 text-sm text-zinc-600 dark:text-zinc-400">No receipt data.</div>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {showRefundModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="text-base font-semibold">Refund ticket</div>
+            <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+              This will mark the ticket as refunded.
+            </div>
+
+            <div className="mt-4 grid gap-2">
+              <label className="text-sm font-medium">Reason (optional)</label>
+              <input
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                placeholder="Example: wrong item"
+                className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+              />
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                onClick={() => setShowRefundModal(false)}
+                disabled={placing}
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmRefund}
+                disabled={placing}
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+              >
+                {placing ? "Saving..." : "Confirm refund"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
