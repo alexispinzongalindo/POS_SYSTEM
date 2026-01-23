@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import {
   createOrder,
+  findMenuItemByCode,
   getOrderReceipt,
   getOrderItems,
   listRecentOrders,
@@ -192,7 +193,7 @@ export default function PosPage() {
     return value.trim().toLowerCase();
   }
 
-  function addByCode(code: string) {
+  async function addByCode(code: string) {
     if (!data) return;
     const q = normalizeCode(code);
     if (!q) return;
@@ -204,7 +205,18 @@ export default function PosPage() {
     });
 
     if (matches.length === 0) {
-      setError(`No product found for code: ${code}`);
+      const dbRes = await findMenuItemByCode(data.restaurantId, code);
+      if (dbRes.error) {
+        setError(dbRes.error.message);
+        return;
+      }
+      if (!dbRes.data) {
+        setError(`No product found for code: ${code}`);
+        return;
+      }
+
+      addItem(dbRes.data.id, dbRes.data.name, Number(dbRes.data.price));
+      setSuccess(`Added: ${dbRes.data.name}`);
       return;
     }
 
@@ -537,7 +549,7 @@ export default function PosPage() {
                   e.preventDefault();
                   setError(null);
                   setSuccess(null);
-                  addByCode(scanCode);
+                  void addByCode(scanCode);
                   setScanCode("");
                 }}
                 placeholder="Scan barcode / SKU"
@@ -797,7 +809,7 @@ export default function PosPage() {
                     e.preventDefault();
                     setError(null);
                     setSuccess(null);
-                    addByCode(scanCode);
+                    void addByCode(scanCode);
                     setScanCode("");
                   }}
                   placeholder="Scan barcode / SKU"

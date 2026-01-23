@@ -16,6 +16,21 @@ export type PosMenuData = {
   pricesIncludeTax: boolean;
 };
 
+export async function findMenuItemByCode(restaurantId: string, code: string) {
+  const q = code.trim();
+  if (!q) return { data: null as MenuItem | null, error: null as Error | null };
+
+  const res = await supabase
+    .from("menu_items")
+    .select("*")
+    .eq("restaurant_id", restaurantId)
+    .eq("is_active", true)
+    .or(`barcode.eq.${q},sku.eq.${q}`)
+    .maybeSingle<MenuItem>();
+
+  return { data: res.data ?? null, error: res.error };
+}
+
 export async function loadPosMenuData(): Promise<
   | { data: PosMenuData; error: null }
   | { data: null; error: Error }
