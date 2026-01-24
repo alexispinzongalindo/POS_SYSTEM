@@ -1,171 +1,181 @@
+"use client";
+
 import MarketingHeader from "@/components/MarketingHeader";
+import MarketingCard from "@/components/MarketingCard";
+import MarketingFooter from "@/components/MarketingFooter";
+import MarketingSection from "@/components/MarketingSection";
+import { marketingCopy } from "@/lib/marketingCopy";
+import { useMarketingLang } from "@/lib/useMarketingLang";
 
 export default function Home() {
+  const { lang } = useMarketingLang();
+  const t = marketingCopy(lang);
+
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
-      <div className="mx-auto w-full max-w-6xl px-6 py-10">
-        <MarketingHeader ctaLabel="Sign in" ctaHref="/login" />
+    <div className="islapos-marketing min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+      <div className="relative mx-auto w-full max-w-6xl px-6 py-10">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] overflow-hidden"
+        >
+          <div className="absolute left-1/2 top-[-220px] h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(0,179,164,0.22),rgba(0,179,164,0))] blur-2xl dark:bg-[radial-gradient(closest-side,rgba(40,225,208,0.20),rgba(40,225,208,0))]" />
+        </div>
+        <MarketingHeader ctaVariant="signin" />
 
-        <main className="mt-12 grid gap-10 lg:grid-cols-2 lg:items-center">
-          <div>
-            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-              The all-in-one POS built for Puerto Rico restaurants.
-            </h1>
-            <p className="mt-3 text-sm font-semibold tracking-tight">
-              POS hecho para Puerto Rico. IVU listo. Soporte real.
-            </p>
-            <p className="mt-4 text-base text-zinc-600 dark:text-zinc-400">
-              Take orders, manage your menu, and run daily operations in one simple system. IVU-ready setup, affordable
-              plans, and guided onboarding.
-            </p>
+        <main className="mt-14">
+          <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-black dark:text-zinc-200">
+                <span className="inline-block h-2 w-2 rounded-full bg-[var(--mp-primary)]" />
+                {lang === "es" ? "Nuevo: prueba gratis" : "New: free trial"}
+              </div>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                className="inline-flex h-11 items-center justify-center rounded-lg bg-zinc-900 px-5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
-                href="/login"
-              >
-                Start free trial
-              </a>
-              <a
-                className="inline-flex h-11 items-center justify-center rounded-lg border border-zinc-200 bg-white px-5 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
-                href="/pricing"
-              >
-                See pricing
-              </a>
+              <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-5xl">
+                {t.home.heroTitle}
+              </h1>
+              <p className="mt-4 text-base text-zinc-600 dark:text-zinc-400">{t.home.heroSubtitle}</p>
+              <p className="mt-4 text-sm font-semibold tracking-tight">{t.tagline}</p>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <a
+                  className="inline-flex h-11 items-center justify-center rounded-lg bg-[var(--mp-primary)] px-5 text-sm font-medium text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
+                  href="/login"
+                >
+                  {t.home.ctaPrimary}
+                </a>
+                <a
+                  className="inline-flex h-11 items-center justify-center rounded-lg border border-zinc-200 bg-white px-5 text-sm font-medium hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)] dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                  href="/pricing"
+                >
+                  {t.home.ctaSecondary}
+                </a>
+              </div>
+
+              <div className="mt-10 grid gap-3 sm:grid-cols-3">
+                <MarketingCard
+                  title={t.home.cards.prReadyTitle}
+                  description={t.home.cards.prReadyBody}
+                  className="p-4 rounded-xl"
+                />
+                <MarketingCard
+                  title={t.home.cards.goLiveTitle}
+                  description={t.home.cards.goLiveBody}
+                  className="p-4 rounded-xl"
+                />
+                <MarketingCard
+                  title={t.home.cards.supportTitle}
+                  description={t.home.cards.supportBody}
+                  className="p-4 rounded-xl"
+                />
+              </div>
             </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                <div className="text-sm font-semibold">Puerto Rico ready</div>
-                <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">IVU settings + local workflows.</div>
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold">{lang === "es" ? "Vista previa" : "Preview"}</div>
+                <div className="text-xs text-zinc-600 dark:text-zinc-400">IslaPOS</div>
               </div>
-              <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                <div className="text-sm font-semibold">Go live fast</div>
-                <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">We help you set it up.</div>
+
+              <div className="mt-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-black">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                    {lang === "es" ? "Ticket" : "Ticket"} #1042
+                  </div>
+                  <div className="text-xs font-medium text-zinc-600 dark:text-zinc-400">IVU</div>
+                </div>
+                <div className="mt-3 grid gap-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="font-medium">{lang === "es" ? "Mofongo" : "Mofongo"}</div>
+                    <div>$12.00</div>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="font-medium">{lang === "es" ? "Refresco" : "Soda"}</div>
+                    <div>$2.00</div>
+                  </div>
+                  <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="text-zinc-600 dark:text-zinc-400">{lang === "es" ? "Subtotal" : "Subtotal"}</div>
+                      <div>$14.00</div>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="text-zinc-600 dark:text-zinc-400">IVU</div>
+                      <div>$1.61</div>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between text-sm font-semibold">
+                      <div>{lang === "es" ? "Total" : "Total"}</div>
+                      <div>$15.61</div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                <div className="text-sm font-semibold">Real support</div>
-                <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Training for owners + staff.</div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-800 dark:bg-black">
+                  <div className="font-semibold text-zinc-900 dark:text-zinc-50">
+                    {lang === "es" ? "Cobro rápido" : "Fast checkout"}
+                  </div>
+                  <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                    {lang === "es" ? "Menos pasos para cobrar." : "Fewer steps to get paid."}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-800 dark:bg-black">
+                  <div className="font-semibold text-zinc-900 dark:text-zinc-50">
+                    {lang === "es" ? "Setup guiado" : "Guided setup"}
+                  </div>
+                  <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                    {lang === "es" ? "IVU, menú y productos." : "IVU, menu and products."}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="text-sm font-semibold">What you get</div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-800 dark:bg-black">
-                POS + payments
-                <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Fast checkout and receipts.</div>
+          <div className="mt-16">
+            <MarketingSection
+              eyebrow={lang === "es" ? "Qué incluye" : "What you get"}
+              title={t.home.whatYouGetTitle}
+              subtitle={lang === "es" ? "Todo lo esencial para operar en PR, más onboarding." : "Everything you need to run in PR, plus onboarding."}
+            >
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <MarketingCard title={t.home.whatYouGet.posTitle} description={t.home.whatYouGet.posBody} />
+                <MarketingCard title={t.home.whatYouGet.menuTitle} description={t.home.whatYouGet.menuBody} />
+                <MarketingCard title={t.home.whatYouGet.ivuTitle} description={t.home.whatYouGet.ivuBody} />
+                <MarketingCard title={t.home.whatYouGet.supportTitle} description={t.home.whatYouGet.supportBody} />
               </div>
-              <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-800 dark:bg-black">
-                Menu management
-                <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Categories, items, barcodes/SKU.</div>
-              </div>
-              <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-800 dark:bg-black">
-                IVU-ready setup
-                <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Business, location, taxes (IVU), products.</div>
-              </div>
-              <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-800 dark:bg-black">
-                Support + training
-                <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">We help you go live and stay live.</div>
-              </div>
-            </div>
+            </MarketingSection>
+          </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <a
-                className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
-                href="/admin"
-              >
-                Admin
-              </a>
-              <a
-                className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
-                href="/pos"
-              >
-                POS
-              </a>
-              <a
-                className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
-                href="/setup"
-              >
-                Setup
-              </a>
-            </div>
+          <div className="mt-16">
+            <MarketingSection
+              eyebrow={lang === "es" ? "Confianza" : "Trust"}
+              title={lang === "es" ? "Restaurantes en Puerto Rico" : "Restaurants in Puerto Rico"}
+              subtitle={lang === "es" ? "Pon logos y testimonios reales aquí cuando los tengas." : "Add real logos and testimonials here as you get them."}
+            >
+              <div className="grid gap-4 lg:grid-cols-2">
+                <MarketingCard
+                  title={lang === "es" ? "Logos" : "Logos"}
+                  description={lang === "es" ? "Placeholders para logo strip." : "Logo strip placeholders."}
+                >
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="h-10 rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-black" />
+                    <div className="h-10 rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-black" />
+                    <div className="h-10 rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-black" />
+                    <div className="h-10 rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-black" />
+                    <div className="h-10 rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-black" />
+                    <div className="h-10 rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-black" />
+                  </div>
+                </MarketingCard>
+
+                <div className="grid gap-4">
+                  <MarketingCard title={t.home.trust.title2} description={t.home.trust.body2} />
+                  <MarketingCard title={t.home.trust.title3} description={t.home.trust.body3} />
+                </div>
+              </div>
+            </MarketingSection>
           </div>
         </main>
 
-        <section className="mt-14 grid gap-4 lg:grid-cols-3">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="text-sm font-semibold">Trusted locally</div>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Add real restaurant quotes here. Even 2–3 short testimonials make a huge difference.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="text-sm font-semibold">“Easy for my staff”</div>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Placeholder testimonial — Restaurant Name, PR
-            </p>
-          </div>
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="text-sm font-semibold">“IVU setup was quick”</div>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Placeholder testimonial — Restaurant Name, PR
-            </p>
-          </div>
-        </section>
-
-        <section className="mt-4 grid gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="text-sm font-semibold">Support that responds</div>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Prefer WhatsApp? No problem. Need training for your cashiers and managers? We’ll guide you.
-            </p>
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-              <a
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
-                href="/contact"
-              >
-                WhatsApp support
-              </a>
-              <a
-                className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
-                href="/contact"
-              >
-                Email support
-              </a>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="text-sm font-semibold">Reliable by design</div>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Secure sign-in, role-based access, and a setup flow designed to prevent mistakes.
-            </p>
-          </div>
-        </section>
-
-        <footer className="mt-16 border-t border-zinc-200 pt-8 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>© {new Date().getFullYear()} IslaPOS</div>
-            <div className="flex gap-4">
-              <a className="hover:text-zinc-900 dark:hover:text-zinc-50" href="/pricing">
-                Pricing
-              </a>
-              <a className="hover:text-zinc-900 dark:hover:text-zinc-50" href="/onboarding">
-                Training
-              </a>
-              <a
-                className="hover:text-zinc-900 dark:hover:text-zinc-50"
-                href="/contact"
-              >
-                WhatsApp
-              </a>
-              <a className="hover:text-zinc-900 dark:hover:text-zinc-50" href="/login">
-                Sign in
-              </a>
-            </div>
-          </div>
-        </footer>
+        <MarketingFooter />
       </div>
     </div>
   );

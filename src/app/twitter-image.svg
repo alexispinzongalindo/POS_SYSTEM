@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#061f1c"/>
+      <stop offset="1" stop-color="#0a0a0a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="0%" r="90%">
+      <stop offset="0" stop-color="#00b3a4" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#00b3a4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="600" fill="url(#bg)"/>
+  <rect width="1200" height="600" fill="url(#glow)"/>
+
+  <g transform="translate(90,110)">
+    <text x="0" y="0" font-family="ui-sans-serif, system-ui, -apple-system" font-size="76" fill="#ffffff" font-weight="800">
+      IslaPOS
+    </text>
+    <text x="0" y="58" font-family="ui-sans-serif, system-ui, -apple-system" font-size="28" fill="#d1d5db" font-weight="600">
+      POS hecho para Puerto Rico. IVU listo. Soporte real.
+    </text>
+    <rect x="0" y="100" width="280" height="54" rx="14" fill="#00b3a4"/>
+    <text x="20" y="136" font-family="ui-sans-serif, system-ui, -apple-system" font-size="20" fill="#071c1a" font-weight="800">
+      Empieza gratis
+    </text>
+  </g>
+</svg>

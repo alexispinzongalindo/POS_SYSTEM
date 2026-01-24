@@ -4,9 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
+import { marketingCopy } from "@/lib/marketingCopy";
+import { useMarketingLang } from "@/lib/useMarketingLang";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { lang } = useMarketingLang();
+  const t = marketingCopy(lang);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -27,7 +31,7 @@ export default function LoginPage() {
           password,
         });
         if (signUpError) throw signUpError;
-        setNotice("Account created. If email confirmation is enabled, check your inbox. Then sign in.");
+        setNotice(t.login.noticeSignup);
         setMode("signin");
         setPassword("");
       } else {
@@ -56,16 +60,16 @@ export default function LoginPage() {
             href="/"
             className="text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
           >
-            ← Back to IslaPOS
+            {t.login.back}
           </a>
         </div>
         <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
           <div className="mb-8">
             <h1 className="text-2xl font-semibold tracking-tight">
-              {mode === "signup" ? "Start your free trial" : "Sign in"}
+              {mode === "signup" ? t.login.titleSignup : t.login.titleSignIn}
             </h1>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              IslaPOS — Admin access
+              IslaPOS — {t.login.adminAccess}
             </p>
           </div>
 
@@ -83,7 +87,7 @@ export default function LoginPage() {
                   : "border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50 dark:bg-black dark:text-zinc-50 dark:hover:bg-zinc-900"
               }`}
             >
-              Sign in
+              {t.login.tabSignIn}
             </button>
             <button
               type="button"
@@ -98,13 +102,13 @@ export default function LoginPage() {
                   : "border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50 dark:bg-black dark:text-zinc-50 dark:hover:bg-zinc-900"
               }`}
             >
-              Create account
+              {t.login.tabCreateAccount}
             </button>
           </div>
 
           <form onSubmit={onSubmit} className="flex flex-col gap-4">
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-medium">Email</span>
+              <span className="text-sm font-medium">{t.login.email}</span>
               <input
                 className="h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
                 type="email"
@@ -116,7 +120,7 @@ export default function LoginPage() {
             </label>
 
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-medium">Password</span>
+              <span className="text-sm font-medium">{t.login.password}</span>
               <input
                 className="h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
                 type="password"
@@ -127,7 +131,7 @@ export default function LoginPage() {
                 minLength={8}
               />
               <span className="text-xs text-zinc-500 dark:text-zinc-500">
-                Minimum 8 characters.
+                {t.login.minChars}
               </span>
             </label>
 
@@ -148,19 +152,19 @@ export default function LoginPage() {
               disabled={loading}
               className="mt-2 inline-flex h-11 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
             >
-              {loading ? "Please wait..." : mode === "signup" ? "Create account" : "Sign in"}
+              {loading ? t.login.pleaseWait : mode === "signup" ? t.login.submitCreate : t.login.submitSignIn}
             </button>
           </form>
         </div>
 
         <p className="mt-6 text-center text-xs text-zinc-500 dark:text-zinc-500">
-          Need help setting up? Visit{" "}
+          {t.login.helpPrefix}{" "}
           <a className="underline hover:text-zinc-900 dark:hover:text-zinc-50" href="/onboarding">
-            Training
+            {t.login.training}
           </a>
-          {" "}or{" "}
+          {" "}{t.login.or}{" "}
           <a className="underline hover:text-zinc-900 dark:hover:text-zinc-50" href="/contact">
-            Contact
+            {t.login.contact}
           </a>
           .
         </p>

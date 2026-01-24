@@ -5,6 +5,13 @@
   --foreground: #171717;
 }
 
+ .islapos-marketing {
+   --mp-primary: #00b3a4;
+   --mp-primary-hover: #009a8d;
+   --mp-primary-contrast: #071c1a;
+   --mp-ring: rgba(0, 179, 164, 0.35);
+ }
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -16,6 +23,13 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+  }
+
+  .islapos-marketing {
+    --mp-primary: #28e1d0;
+    --mp-primary-hover: #19c8b9;
+    --mp-primary-contrast: #041615;
+    --mp-ring: rgba(40, 225, 208, 0.35);
   }
 }
 

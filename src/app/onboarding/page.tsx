@@ -1,60 +1,46 @@
+"use client";
+
 import MarketingHeader from "@/components/MarketingHeader";
+import MarketingCard from "@/components/MarketingCard";
+import MarketingFooter from "@/components/MarketingFooter";
+import MarketingSection from "@/components/MarketingSection";
+import { marketingCopy } from "@/lib/marketingCopy";
+import { useMarketingLang } from "@/lib/useMarketingLang";
 
 export default function OnboardingPage() {
+  const { lang } = useMarketingLang();
+  const t = marketingCopy(lang);
+
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+    <div className="islapos-marketing min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
       <div className="mx-auto w-full max-w-5xl px-6 py-10">
         <MarketingHeader />
 
         <main className="mt-10">
-          <div className="max-w-2xl">
-            <h1 className="text-3xl font-semibold tracking-tight">Onboarding & Training</h1>
-            <p className="mt-3 text-sm font-semibold tracking-tight">POS hecho para Puerto Rico. IVU listo. Soporte real.</p>
-            <p className="mt-3 text-base text-zinc-600 dark:text-zinc-400">
-              Your advantage is support and training. This page makes that clear so Puerto Rico restaurants feel safe
-              starting the free trial.
-            </p>
-          </div>
+          <MarketingSection title={t.onboarding.title} subtitle={t.onboarding.subtitle}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <MarketingCard title={t.onboarding.cards.guidedTitle} description={t.onboarding.cards.guidedBody}>
+                <a className="inline-flex text-sm font-medium text-zinc-900 hover:text-[var(--mp-primary)] dark:text-zinc-50" href="/setup">
+                  {t.onboarding.cards.openSetup}
+                </a>
+              </MarketingCard>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-              <div className="text-sm font-semibold">1) Guided setup</div>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                We help you complete Business, Location, Taxes (IVU) and Products so you can go live.
-              </p>
-              <a className="mt-4 inline-flex text-sm font-medium text-zinc-900 dark:text-zinc-50" href="/setup">
-                Open setup
-              </a>
-            </div>
+              <MarketingCard title={t.onboarding.cards.staffTitle} description={t.onboarding.cards.staffBody} />
+              <MarketingCard title={t.onboarding.cards.supportTitle} description={t.onboarding.cards.supportBody} />
 
-            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-              <div className="text-sm font-semibold">2) Staff training</div>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                Short training sessions so cashiers and managers learn the system quickly.
-              </p>
+              <MarketingCard title={t.onboarding.cards.startTitle} description={t.onboarding.cards.startBody}>
+                <a
+                  className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--mp-primary)] px-4 text-sm font-medium text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
+                  href="/login"
+                >
+                  {t.onboarding.cards.startTrial}
+                </a>
+              </MarketingCard>
             </div>
-
-            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-              <div className="text-sm font-semibold">3) Support when you need it</div>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                Real help for real restaurant issues: menu changes, tax questions, and daily operations.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-              <div className="text-sm font-semibold">Start free</div>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                Create your account and we’ll guide you through the setup.
-              </p>
-              <a
-                className="mt-4 inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
-                href="/login"
-              >
-                Start free trial
-              </a>
-            </div>
-          </div>
+          </MarketingSection>
         </main>
+
+        <MarketingFooter />
       </div>
     </div>
   );
