@@ -2,6 +2,7 @@
 
 import { marketingCopy } from "@/lib/marketingCopy";
 import { useMarketingLang } from "@/lib/useMarketingLang";
+import MarketingLogo from "@/components/MarketingLogo";
 
 type MarketingHeaderProps = {
   ctaVariant?: "trial" | "signin";
@@ -16,8 +17,9 @@ export default function MarketingHeader({ ctaVariant = "trial", ctaHref }: Marke
 
   return (
     <header className="flex items-center justify-between gap-4">
-      <a href="/" className="text-sm font-semibold tracking-tight">
-        {t.brand}
+      <a href="/" className="inline-flex items-center gap-2 text-sm font-semibold tracking-tight">
+        <MarketingLogo className="shrink-0" size={26} />
+        <span>{t.brand}</span>
       </a>
       <nav className="flex items-center gap-4 text-sm">
         <a className="text-[var(--mp-muted)] hover:text-[var(--mp-fg)]" href="/features">

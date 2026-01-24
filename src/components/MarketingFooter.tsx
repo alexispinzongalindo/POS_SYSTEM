@@ -2,6 +2,7 @@
 
 import { marketingCopy } from "@/lib/marketingCopy";
 import { useMarketingLang } from "@/lib/useMarketingLang";
+import MarketingLogo from "@/components/MarketingLogo";
 
 type MarketingFooterProps = {
   showCta?: boolean;
@@ -43,7 +44,10 @@ export default function MarketingFooter({ showCta = true }: MarketingFooterProps
       ) : null}
 
       <div className="mt-10 flex flex-col gap-3 text-xs text-[var(--mp-muted)] sm:flex-row sm:items-center sm:justify-between">
-        <div>© {new Date().getFullYear()} IslaPOS</div>
+        <div className="inline-flex items-center gap-2">
+          <MarketingLogo className="shrink-0" size={18} />
+          <div>© {new Date().getFullYear()} IslaPOS</div>
+        </div>
         <div className="flex gap-4">
           <a className="hover:text-[var(--mp-fg)]" href="/pricing">
             {t.home.footer.pricing}
