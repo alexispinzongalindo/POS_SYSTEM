@@ -6,10 +6,19 @@
 }
 
  .islapos-marketing {
+   --mp-bg: #fff7e8;
+   --mp-fg: #0b1a24;
+   --mp-muted: rgba(11, 26, 36, 0.68);
+   --mp-surface: rgba(255, 255, 255, 0.85);
+   --mp-border: rgba(11, 26, 36, 0.12);
+
    --mp-primary: #00b3a4;
    --mp-primary-hover: #009a8d;
    --mp-primary-contrast: #071c1a;
    --mp-ring: rgba(0, 179, 164, 0.35);
+
+   --mp-coral: #ff5a7a;
+   --mp-sun: #ffd24a;
  }
 
 @theme inline {
@@ -26,10 +35,19 @@
   }
 
   .islapos-marketing {
+    --mp-bg: #061826;
+    --mp-fg: #eef7ff;
+    --mp-muted: rgba(238, 247, 255, 0.72);
+    --mp-surface: rgba(9, 28, 44, 0.78);
+    --mp-border: rgba(238, 247, 255, 0.14);
+
     --mp-primary: #28e1d0;
     --mp-primary-hover: #19c8b9;
     --mp-primary-contrast: #041615;
     --mp-ring: rgba(40, 225, 208, 0.35);
+
+    --mp-coral: #ff6a88;
+    --mp-sun: #ffd24a;
   }
 }
 

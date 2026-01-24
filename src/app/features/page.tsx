@@ -12,7 +12,7 @@ export default function FeaturesPage() {
   const t = marketingCopy(lang);
 
   return (
-    <div className="islapos-marketing min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+    <div className="islapos-marketing min-h-screen bg-[var(--mp-bg)] text-[var(--mp-fg)]">
       <div className="mx-auto w-full max-w-5xl px-6 py-10">
         <MarketingHeader />
 
@@ -20,26 +20,26 @@ export default function FeaturesPage() {
           <MarketingSection title={t.features.title} subtitle={t.features.subtitle}>
             <div className="grid gap-4 sm:grid-cols-2">
               <MarketingCard title={t.features.cards.posTitle} description={t.features.cards.posBody}>
-                <a className="inline-flex text-sm font-medium text-zinc-900 hover:text-[var(--mp-primary)] dark:text-zinc-50" href="/pos">
+                <a className="inline-flex text-sm font-medium text-[var(--mp-fg)] hover:text-[var(--mp-primary)]" href="/pos">
                   {t.features.cards.openPos}
                 </a>
               </MarketingCard>
 
               <MarketingCard title={t.features.cards.adminTitle} description={t.features.cards.adminBody}>
-                <a className="inline-flex text-sm font-medium text-zinc-900 hover:text-[var(--mp-primary)] dark:text-zinc-50" href="/admin">
+                <a className="inline-flex text-sm font-medium text-[var(--mp-fg)] hover:text-[var(--mp-primary)]" href="/admin">
                   {t.features.cards.openAdmin}
                 </a>
               </MarketingCard>
 
               <MarketingCard title={t.features.cards.setupTitle} description={t.features.cards.setupBody}>
-                <a className="inline-flex text-sm font-medium text-zinc-900 hover:text-[var(--mp-primary)] dark:text-zinc-50" href="/setup">
+                <a className="inline-flex text-sm font-medium text-[var(--mp-fg)] hover:text-[var(--mp-primary)]" href="/setup">
                   {t.features.cards.startSetup}
                 </a>
               </MarketingCard>
 
               <MarketingCard title={t.features.cards.onboardingTitle} description={t.features.cards.onboardingBody}>
                 <a
-                  className="inline-flex text-sm font-medium text-zinc-900 hover:text-[var(--mp-primary)] dark:text-zinc-50"
+                  className="inline-flex text-sm font-medium text-[var(--mp-fg)] hover:text-[var(--mp-primary)]"
                   href="/onboarding"
                 >
                   {t.features.cards.seeTraining}

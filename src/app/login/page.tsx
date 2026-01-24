@@ -53,22 +53,22 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+    <div className="islapos-marketing min-h-screen bg-[var(--mp-bg)] text-[var(--mp-fg)]">
       <div className="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-6 py-12">
         <div className="mb-6 flex justify-center">
           <a
             href="/"
-            className="text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+            className="text-xs font-medium text-[var(--mp-muted)] hover:text-[var(--mp-fg)]"
           >
             {t.login.back}
           </a>
         </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-8 shadow-sm">
           <div className="mb-8">
             <h1 className="text-2xl font-semibold tracking-tight">
               {mode === "signup" ? t.login.titleSignup : t.login.titleSignIn}
             </h1>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-sm text-[var(--mp-muted)]">
               IslaPOS — {t.login.adminAccess}
             </p>
           </div>
@@ -81,10 +81,10 @@ export default function LoginPage() {
                 setError(null);
                 setNotice(null);
               }}
-              className={`inline-flex h-9 items-center justify-center rounded-lg px-3 text-xs font-medium border dark:border-zinc-800 ${
+              className={`inline-flex h-9 items-center justify-center rounded-lg px-3 text-xs font-medium border border-[var(--mp-border)] ${
                 mode === "signin"
-                  ? "border-zinc-900 bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-950"
-                  : "border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50 dark:bg-black dark:text-zinc-50 dark:hover:bg-zinc-900"
+                  ? "bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]"
+                  : "bg-[var(--mp-surface)] text-[var(--mp-fg)] hover:bg-white/60"
               }`}
             >
               {t.login.tabSignIn}
@@ -96,10 +96,10 @@ export default function LoginPage() {
                 setError(null);
                 setNotice(null);
               }}
-              className={`inline-flex h-9 items-center justify-center rounded-lg px-3 text-xs font-medium border dark:border-zinc-800 ${
+              className={`inline-flex h-9 items-center justify-center rounded-lg px-3 text-xs font-medium border border-[var(--mp-border)] ${
                 mode === "signup"
-                  ? "border-zinc-900 bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-950"
-                  : "border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50 dark:bg-black dark:text-zinc-50 dark:hover:bg-zinc-900"
+                  ? "bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]"
+                  : "bg-[var(--mp-surface)] text-[var(--mp-fg)] hover:bg-white/60"
               }`}
             >
               {t.login.tabCreateAccount}
@@ -110,7 +110,7 @@ export default function LoginPage() {
             <label className="flex flex-col gap-2">
               <span className="text-sm font-medium">{t.login.email}</span>
               <input
-                className="h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
+                className="h-11 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)] px-3 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -122,7 +122,7 @@ export default function LoginPage() {
             <label className="flex flex-col gap-2">
               <span className="text-sm font-medium">{t.login.password}</span>
               <input
-                className="h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
+                className="h-11 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)] px-3 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -130,7 +130,7 @@ export default function LoginPage() {
                 required
                 minLength={8}
               />
-              <span className="text-xs text-zinc-500 dark:text-zinc-500">
+              <span className="text-xs text-[var(--mp-muted)]">
                 {t.login.minChars}
               </span>
             </label>
@@ -150,20 +150,20 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 inline-flex h-11 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+              className="mt-2 inline-flex h-11 items-center justify-center rounded-lg bg-[var(--mp-primary)] px-4 text-sm font-medium text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
             >
               {loading ? t.login.pleaseWait : mode === "signup" ? t.login.submitCreate : t.login.submitSignIn}
             </button>
           </form>
         </div>
 
-        <p className="mt-6 text-center text-xs text-zinc-500 dark:text-zinc-500">
+        <p className="mt-6 text-center text-xs text-[var(--mp-muted)]">
           {t.login.helpPrefix}{" "}
-          <a className="underline hover:text-zinc-900 dark:hover:text-zinc-50" href="/onboarding">
+          <a className="underline hover:text-[var(--mp-fg)]" href="/onboarding">
             {t.login.training}
           </a>
           {" "}{t.login.or}{" "}
-          <a className="underline hover:text-zinc-900 dark:hover:text-zinc-50" href="/contact">
+          <a className="underline hover:text-[var(--mp-fg)]" href="/contact">
             {t.login.contact}
           </a>
           .

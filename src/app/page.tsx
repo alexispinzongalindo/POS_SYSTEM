@@ -12,20 +12,22 @@ export default function Home() {
   const t = marketingCopy(lang);
 
   return (
-    <div className="islapos-marketing min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+    <div className="islapos-marketing min-h-screen bg-[var(--mp-bg)] text-[var(--mp-fg)]">
       <div className="relative mx-auto w-full max-w-6xl px-6 py-10">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] overflow-hidden"
         >
-          <div className="absolute left-1/2 top-[-220px] h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(0,179,164,0.22),rgba(0,179,164,0))] blur-2xl dark:bg-[radial-gradient(closest-side,rgba(40,225,208,0.20),rgba(40,225,208,0))]" />
+          <div className="absolute left-1/2 top-[-220px] h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(0,179,164,0.22),rgba(0,179,164,0))] blur-2xl" />
+          <div className="absolute left-[-120px] top-[-140px] h-[420px] w-[520px] rounded-full bg-[radial-gradient(closest-side,rgba(255,90,122,0.16),rgba(255,90,122,0))] blur-2xl" />
+          <div className="absolute right-[-140px] top-[-160px] h-[420px] w-[520px] rounded-full bg-[radial-gradient(closest-side,rgba(255,210,74,0.16),rgba(255,210,74,0))] blur-2xl" />
         </div>
         <MarketingHeader ctaVariant="signin" />
 
         <main className="mt-14">
           <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-black dark:text-zinc-200">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[var(--mp-border)] bg-[var(--mp-surface)] px-3 py-1 text-xs font-medium text-[var(--mp-muted)] shadow-sm">
                 <span className="inline-block h-2 w-2 rounded-full bg-[var(--mp-primary)]" />
                 {lang === "es" ? "Nuevo: prueba gratis" : "New: free trial"}
               </div>
@@ -33,7 +35,7 @@ export default function Home() {
               <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-5xl">
                 {t.home.heroTitle}
               </h1>
-              <p className="mt-4 text-base text-zinc-600 dark:text-zinc-400">{t.home.heroSubtitle}</p>
+              <p className="mt-4 text-base text-[var(--mp-muted)]">{t.home.heroSubtitle}</p>
               <p className="mt-4 text-sm font-semibold tracking-tight">{t.tagline}</p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -44,7 +46,7 @@ export default function Home() {
                   {t.home.ctaPrimary}
                 </a>
                 <a
-                  className="inline-flex h-11 items-center justify-center rounded-lg border border-zinc-200 bg-white px-5 text-sm font-medium hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)] dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                  className="inline-flex h-11 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)] px-5 text-sm font-medium text-[var(--mp-fg)] hover:bg-white/60 focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
                   href="/pricing"
                 >
                   {t.home.ctaSecondary}
@@ -70,18 +72,18 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-semibold">{lang === "es" ? "Vista previa" : "Preview"}</div>
-                <div className="text-xs text-zinc-600 dark:text-zinc-400">IslaPOS</div>
+                <div className="text-xs text-[var(--mp-muted)]">IslaPOS</div>
               </div>
 
-              <div className="mt-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-black">
+              <div className="mt-4 rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-4">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                  <div className="text-xs font-medium text-[var(--mp-muted)]">
                     {lang === "es" ? "Ticket" : "Ticket"} #1042
                   </div>
-                  <div className="text-xs font-medium text-zinc-600 dark:text-zinc-400">IVU</div>
+                  <div className="text-xs font-medium text-[var(--mp-muted)]">IVU</div>
                 </div>
                 <div className="mt-3 grid gap-2">
                   <div className="flex items-center justify-between text-sm">
@@ -92,13 +94,13 @@ export default function Home() {
                     <div className="font-medium">{lang === "es" ? "Refresco" : "Soda"}</div>
                     <div>$2.00</div>
                   </div>
-                  <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                  <div className="mt-3 border-t border-[var(--mp-border)] pt-3">
                     <div className="flex items-center justify-between text-sm">
-                      <div className="text-zinc-600 dark:text-zinc-400">{lang === "es" ? "Subtotal" : "Subtotal"}</div>
+                      <div className="text-[var(--mp-muted)]">{lang === "es" ? "Subtotal" : "Subtotal"}</div>
                       <div>$14.00</div>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <div className="text-zinc-600 dark:text-zinc-400">IVU</div>
+                      <div className="text-[var(--mp-muted)]">IVU</div>
                       <div>$1.61</div>
                     </div>
                     <div className="mt-2 flex items-center justify-between text-sm font-semibold">
@@ -110,19 +112,19 @@ export default function Home() {
               </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-800 dark:bg-black">
-                  <div className="font-semibold text-zinc-900 dark:text-zinc-50">
+                <div className="rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-4 text-sm">
+                  <div className="font-semibold">
                     {lang === "es" ? "Cobro rápido" : "Fast checkout"}
                   </div>
-                  <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                  <div className="mt-1 text-xs text-[var(--mp-muted)]">
                     {lang === "es" ? "Menos pasos para cobrar." : "Fewer steps to get paid."}
                   </div>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-800 dark:bg-black">
-                  <div className="font-semibold text-zinc-900 dark:text-zinc-50">
+                <div className="rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-4 text-sm">
+                  <div className="font-semibold">
                     {lang === "es" ? "Setup guiado" : "Guided setup"}
                   </div>
-                  <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                  <div className="mt-1 text-xs text-[var(--mp-muted)]">
                     {lang === "es" ? "IVU, menú y productos." : "IVU, menu and products."}
                   </div>
                 </div>
@@ -157,12 +159,12 @@ export default function Home() {
                   description={lang === "es" ? "Placeholders para logo strip." : "Logo strip placeholders."}
                 >
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="h-10 rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-black" />
-                    <div className="h-10 rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-black" />
-                    <div className="h-10 rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-black" />
-                    <div className="h-10 rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-black" />
-                    <div className="h-10 rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-black" />
-                    <div className="h-10 rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-black" />
+                    <div className="h-10 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)]" />
+                    <div className="h-10 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)]" />
+                    <div className="h-10 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)]" />
+                    <div className="h-10 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)]" />
+                    <div className="h-10 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)]" />
+                    <div className="h-10 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)]" />
                   </div>
                 </MarketingCard>
 

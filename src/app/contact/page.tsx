@@ -12,7 +12,7 @@ export default function ContactPage() {
   const t = marketingCopy(lang);
 
   return (
-    <div className="islapos-marketing min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+    <div className="islapos-marketing min-h-screen bg-[var(--mp-bg)] text-[var(--mp-fg)]">
       <div className="mx-auto w-full max-w-5xl px-6 py-10">
         <MarketingHeader />
 

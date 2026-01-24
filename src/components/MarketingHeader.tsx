@@ -20,27 +20,27 @@ export default function MarketingHeader({ ctaVariant = "trial", ctaHref }: Marke
         {t.brand}
       </a>
       <nav className="flex items-center gap-4 text-sm">
-        <a className="text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-50" href="/features">
+        <a className="text-[var(--mp-muted)] hover:text-[var(--mp-fg)]" href="/features">
           {t.nav.features}
         </a>
-        <a className="text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-50" href="/pricing">
+        <a className="text-[var(--mp-muted)] hover:text-[var(--mp-fg)]" href="/pricing">
           {t.nav.pricing}
         </a>
-        <a className="text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-50" href="/onboarding">
+        <a className="text-[var(--mp-muted)] hover:text-[var(--mp-fg)]" href="/onboarding">
           {t.nav.training}
         </a>
-        <a className="text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-50" href="/contact">
+        <a className="text-[var(--mp-muted)] hover:text-[var(--mp-fg)]" href="/contact">
           {t.nav.contact}
         </a>
 
-        <div className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white p-1 dark:border-zinc-800 dark:bg-black">
+        <div className="inline-flex items-center gap-1 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)] p-1">
           <button
             type="button"
             onClick={() => setLang("es")}
             className={`inline-flex h-8 items-center justify-center rounded-md px-2 text-xs font-medium ${
               lang === "es"
                 ? "bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]"
-                : "text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                : "text-[var(--mp-muted)] hover:bg-white/60"
             }`}
             aria-label="Español (Puerto Rico)"
           >
@@ -52,7 +52,7 @@ export default function MarketingHeader({ ctaVariant = "trial", ctaHref }: Marke
             className={`inline-flex h-8 items-center justify-center rounded-md px-2 text-xs font-medium ${
               lang === "en"
                 ? "bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]"
-                : "text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                : "text-[var(--mp-muted)] hover:bg-white/60"
             }`}
             aria-label="English (United States)"
           >
