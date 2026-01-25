@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-export async function POST(req: Request, ctx: { params: { provider: string } }) {
-  const { provider } = ctx.params;
+export async function POST(req: NextRequest, ctx: { params: Promise<{ provider: string }> }) {
+  const { provider } = await ctx.params;
 
   const body = (await req.json().catch(() => null)) as
     | {

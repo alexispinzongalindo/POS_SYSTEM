@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
 import { applyInventoryDelta } from "@/lib/inventory";
@@ -38,7 +37,7 @@ type CartLine = {
 
 export default function PosPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [tableQuery, setTableQuery] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -134,14 +133,27 @@ export default function PosPage() {
   }, [router]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const table = params.get("table");
+      setTableQuery(table);
+    } catch {
+      setTableQuery(null);
+    }
+  }, []);
+
+  useEffect(() => {
     if (!data) return;
     if (loading) return;
 
-    const raw = searchParams.get("table");
-    const tableNo = raw ? Number(raw) : NaN;
-    if (!Number.isFinite(tableNo) || tableNo <= 0) return;
+    const tableQ = tableQuery;
+    if (!tableQ) return;
 
-    const label = formatTableLabel(Math.floor(tableNo));
+    const t = Number(tableQ);
+    if (!Number.isFinite(t) || t <= 0 || t > 200) return;
+
+    const label = formatTableLabel(Math.floor(t));
     setOrderType("dine_in");
     setCustomerName(label);
 
@@ -160,7 +172,7 @@ export default function PosPage() {
         setCart({});
       }
     })();
-  }, [data, loading, searchParams]);
+  }, [data, loading, tableQuery]);
 
   useEffect(() => {
     if (!data) return;
