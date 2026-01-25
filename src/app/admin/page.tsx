@@ -14,6 +14,7 @@ export default function AdminPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"manager" | "cashier">("cashier");
   const [inviteStatus, setInviteStatus] = useState<string | null>(null);
+  const [showAiPanel, setShowAiPanel] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -449,6 +450,67 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
+
+      <div className="fixed right-3 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-3 md:flex">
+        <button
+          type="button"
+          onClick={() => router.push("/onboarding")}
+          className="group flex items-center gap-2 rounded-2xl border border-[var(--mp-border)] bg-white px-3 py-2 shadow-sm"
+        >
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--mp-primary)] text-white">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 6v6l4 2" />
+              <circle cx="12" cy="12" r="10" />
+            </svg>
+          </span>
+          <span className="text-xs font-semibold text-[var(--mp-fg)] [writing-mode:vertical-rl] [text-orientation:mixed]">
+            View Tutorial
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShowAiPanel(true)}
+          className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-b from-violet-500 to-indigo-600 text-white shadow-lg"
+        >
+          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z" />
+            <path d="M4 14l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z" />
+          </svg>
+        </button>
+      </div>
+
+      {showAiPanel ? (
+        <div className="fixed inset-0 z-50">
+          <button
+            type="button"
+            onClick={() => setShowAiPanel(false)}
+            className="absolute inset-0 bg-black/30"
+            aria-label="Close"
+          />
+          <div className="absolute right-0 top-0 h-full w-full max-w-md border-l border-[var(--mp-border)] bg-white shadow-xl">
+            <div className="flex items-center justify-between gap-3 border-b border-[var(--mp-border)] px-5 py-4">
+              <div>
+                <div className="text-sm font-semibold text-[var(--mp-fg)]">AI Assistant</div>
+                <div className="mt-1 text-xs text-[var(--mp-muted)]">Ask for help configuring your restaurant.</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAiPanel(false)}
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-xs font-semibold hover:bg-white"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="p-5">
+              <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3 text-sm text-[var(--mp-muted)]">
+                AI chat will be wired next. For now, use “View Tutorial” for training.
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
