@@ -48,6 +48,129 @@ export default function Home() {
             <p className="mt-5 text-sm font-semibold tracking-tight">{t.tagline}</p>
           </div>
 
+          <div className="mt-10">
+            <div className="relative mx-auto w-full max-w-5xl overflow-hidden rounded-3xl border border-[var(--mp-border)] bg-[var(--mp-surface)] shadow-[0_30px_80px_rgba(0,0,0,0.12)]">
+              <div
+                aria-hidden="true"
+                className="absolute inset-0"
+                style={{ backgroundImage: "url(/hero/hero.jpg)", backgroundSize: "cover", backgroundPosition: "center" }}
+              />
+              <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+                <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,252,245,0.58),rgba(255,252,245,0.26),rgba(0,0,0,0.22))]" />
+                <div className="absolute inset-0 bg-[radial-gradient(900px_520px_at_25%_20%,rgba(16,185,129,0.28),rgba(16,185,129,0))]" />
+                <div className="absolute inset-0 bg-[radial-gradient(900px_520px_at_75%_30%,rgba(245,158,11,0.18),rgba(245,158,11,0))]" />
+              </div>
+
+              <div className="relative aspect-[16/9]">
+                <div className="absolute left-1/2 top-1/2 w-[92%] max-w-[980px] -translate-x-1/2 -translate-y-1/2">
+                  <div className="relative mx-auto">
+                    <div aria-hidden="true" className="absolute -inset-10 rounded-[48px] bg-black/20 blur-2xl" />
+
+                    <div className="relative mx-auto w-full max-w-[700px]">
+                      <div aria-hidden="true" className="absolute -left-14 top-28 hidden h-56 w-20 rounded-[999px] bg-gradient-to-b from-zinc-200/90 to-zinc-300/60 shadow-sm sm:block" />
+                      <div aria-hidden="true" className="absolute -left-6 top-36 hidden h-44 w-32 rounded-[32px] bg-black/15 blur-xl sm:block" />
+                      <div className="relative rounded-[38px] bg-zinc-900 p-[12px] shadow-[0_22px_80px_rgba(0,0,0,0.42)]">
+                        <div aria-hidden="true" className="absolute left-1/2 top-[12px] h-[6px] w-16 -translate-x-1/2 rounded-full bg-zinc-800" />
+                        <div className="relative overflow-hidden rounded-[30px] bg-white">
+                          <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(520px_360px_at_30%_25%,rgba(16,185,129,0.32),rgba(16,185,129,0))]" />
+                          <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(520px_360px_at_80%_35%,rgba(245,158,11,0.18),rgba(245,158,11,0))]" />
+                          <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.55),rgba(255,255,255,0.28),rgba(255,255,255,0.50))]" />
+
+                          <div className="relative p-6">
+                            <div className="flex items-center justify-between">
+                              <div className="inline-flex items-center gap-2">
+                                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+                                  <span className="h-5 w-5 rounded-full bg-[var(--mp-primary)]" />
+                                </span>
+                                <div>
+                                  <div className="text-sm font-semibold text-zinc-900">IslaPOS</div>
+                                  <div className="text-xs text-zinc-700/80">{lang === "es" ? "Toma órdenes" : "Order taking"}</div>
+                                </div>
+                              </div>
+                              <div className="rounded-full border border-black/10 bg-white/70 px-3 py-1 text-xs font-semibold text-zinc-900 backdrop-blur">
+                                {lang === "es" ? "Listo" : "Ready"}
+                              </div>
+                            </div>
+
+                            <div className="mt-5 flex flex-wrap gap-2">
+                              {[
+                                lang === "es" ? "Platos" : "Meals",
+                                lang === "es" ? "Bebidas" : "Drinks",
+                                lang === "es" ? "Postres" : "Desserts",
+                                lang === "es" ? "Extras" : "Extras",
+                              ].map((label) => (
+                                <div key={label} className="rounded-full border border-black/10 bg-white/75 px-3 py-1 text-[11px] font-semibold text-zinc-900">
+                                  {label}
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_0.74fr]">
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="rounded-2xl border border-black/10 bg-white/80 p-3 shadow-sm">
+                                  <div className="h-20 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-200" />
+                                  <div className="mt-2 text-xs font-semibold text-zinc-900">{lang === "es" ? "Hamburguesa" : "Burger"}</div>
+                                  <div className="mt-1 text-[11px] text-zinc-700/80">$9.50</div>
+                                </div>
+                                <div className="rounded-2xl border border-black/10 bg-white/80 p-3 shadow-sm">
+                                  <div className="h-20 rounded-xl bg-gradient-to-br from-amber-100 to-amber-200" />
+                                  <div className="mt-2 text-xs font-semibold text-zinc-900">{lang === "es" ? "Papas" : "Fries"}</div>
+                                  <div className="mt-1 text-[11px] text-zinc-700/80">$3.25</div>
+                                </div>
+                                <div className="rounded-2xl border border-black/10 bg-white/80 p-3 shadow-sm">
+                                  <div className="h-20 rounded-xl bg-gradient-to-br from-sky-100 to-sky-200" />
+                                  <div className="mt-2 text-xs font-semibold text-zinc-900">{lang === "es" ? "Refresco" : "Soda"}</div>
+                                  <div className="mt-1 text-[11px] text-zinc-700/80">$2.50</div>
+                                </div>
+                                <div className="rounded-2xl border border-black/10 bg-white/80 p-3 shadow-sm">
+                                  <div className="h-20 rounded-xl bg-gradient-to-br from-fuchsia-100 to-fuchsia-200" />
+                                  <div className="mt-2 text-xs font-semibold text-zinc-900">{lang === "es" ? "Postre" : "Dessert"}</div>
+                                  <div className="mt-1 text-[11px] text-zinc-700/80">$4.75</div>
+                                </div>
+                              </div>
+
+                              <div className="rounded-2xl border border-black/10 bg-white/85 p-4 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                  <div className="text-xs font-semibold text-zinc-900">{lang === "es" ? "Carrito" : "Cart"}</div>
+                                  <div className="text-[11px] text-zinc-700/80">{lang === "es" ? "Mesa 4" : "Table 4"}</div>
+                                </div>
+                                <div className="mt-3 grid gap-2">
+                                  <div className="flex items-center justify-between rounded-xl border border-black/10 bg-white/80 px-3 py-2">
+                                    <div className="text-[11px] font-semibold text-zinc-900">2x {lang === "es" ? "Hamburguesa" : "Burger"}</div>
+                                    <div className="text-[11px] text-zinc-700/80">$19.00</div>
+                                  </div>
+                                  <div className="flex items-center justify-between rounded-xl border border-black/10 bg-white/80 px-3 py-2">
+                                    <div className="text-[11px] font-semibold text-zinc-900">1x {lang === "es" ? "Papas" : "Fries"}</div>
+                                    <div className="text-[11px] text-zinc-700/80">$3.25</div>
+                                  </div>
+                                  <div className="flex items-center justify-between rounded-xl border border-black/10 bg-white/80 px-3 py-2">
+                                    <div className="text-[11px] font-semibold text-zinc-900">1x {lang === "es" ? "Refresco" : "Soda"}</div>
+                                    <div className="text-[11px] text-zinc-700/80">$2.50</div>
+                                  </div>
+                                </div>
+                                <div className="mt-3 flex items-center justify-between">
+                                  <div className="text-xs font-semibold text-zinc-900">{lang === "es" ? "Total" : "Total"}</div>
+                                  <div className="text-sm font-semibold text-zinc-900">$24.75</div>
+                                </div>
+                                <div className="mt-3">
+                                  <div className="h-10 w-full rounded-xl bg-[var(--mp-primary)] text-center text-sm font-semibold leading-10 text-[var(--mp-primary-contrast)] shadow-sm">
+                                    {lang === "es" ? "Cobrar" : "Charge"}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div aria-hidden="true" className="absolute inset-0 ring-1 ring-black/5" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="mt-10 grid gap-3 sm:grid-cols-3">
             <MarketingCard title={t.home.cards.prReadyTitle} description={t.home.cards.prReadyBody} className="p-4 rounded-xl" />
             <MarketingCard title={t.home.cards.goLiveTitle} description={t.home.cards.goLiveBody} className="p-4 rounded-xl" />
