@@ -33,22 +33,6 @@
     --background: #0a0a0a;
     --foreground: #ededed;
   }
-
-  .islapos-marketing {
-    --mp-bg: #061826;
-    --mp-fg: #eef7ff;
-    --mp-muted: rgba(238, 247, 255, 0.72);
-    --mp-surface: rgba(9, 28, 44, 0.78);
-    --mp-border: rgba(238, 247, 255, 0.14);
-
-    --mp-primary: #28e1d0;
-    --mp-primary-hover: #19c8b9;
-    --mp-primary-contrast: #041615;
-    --mp-ring: rgba(40, 225, 208, 0.35);
-
-    --mp-coral: #ff6a88;
-    --mp-sun: #ffd24a;
-  }
 }
 
 @media print {
