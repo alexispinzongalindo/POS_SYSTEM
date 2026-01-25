@@ -12,6 +12,7 @@ export default function AdminPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<"manager" | "cashier">("cashier");
   const [inviteStatus, setInviteStatus] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,6 +31,12 @@ export default function AdminPage() {
 
       if (!data.session) {
         router.replace("/login");
+        return;
+      }
+
+      const role = (data.session.user.app_metadata as { role?: string } | undefined)?.role ?? null;
+      if (role === "cashier") {
+        router.replace("/pos");
         return;
       }
 
@@ -86,7 +93,7 @@ export default function AdminPage() {
         "content-type": "application/json",
         authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({ email: inviteEmail }),
+      body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
     });
 
     const json = (await res.json().catch(() => null)) as
@@ -99,6 +106,7 @@ export default function AdminPage() {
     }
 
     setInviteEmail("");
+    setInviteRole("cashier");
     setInviteStatus("Invite sent.");
   }
 
@@ -128,6 +136,86 @@ export default function AdminPage() {
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <h2 className="text-base font-semibold">Restaurants</h2>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              Create and switch between restaurants.
+            </p>
+
+            <div className="mt-4">
+              <button
+                onClick={() => router.push("/admin/restaurants")}
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+              >
+                Manage restaurants
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <h2 className="text-base font-semibold">Staff</h2>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              Manage staff access and roles.
+            </p>
+
+            <div className="mt-4">
+              <button
+                onClick={() => router.push("/admin/staff")}
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+              >
+                Manage staff
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <h2 className="text-base font-semibold">Reports</h2>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              Sales totals, taxes, and payment methods.
+            </p>
+
+            <div className="mt-4">
+              <button
+                onClick={() => router.push("/admin/reports")}
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+              >
+                View reports
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <h2 className="text-base font-semibold">Reservations</h2>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              Create and manage reservations.
+            </p>
+
+            <div className="mt-4">
+              <button
+                onClick={() => router.push("/admin/reservations")}
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+              >
+                Manage reservations
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <h2 className="text-base font-semibold">Inventory</h2>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              Track stock for products.
+            </p>
+
+            <div className="mt-4">
+              <button
+                onClick={() => router.push("/admin/inventory")}
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+              >
+                Manage inventory
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
             <h2 className="text-base font-semibold">Settings</h2>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
               Update business info, location, taxes, and products.
@@ -141,6 +229,22 @@ export default function AdminPage() {
                  Edit setup
                </button>
              </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <h2 className="text-base font-semibold">Integrations</h2>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              Configure delivery providers for your business.
+            </p>
+
+            <div className="mt-4">
+              <button
+                onClick={() => router.push("/admin/integrations/delivery")}
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+              >
+                Delivery integrations
+              </button>
+            </div>
           </div>
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
@@ -162,10 +266,19 @@ export default function AdminPage() {
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
             <h2 className="text-base font-semibold">Invite user</h2>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Only the system owner can invite new users.
+              Invite staff to your restaurant.
             </p>
 
             <div className="mt-4 flex flex-col gap-3">
+              <select
+                className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value as "manager" | "cashier")}
+              >
+                <option value="cashier">Cashier (POS only)</option>
+                <option value="manager">Manager (Admin + POS)</option>
+              </select>
+
               <input
                 className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
                 type="email"

@@ -2,21 +2,27 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
+import { applyInventoryDelta } from "@/lib/inventory";
 import {
   createOrder,
   findMenuItemByCode,
+  getOrderDeliveryMeta,
   getOrderReceipt,
   getOrderItems,
   listRecentOrders,
   listRecentOrdersFiltered,
+  findOpenDineInOrderByTable,
+  formatTableLabel,
   listPaidOrdersForSummary,
   loadPosMenuData,
   markOrderPaid,
   refundOrder,
   updateOrderStatus,
   updateOrder,
+  type OrderType,
   type OrderSummary,
   type OrderReceipt,
   type PosMenuData,
@@ -32,6 +38,7 @@ type CartLine = {
 
 export default function PosPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -65,6 +72,16 @@ export default function PosPage() {
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   const [activeOrderStatus, setActiveOrderStatus] = useState<string | null>(null);
+
+  const [orderType, setOrderType] = useState<OrderType>("counter");
+  const [customerName, setCustomerName] = useState<string>("");
+  const [customerPhone, setCustomerPhone] = useState<string>("");
+  const [deliveryAddress1, setDeliveryAddress1] = useState<string>("");
+  const [deliveryAddress2, setDeliveryAddress2] = useState<string>("");
+  const [deliveryCity, setDeliveryCity] = useState<string>("");
+  const [deliveryState, setDeliveryState] = useState<string>("PR");
+  const [deliveryPostalCode, setDeliveryPostalCode] = useState<string>("");
+  const [deliveryInstructions, setDeliveryInstructions] = useState<string>("");
 
   useEffect(() => {
     let cancelled = false;
@@ -115,6 +132,35 @@ export default function PosPage() {
       authListener.subscription.unsubscribe();
     };
   }, [router]);
+
+  useEffect(() => {
+    if (!data) return;
+    if (loading) return;
+
+    const raw = searchParams.get("table");
+    const tableNo = raw ? Number(raw) : NaN;
+    if (!Number.isFinite(tableNo) || tableNo <= 0) return;
+
+    const label = formatTableLabel(Math.floor(tableNo));
+    setOrderType("dine_in");
+    setCustomerName(label);
+
+    void (async () => {
+      const existing = await findOpenDineInOrderByTable(data.restaurantId, label);
+      if (existing.error) {
+        setError(existing.error.message);
+        return;
+      }
+
+      if (existing.data?.id) {
+        await openOrder(existing.data.id);
+      } else {
+        setActiveOrderId(null);
+        setActiveOrderStatus(null);
+        setCart({});
+      }
+    })();
+  }, [data, loading, searchParams]);
 
   useEffect(() => {
     if (!data) return;
@@ -256,6 +302,15 @@ export default function PosPage() {
     setCart({});
     setActiveOrderId(null);
     setActiveOrderStatus(null);
+    setOrderType("counter");
+    setCustomerName("");
+    setCustomerPhone("");
+    setDeliveryAddress1("");
+    setDeliveryAddress2("");
+    setDeliveryCity("");
+    setDeliveryState("PR");
+    setDeliveryPostalCode("");
+    setDeliveryInstructions("");
   }
 
   const refreshOrders = useCallback(
@@ -328,6 +383,23 @@ export default function PosPage() {
       setError(itemsRes.error.message);
       return;
     }
+
+    const metaRes = await getOrderDeliveryMeta(orderId);
+    if (metaRes.error) {
+      setError(metaRes.error.message);
+      return;
+    }
+
+    const meta = metaRes.data;
+    setOrderType(meta?.order_type ?? "counter");
+    setCustomerName(meta?.customer_name ?? "");
+    setCustomerPhone(meta?.customer_phone ?? "");
+    setDeliveryAddress1(meta?.delivery_address1 ?? "");
+    setDeliveryAddress2(meta?.delivery_address2 ?? "");
+    setDeliveryCity(meta?.delivery_city ?? "");
+    setDeliveryState(meta?.delivery_state ?? "PR");
+    setDeliveryPostalCode(meta?.delivery_postal_code ?? "");
+    setDeliveryInstructions(meta?.delivery_instructions ?? "");
 
     const next: Record<string, CartLine> = {};
     for (const row of itemsRes.data ?? []) {
@@ -410,6 +482,18 @@ export default function PosPage() {
       });
       if (res.error) throw res.error;
 
+      try {
+        const itemsRes = await getOrderItems(activeOrderId);
+        if (!itemsRes.error && itemsRes.data) {
+          applyInventoryDelta(
+            data.restaurantId,
+            itemsRes.data.map((r) => ({ menu_item_id: r.menu_item_id, qty: r.qty })),
+          );
+        }
+      } catch {
+        // ignore inventory errors
+      }
+
       setShowPaymentModal(false);
       clearCart();
       await refreshOrders(data.restaurantId);
@@ -483,12 +567,38 @@ export default function PosPage() {
         line_total: it.unitPrice * it.qty,
       }));
 
+      if (orderType === "delivery") {
+        if (!customerName.trim()) {
+          setError("Delivery requires customer name");
+          return;
+        }
+        if (!customerPhone.trim()) {
+          setError("Delivery requires customer phone");
+          return;
+        }
+        if (!deliveryAddress1.trim() || !deliveryCity.trim() || !deliveryState.trim() || !deliveryPostalCode.trim()) {
+          setError("Delivery requires address, city, state, and postal code");
+          return;
+        }
+      }
+
       const payload = {
         restaurant_id: data.restaurantId,
         created_by_user_id: userId,
         subtotal: Number(totals.subtotal.toFixed(2)),
         tax: Number(totals.tax.toFixed(2)),
         total: Number(totals.total.toFixed(2)),
+        order_type: orderType,
+        customer_name: customerName.trim() ? customerName.trim() : null,
+        customer_phone: customerPhone.trim() ? customerPhone.trim() : null,
+        delivery_address1: orderType === "delivery" && deliveryAddress1.trim() ? deliveryAddress1.trim() : null,
+        delivery_address2: orderType === "delivery" && deliveryAddress2.trim() ? deliveryAddress2.trim() : null,
+        delivery_city: orderType === "delivery" && deliveryCity.trim() ? deliveryCity.trim() : null,
+        delivery_state: orderType === "delivery" && deliveryState.trim() ? deliveryState.trim() : null,
+        delivery_postal_code:
+          orderType === "delivery" && deliveryPostalCode.trim() ? deliveryPostalCode.trim() : null,
+        delivery_instructions:
+          orderType === "delivery" && deliveryInstructions.trim() ? deliveryInstructions.trim() : null,
         items,
       };
 
@@ -556,6 +666,12 @@ export default function PosPage() {
                 className="h-10 w-56 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
               />
             </div>
+            <button
+              onClick={() => router.push("/pos/tables")}
+              className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+            >
+              Tables
+            </button>
             <button
               onClick={() => router.push("/admin")}
               className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
@@ -719,6 +835,14 @@ export default function PosPage() {
                           </div>
                           <div className="text-sm">${Number(o.total).toFixed(2)}</div>
                         </div>
+                        {o.order_type ? (
+                          <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                            Type: {o.order_type.replace("_", " ")}
+                            {o.order_type === "delivery" && o.delivery_status
+                              ? ` • Delivery: ${o.delivery_status.replace("_", " ")}`
+                              : ""}
+                          </div>
+                        ) : null}
                         {o.status === "paid" && o.payment_method ? (
                           <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
                             {o.payment_method.replace("_", " ")}
@@ -826,6 +950,122 @@ export default function PosPage() {
                   <span className="break-all">{activeOrderId}</span>
                 </div>
               ) : null}
+
+              <div className="mt-4 grid gap-3">
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">Order type</label>
+                  <select
+                    value={orderType}
+                    onChange={(e) => setOrderType(e.target.value as OrderType)}
+                    className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                  >
+                    <option value="counter">Counter</option>
+                    <option value="pickup">Pickup</option>
+                    <option value="delivery">Delivery</option>
+                    <option value="dine_in">Dine-in</option>
+                  </select>
+                </div>
+
+                {orderType === "delivery" ? (
+                  <div className="grid gap-3 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-black">
+                    <div className="grid gap-2">
+                      <label className="text-sm font-medium">Customer name</label>
+                      <input
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder="Full name"
+                        className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <label className="text-sm font-medium">Customer phone</label>
+                      <input
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        placeholder="(787) 000-0000"
+                        className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <label className="text-sm font-medium">Address line 1</label>
+                      <input
+                        value={deliveryAddress1}
+                        onChange={(e) => setDeliveryAddress1(e.target.value)}
+                        placeholder="Street address"
+                        className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <label className="text-sm font-medium">Address line 2 (optional)</label>
+                      <input
+                        value={deliveryAddress2}
+                        onChange={(e) => setDeliveryAddress2(e.target.value)}
+                        placeholder="Apt / suite"
+                        className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <div className="grid gap-2 sm:col-span-2">
+                        <label className="text-sm font-medium">City</label>
+                        <input
+                          value={deliveryCity}
+                          onChange={(e) => setDeliveryCity(e.target.value)}
+                          placeholder="San Juan"
+                          className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <label className="text-sm font-medium">State</label>
+                        <input
+                          value={deliveryState}
+                          onChange={(e) => setDeliveryState(e.target.value)}
+                          placeholder="PR"
+                          className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <label className="text-sm font-medium">Postal code</label>
+                      <input
+                        value={deliveryPostalCode}
+                        onChange={(e) => setDeliveryPostalCode(e.target.value)}
+                        placeholder="00901"
+                        className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <label className="text-sm font-medium">Delivery instructions (optional)</label>
+                      <input
+                        value={deliveryInstructions}
+                        onChange={(e) => setDeliveryInstructions(e.target.value)}
+                        placeholder="Gate code, call on arrival, etc."
+                        className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                      />
+                    </div>
+                  </div>
+                ) : null}
+
+                {orderType === "dine_in" ? (
+                  <div className="grid gap-2">
+                    <label className="text-sm font-medium">Table label</label>
+                    <input
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="Table 1"
+                      className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                    />
+                    <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                      Tip: use the Tables screen to open a table automatically.
+                    </div>
+                  </div>
+                ) : null}
+              </div>
 
               <div className="mt-4 flex flex-col gap-2">
                 {cartLines.length === 0 ? (
@@ -1017,6 +1257,37 @@ export default function PosPage() {
                     ? ` • ${receipt.order.payment_method.replace("_", " ")}`
                     : ""}
                 </div>
+
+                {receipt.order.order_type ? (
+                  <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                    Type: {receipt.order.order_type.replace("_", " ")}
+                    {receipt.order.order_type === "delivery" && receipt.order.delivery_status
+                      ? ` • Delivery: ${receipt.order.delivery_status.replace("_", " ")}`
+                      : ""}
+                  </div>
+                ) : null}
+
+                {receipt.order.order_type === "delivery" ? (
+                  <div className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+                    {receipt.order.customer_name ? `${receipt.order.customer_name} • ` : ""}
+                    {receipt.order.customer_phone ?? ""}
+                    <div className="mt-1">
+                      {receipt.order.delivery_address1 ?? ""}
+                      {receipt.order.delivery_address2 ? `, ${receipt.order.delivery_address2}` : ""}
+                    </div>
+                    <div className="mt-1">
+                      {receipt.order.delivery_city ?? ""}
+                      {receipt.order.delivery_state ? `, ${receipt.order.delivery_state}` : ""}
+                      {receipt.order.delivery_postal_code ? ` ${receipt.order.delivery_postal_code}` : ""}
+                    </div>
+                    {receipt.order.delivery_instructions ? (
+                      <div className="mt-1">Instructions: {receipt.order.delivery_instructions}</div>
+                    ) : null}
+                    {receipt.order.delivery_tracking_url ? (
+                      <div className="mt-1 break-all">Tracking: {receipt.order.delivery_tracking_url}</div>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 <div className="mt-4 border-t border-zinc-200 pt-3 text-sm dark:border-zinc-800">
                   <div className="grid gap-2">

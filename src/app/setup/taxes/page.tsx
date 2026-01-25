@@ -29,6 +29,12 @@ export default function SetupTaxesPage() {
         return;
       }
 
+      const role = (ctx.session.user.app_metadata as { role?: string } | undefined)?.role ?? null;
+      if (role === "cashier") {
+        router.replace("/pos");
+        return;
+      }
+
       const rid = (ctx.config?.restaurant_id as string | null) ?? null;
       if (!rid) {
         router.replace("/setup/restaurant");

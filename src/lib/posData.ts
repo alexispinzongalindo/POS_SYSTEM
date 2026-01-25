@@ -16,6 +16,8 @@ export type PosMenuData = {
   pricesIncludeTax: boolean;
 };
 
+export type OrderType = "counter" | "pickup" | "delivery" | "dine_in";
+
 export async function findMenuItemByCode(restaurantId: string, code: string) {
   const q = code.trim();
   if (!q) return { data: null as MenuItem | null, error: null as Error | null };
@@ -76,6 +78,15 @@ export type CreateOrderInput = {
   subtotal: number;
   tax: number;
   total: number;
+  order_type?: OrderType;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  delivery_address1?: string | null;
+  delivery_address2?: string | null;
+  delivery_city?: string | null;
+  delivery_state?: string | null;
+  delivery_postal_code?: string | null;
+  delivery_instructions?: string | null;
   items: Array<{
     menu_item_id: string;
     name: string;
@@ -91,6 +102,10 @@ export type OrderSummary = {
   status: string;
   total: number;
   created_at: string;
+  order_type?: OrderType | null;
+  delivery_status?: string | null;
+  delivery_provider?: string | null;
+  delivery_tracking_url?: string | null;
   payment_method?: string | null;
   paid_at?: string | null;
   amount_tendered?: number | null;
@@ -98,6 +113,15 @@ export type OrderSummary = {
   refunded_at?: string | null;
   refunded_by_user_id?: string | null;
   refund_reason?: string | null;
+};
+
+export type DineInTableOrder = {
+  id: string;
+  ticket_no: number | null;
+  status: string;
+  total: number;
+  created_at: string;
+  customer_name: string | null;
 };
 
 export type OrderItemRow = {
@@ -121,6 +145,18 @@ export type OrderReceipt = {
     subtotal: number;
     tax: number;
     total: number;
+    order_type?: OrderType | null;
+    customer_name?: string | null;
+    customer_phone?: string | null;
+    delivery_address1?: string | null;
+    delivery_address2?: string | null;
+    delivery_city?: string | null;
+    delivery_state?: string | null;
+    delivery_postal_code?: string | null;
+    delivery_instructions?: string | null;
+    delivery_status?: string | null;
+    delivery_provider?: string | null;
+    delivery_tracking_url?: string | null;
     payment_method: string | null;
     paid_at: string | null;
     amount_tendered: number | null;
@@ -149,6 +185,16 @@ export async function createOrder(input: CreateOrderInput) {
       tax: input.tax,
       total: input.total,
       status: "open",
+      order_type: input.order_type ?? "counter",
+      customer_name: input.customer_name ?? null,
+      customer_phone: input.customer_phone ?? null,
+      delivery_address1: input.delivery_address1 ?? null,
+      delivery_address2: input.delivery_address2 ?? null,
+      delivery_city: input.delivery_city ?? null,
+      delivery_state: input.delivery_state ?? null,
+      delivery_postal_code: input.delivery_postal_code ?? null,
+      delivery_instructions: input.delivery_instructions ?? null,
+      delivery_status: (input.order_type ?? "counter") === "delivery" ? "needs_dispatch" : null,
     })
     .select("id, ticket_no")
     .maybeSingle<{ id: string; ticket_no: number | null }>();
@@ -215,6 +261,39 @@ export async function listRecentOrders(restaurantId: string, limit = 20) {
   return listRecentOrdersFiltered(restaurantId, { limit });
 }
 
+export function formatTableLabel(tableNumber: number) {
+  return `Table ${tableNumber}`;
+}
+
+export async function listOpenDineInOrders(restaurantId: string) {
+  return supabase
+    .from("orders")
+    .select("id, ticket_no, status, total, created_at, customer_name")
+    .eq("restaurant_id", restaurantId)
+    .eq("status", "open")
+    .eq("order_type", "dine_in")
+    .order("created_at", { ascending: false })
+    .returns<DineInTableOrder[]>();
+}
+
+export async function findOpenDineInOrderByTable(restaurantId: string, tableLabel: string) {
+  const q = tableLabel.trim();
+  if (!q) return { data: null as DineInTableOrder | null, error: null as Error | null };
+
+  const res = await supabase
+    .from("orders")
+    .select("id, ticket_no, status, total, created_at, customer_name")
+    .eq("restaurant_id", restaurantId)
+    .eq("status", "open")
+    .eq("order_type", "dine_in")
+    .eq("customer_name", q)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<DineInTableOrder>();
+
+  return { data: res.data ?? null, error: res.error };
+}
+
 export async function listRecentOrdersFiltered(
   restaurantId: string,
   opts?: {
@@ -227,7 +306,7 @@ export async function listRecentOrdersFiltered(
   let q = supabase
     .from("orders")
     .select(
-      "id, ticket_no, status, total, created_at, payment_method, paid_at, amount_tendered, change_due, refunded_at, refunded_by_user_id, refund_reason",
+      "id, ticket_no, status, total, created_at, order_type, delivery_status, delivery_provider, delivery_tracking_url, payment_method, paid_at, amount_tendered, change_due, refunded_at, refunded_by_user_id, refund_reason",
     )
     .eq("restaurant_id", restaurantId);
 
@@ -290,7 +369,7 @@ export async function getOrderReceipt(orderId: string) {
   const orderRes = await supabase
     .from("orders")
     .select(
-      "id, ticket_no, restaurant_id, status, created_at, subtotal, tax, total, payment_method, paid_at, amount_tendered, change_due",
+      "id, ticket_no, restaurant_id, status, created_at, subtotal, tax, total, order_type, customer_name, customer_phone, delivery_address1, delivery_address2, delivery_city, delivery_state, delivery_postal_code, delivery_instructions, delivery_status, delivery_provider, delivery_tracking_url, payment_method, paid_at, amount_tendered, change_due",
     )
     .eq("id", orderId)
     .maybeSingle<{
@@ -302,6 +381,18 @@ export async function getOrderReceipt(orderId: string) {
       subtotal: number;
       tax: number;
       total: number;
+      order_type?: OrderType | null;
+      customer_name?: string | null;
+      customer_phone?: string | null;
+      delivery_address1?: string | null;
+      delivery_address2?: string | null;
+      delivery_city?: string | null;
+      delivery_state?: string | null;
+      delivery_postal_code?: string | null;
+      delivery_instructions?: string | null;
+      delivery_status?: string | null;
+      delivery_provider?: string | null;
+      delivery_tracking_url?: string | null;
       payment_method: string | null;
       paid_at: string | null;
       amount_tendered: number | null;
@@ -333,6 +424,30 @@ export async function getOrderReceipt(orderId: string) {
   };
 }
 
+export async function getOrderDeliveryMeta(orderId: string) {
+  return supabase
+    .from("orders")
+    .select(
+      "id, order_type, customer_name, customer_phone, delivery_address1, delivery_address2, delivery_city, delivery_state, delivery_postal_code, delivery_instructions, delivery_status, delivery_provider, delivery_tracking_url",
+    )
+    .eq("id", orderId)
+    .maybeSingle<{
+      id: string;
+      order_type?: OrderType | null;
+      customer_name?: string | null;
+      customer_phone?: string | null;
+      delivery_address1?: string | null;
+      delivery_address2?: string | null;
+      delivery_city?: string | null;
+      delivery_state?: string | null;
+      delivery_postal_code?: string | null;
+      delivery_instructions?: string | null;
+      delivery_status?: string | null;
+      delivery_provider?: string | null;
+      delivery_tracking_url?: string | null;
+    }>();
+}
+
 export async function updateOrder(
   orderId: string,
   input: CreateOrderInput,
@@ -343,6 +458,16 @@ export async function updateOrder(
       subtotal: input.subtotal,
       tax: input.tax,
       total: input.total,
+      order_type: input.order_type ?? "counter",
+      customer_name: input.customer_name ?? null,
+      customer_phone: input.customer_phone ?? null,
+      delivery_address1: input.delivery_address1 ?? null,
+      delivery_address2: input.delivery_address2 ?? null,
+      delivery_city: input.delivery_city ?? null,
+      delivery_state: input.delivery_state ?? null,
+      delivery_postal_code: input.delivery_postal_code ?? null,
+      delivery_instructions: input.delivery_instructions ?? null,
+      delivery_status: (input.order_type ?? "counter") === "delivery" ? "needs_dispatch" : null,
     })
     .eq("id", orderId)
     .select("id, ticket_no")

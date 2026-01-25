@@ -31,6 +31,12 @@ export default function SetupPage() {
         return;
       }
 
+      const role = (data.session.user.app_metadata as { role?: string } | undefined)?.role ?? null;
+      if (role === "cashier") {
+        router.replace("/pos");
+        return;
+      }
+
       const userId = data.session.user.id;
       const cfg = await getOrCreateAppConfig(userId);
       if (cancelled) return;

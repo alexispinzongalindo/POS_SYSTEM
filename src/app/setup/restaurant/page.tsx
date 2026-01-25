@@ -28,6 +28,12 @@ export default function SetupRestaurantPage() {
         return;
       }
 
+      const role = (ctx.session.user.app_metadata as { role?: string } | undefined)?.role ?? null;
+      if (role === "cashier") {
+        router.replace("/pos");
+        return;
+      }
+
       const existingRestaurantId = (ctx.config?.restaurant_id as string | null) ?? null;
       setRestaurantId(existingRestaurantId);
 

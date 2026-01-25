@@ -50,6 +50,17 @@ export type MenuItem = {
   is_active: boolean;
 };
 
+export type DeliveryProvider = "uber_direct" | "doordash_drive" | "aggregator";
+
+export type DeliveryIntegration = {
+  id: string;
+  restaurant_id: string;
+  provider: DeliveryProvider;
+  enabled: boolean;
+  credentials_json: Record<string, unknown> | null;
+  settings_json: Record<string, unknown> | null;
+};
+
 export async function requireSession() {
   const { data, error } = await supabase.auth.getSession();
   if (error) return { session: null, error };
@@ -76,6 +87,15 @@ export async function getSetupContext() {
 
 export async function getRestaurant(restaurantId: string) {
   return supabase.from("restaurants").select("*").eq("id", restaurantId).maybeSingle<Restaurant>();
+}
+
+export async function listRestaurantsByOwner(userId: string) {
+  return supabase
+    .from("restaurants")
+    .select("*")
+    .eq("owner_user_id", userId)
+    .order("created_at", { ascending: true })
+    .returns<Restaurant[]>();
 }
 
 export async function upsertRestaurant(input: {
@@ -239,4 +259,37 @@ export async function addMenuItem(input: {
 
 export async function deleteMenuItem(itemId: string) {
   return supabase.from("menu_items").delete().eq("id", itemId);
+}
+
+export async function listDeliveryIntegrations(restaurantId: string) {
+  return supabase
+    .from("delivery_integrations")
+    .select("*")
+    .eq("restaurant_id", restaurantId)
+    .order("created_at", { ascending: true })
+    .returns<DeliveryIntegration[]>();
+}
+
+export async function upsertDeliveryIntegration(input: {
+  id?: string;
+  restaurant_id: string;
+  provider: DeliveryProvider;
+  enabled: boolean;
+  credentials_json?: Record<string, unknown> | null;
+  settings_json?: Record<string, unknown> | null;
+}) {
+  const payload = {
+    id: input.id,
+    restaurant_id: input.restaurant_id,
+    provider: input.provider,
+    enabled: input.enabled,
+    credentials_json: input.credentials_json ?? null,
+    settings_json: input.settings_json ?? null,
+  };
+
+  return supabase
+    .from("delivery_integrations")
+    .upsert(payload, { onConflict: "restaurant_id,provider" })
+    .select("*")
+    .maybeSingle<DeliveryIntegration>();
 }
