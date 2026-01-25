@@ -53,7 +53,7 @@ export default function Home() {
               <div
                 aria-hidden="true"
                 className="absolute inset-0"
-                style={{ backgroundImage: "url(/hero/hero.jpg)", backgroundSize: "cover", backgroundPosition: "center" }}
+                style={{ backgroundImage: "url(/hero/PART2.png)", backgroundSize: "cover", backgroundPosition: "center" }}
               />
               <div aria-hidden="true" className="pointer-events-none absolute inset-0">
                 <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,252,245,0.58),rgba(255,252,245,0.26),rgba(0,0,0,0.22))]" />
