@@ -1707,7 +1707,7 @@ export default function PosPage() {
 
       {showReceiptModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-200 bg-[#fffdf7] p-6 shadow-xl">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-base font-semibold">Receipt</div>
@@ -1717,7 +1717,7 @@ export default function PosPage() {
               </div>
               <button
                 onClick={() => setShowReceiptModal(false)}
-                className="inline-flex h-9 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 text-xs font-semibold hover:bg-zinc-50"
               >
                 Close
               </button>
@@ -1726,22 +1726,29 @@ export default function PosPage() {
             {receiptLoading ? (
               <div className="mt-6 text-sm text-zinc-600 dark:text-zinc-400">Loading receipt...</div>
             ) : receipt ? (
-              <div className="mt-4">
-                <div className="text-xs text-zinc-600 dark:text-zinc-400">
-                  Ticket: {receipt.order.ticket_no != null ? `#${receipt.order.ticket_no}` : ""}
+              <div className="receipt-print mt-4 rounded-2xl border border-zinc-200 bg-white p-4">
+                <div className="text-center">
+                  <div className="text-sm font-semibold tracking-tight">{receipt.restaurant_name ?? ""}</div>
+                  <div className="mt-1 text-[11px] text-zinc-600">
+                    {new Date(receipt.order.created_at).toLocaleString()}
+                  </div>
                 </div>
-                <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                  Order: <span className="break-all">{receipt.order.id}</span>
+
+                <div className="mt-3 flex items-center justify-between text-[11px] text-zinc-700">
+                  <div>Ticket</div>
+                  <div className="font-semibold tabular-nums">
+                    {receipt.order.ticket_no != null ? `#${receipt.order.ticket_no}` : ""}
+                  </div>
                 </div>
-                <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                  {new Date(receipt.order.created_at).toLocaleString()}
+                <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-700">
+                  <div>Status</div>
+                  <div className="font-medium">
+                    {receipt.order.status}
+                    {receipt.order.payment_method ? ` • ${receipt.order.payment_method.replace("_", " ")}` : ""}
+                  </div>
                 </div>
-                <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                  Status: {receipt.order.status}
-                  {receipt.order.payment_method
-                    ? ` • ${receipt.order.payment_method.replace("_", " ")}`
-                    : ""}
-                </div>
+
+                <div className="mt-1 text-[10px] text-zinc-500 break-all">{receipt.order.id}</div>
 
                 {receipt.order.order_type ? (
                   <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
@@ -1816,7 +1823,7 @@ export default function PosPage() {
                 <div className="mt-6 flex justify-end">
                   <button
                     onClick={() => window.print()}
-                    className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+                    className="inline-flex h-10 items-center justify-center rounded-xl bg-zinc-900 px-5 text-sm font-semibold text-white hover:bg-zinc-800"
                   >
                     Print
                   </button>

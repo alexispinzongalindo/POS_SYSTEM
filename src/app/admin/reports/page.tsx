@@ -114,64 +114,64 @@ export default function AdminReportsPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+      <div className="islapos-marketing flex min-h-screen items-center justify-center bg-[var(--mp-bg)] text-[var(--mp-fg)]">
         <div className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+    <div className="islapos-marketing min-h-screen bg-[var(--mp-bg)] text-[var(--mp-fg)]">
       <div className="mx-auto w-full max-w-5xl px-6 py-10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Reports</h1>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Sales summary for the active restaurant.</p>
+            <h1 className="text-3xl font-semibold tracking-tight">Reports</h1>
+            <p className="text-sm text-[var(--mp-muted)]">Sales summary for the active restaurant.</p>
           </div>
           <button
             onClick={() => router.push("/admin")}
-            className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
           >
             Back
           </button>
         </div>
 
         {error ? (
-          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
+          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         ) : null}
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
             <h2 className="text-base font-semibold">Range</h2>
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 onClick={() => setRange("today")}
-                className={`inline-flex h-10 items-center justify-center rounded-lg border px-4 text-sm font-medium ${
+                className={`inline-flex h-11 items-center justify-center rounded-xl border px-5 text-sm font-semibold ${
                   range === "today"
-                    ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-50 dark:bg-zinc-50 dark:text-zinc-950"
-                    : "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                    ? "border-[var(--mp-primary)] bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]"
+                    : "border-[var(--mp-border)] bg-white hover:bg-white"
                 }`}
               >
                 Today
               </button>
               <button
                 onClick={() => setRange("7d")}
-                className={`inline-flex h-10 items-center justify-center rounded-lg border px-4 text-sm font-medium ${
+                className={`inline-flex h-11 items-center justify-center rounded-xl border px-5 text-sm font-semibold ${
                   range === "7d"
-                    ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-50 dark:bg-zinc-50 dark:text-zinc-950"
-                    : "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                    ? "border-[var(--mp-primary)] bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]"
+                    : "border-[var(--mp-border)] bg-white hover:bg-white"
                 }`}
               >
                 7 days
               </button>
               <button
                 onClick={() => setRange("30d")}
-                className={`inline-flex h-10 items-center justify-center rounded-lg border px-4 text-sm font-medium ${
+                className={`inline-flex h-11 items-center justify-center rounded-xl border px-5 text-sm font-semibold ${
                   range === "30d"
-                    ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-50 dark:bg-zinc-50 dark:text-zinc-950"
-                    : "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                    ? "border-[var(--mp-primary)] bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]"
+                    : "border-[var(--mp-border)] bg-white hover:bg-white"
                 }`}
               >
                 30 days
@@ -179,47 +179,47 @@ export default function AdminReportsPage() {
             </div>
 
             {rowsLoading ? (
-              <div className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">Loading sales...</div>
+              <div className="mt-4 text-sm text-[var(--mp-muted)]">Loading sales...</div>
             ) : null}
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
             <h2 className="text-base font-semibold">Totals</h2>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800">
-                <div className="text-xs text-zinc-600 dark:text-zinc-400">Gross sales</div>
-                <div className="mt-1 text-base font-semibold tabular-nums">${summary.gross.toFixed(2)}</div>
+              <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
+                <div className="text-xs text-[var(--mp-muted)]">Gross sales</div>
+                <div className="mt-1 text-lg font-semibold tabular-nums">${summary.gross.toFixed(2)}</div>
               </div>
-              <div className="rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800">
-                <div className="text-xs text-zinc-600 dark:text-zinc-400">Tickets</div>
-                <div className="mt-1 text-base font-semibold tabular-nums">{summary.ticketCount}</div>
+              <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
+                <div className="text-xs text-[var(--mp-muted)]">Tickets</div>
+                <div className="mt-1 text-lg font-semibold tabular-nums">{summary.ticketCount}</div>
               </div>
-              <div className="rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800">
-                <div className="text-xs text-zinc-600 dark:text-zinc-400">Net sales</div>
-                <div className="mt-1 text-base font-semibold tabular-nums">${summary.net.toFixed(2)}</div>
+              <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
+                <div className="text-xs text-[var(--mp-muted)]">Net sales</div>
+                <div className="mt-1 text-lg font-semibold tabular-nums">${summary.net.toFixed(2)}</div>
               </div>
-              <div className="rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800">
-                <div className="text-xs text-zinc-600 dark:text-zinc-400">Tax</div>
-                <div className="mt-1 text-base font-semibold tabular-nums">${summary.tax.toFixed(2)}</div>
+              <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
+                <div className="text-xs text-[var(--mp-muted)]">Tax</div>
+                <div className="mt-1 text-lg font-semibold tabular-nums">${summary.tax.toFixed(2)}</div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="mt-8 rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
           <h2 className="text-base font-semibold">By payment method</h2>
           <div className="mt-4 flex flex-col gap-2">
             {summary.methods.length === 0 ? (
-              <div className="text-sm text-zinc-600 dark:text-zinc-400">No paid tickets in this range.</div>
+              <div className="text-sm text-[var(--mp-muted)]">No paid tickets in this range.</div>
             ) : (
               summary.methods.map(([method, v]) => (
                 <div
                   key={method}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800"
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3"
                 >
                   <div className="text-sm font-medium">{method.replaceAll("_", " ")}</div>
                   <div className="flex items-center gap-4">
-                    <div className="text-xs text-zinc-600 dark:text-zinc-400 tabular-nums">{v.count} tickets</div>
+                    <div className="text-xs text-[var(--mp-muted)] tabular-nums">{v.count} tickets</div>
                     <div className="text-sm font-semibold tabular-nums">${v.gross.toFixed(2)}</div>
                   </div>
                 </div>
