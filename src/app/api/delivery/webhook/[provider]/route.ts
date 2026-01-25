@@ -3,6 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ provider: string }> }) {
+  const secret = process.env.DELIVERY_WEBHOOK_SECRET;
+  if (secret) {
+    const provided = req.headers.get("x-webhook-secret");
+    if (!provided || provided !== secret) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
+
   const { provider } = await ctx.params;
 
   const body = (await req.json().catch(() => null)) as
