@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
 import { applyInventoryDelta } from "@/lib/inventory";
+import { loadInventory, type InventoryState } from "@/lib/inventory";
 import {
   getOfflineOrder,
   getSyncedCloudOrderId,
@@ -84,6 +85,7 @@ export default function PosPage() {
   const [summaryRows, setSummaryRows] = useState<SalesSummaryRow[]>([]);
 
   const [data, setData] = useState<PosMenuData | null>(null);
+  const [inventory, setInventory] = useState<InventoryState>({});
   const [cart, setCart] = useState<Record<string, CartLine>>({});
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
@@ -124,6 +126,7 @@ export default function PosPage() {
       }
 
       setData(res.data);
+      setInventory(loadInventory(res.data.restaurantId));
 
       setIsOffline(typeof navigator !== "undefined" ? !navigator.onLine : false);
       setOfflineQueueCount(listOfflineOrderSummaries(res.data.restaurantId).length);
@@ -151,6 +154,33 @@ export default function PosPage() {
       authListener.subscription.unsubscribe();
     };
   }, [router]);
+
+  const getTrackedStock = useCallback(
+    (menuItemId: string) => {
+      const row = inventory[menuItemId];
+      if (!row?.tracked) return null;
+      const n = Number(row.stock);
+      return Number.isFinite(n) ? n : null;
+    },
+    [inventory],
+  );
+
+  function tryAddItem(id: string, name: string, unitPrice: number, qtyToAdd = 1) {
+    const stock = getTrackedStock(id);
+    if (stock != null) {
+      const current = cart[id]?.qty ?? 0;
+      if (current + qtyToAdd > stock) {
+        setError(`Out of stock: ${name}`);
+        return;
+      }
+    }
+
+    setCart((prev) => {
+      const existing = prev[id];
+      const qty = (existing?.qty ?? 0) + qtyToAdd;
+      return { ...prev, [id]: { id, name, unitPrice, qty } };
+    });
+  }
 
   function isLikelyOfflineError(e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -391,7 +421,7 @@ export default function PosPage() {
         return;
       }
 
-      addItem(dbRes.data.id, dbRes.data.name, Number(dbRes.data.price));
+      tryAddItem(dbRes.data.id, dbRes.data.name, Number(dbRes.data.price));
       setSuccess(`Added: ${dbRes.data.name}`);
       return;
     }
@@ -402,16 +432,8 @@ export default function PosPage() {
     }
 
     const it = matches[0];
-    addItem(it.id, it.name, Number(it.price));
+    tryAddItem(it.id, it.name, Number(it.price));
     setSuccess(`Added: ${it.name}`);
-  }
-
-  function addItem(id: string, name: string, unitPrice: number) {
-    setCart((prev) => {
-      const existing = prev[id];
-      const qty = (existing?.qty ?? 0) + 1;
-      return { ...prev, [id]: { id, name, unitPrice, qty } };
-    });
   }
 
   function decItem(id: string) {
@@ -770,6 +792,7 @@ export default function PosPage() {
             data.restaurantId,
             offline.payload.items.map((r) => ({ menu_item_id: r.menu_item_id, qty: r.qty })),
           );
+          setInventory(loadInventory(data.restaurantId));
         } catch {
           // ignore
         }
@@ -985,6 +1008,8 @@ export default function PosPage() {
         });
         refreshOfflineQueueCount(data.restaurantId);
       }
+
+      setInventory(loadInventory(data.restaurantId));
 
       clearCart();
       await refreshOrders(data.restaurantId);
@@ -1344,13 +1369,31 @@ export default function PosPage() {
                   data.items.map((it) => (
                     <button
                       key={it.id}
-                      onClick={() => addItem(it.id, it.name, Number(it.price))}
-                      className="rounded-lg border border-zinc-200 bg-white px-3 py-3 text-left hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                      onClick={() => tryAddItem(it.id, it.name, Number(it.price))}
+                      disabled={(() => {
+                        const stock = getTrackedStock(it.id);
+                        return stock != null && stock <= 0;
+                      })()}
+                      className="rounded-lg border border-zinc-200 bg-white px-3 py-3 text-left hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-sm font-medium">{it.name}</div>
                         <div className="text-sm">${Number(it.price).toFixed(2)}</div>
                       </div>
+
+                      {(() => {
+                        const stock = getTrackedStock(it.id);
+                        if (stock == null) return null;
+                        return (
+                          <div
+                            className={`mt-2 text-xs ${
+                              stock <= 0 ? "text-rose-600 dark:text-rose-300" : "text-zinc-600 dark:text-zinc-400"
+                            }`}
+                          >
+                            {stock <= 0 ? "Out of stock" : `Stock: ${stock}`}
+                          </div>
+                        );
+                      })()}
                     </button>
                   ))
                 )}
@@ -1525,7 +1568,11 @@ export default function PosPage() {
                           -
                         </button>
                         <button
-                          onClick={() => addItem(line.id, line.name, line.unitPrice)}
+                          onClick={() => tryAddItem(line.id, line.name, line.unitPrice)}
+                          disabled={(() => {
+                            const stock = getTrackedStock(line.id);
+                            return stock != null && line.qty + 1 > stock;
+                          })()}
                           className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
                         >
                           +
