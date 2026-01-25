@@ -97,36 +97,54 @@ export default function Home() {
 
                       <div className="relative rounded-[34px] bg-zinc-900 p-[10px] shadow-[0_22px_70px_rgba(0,0,0,0.35)]">
                         <div aria-hidden="true" className="absolute left-1/2 top-[10px] h-[5px] w-14 -translate-x-1/2 rounded-full bg-zinc-800" />
-                        <div className="rounded-[26px] bg-[var(--mp-surface)] p-4">
-                          <div className="rounded-2xl border border-[var(--mp-border)] bg-white p-4">
+                        <div className="relative overflow-hidden rounded-[26px] bg-[var(--mp-surface)]">
+                          <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(520px_360px_at_30%_25%,rgba(16,185,129,0.55),rgba(16,185,129,0))]" />
+                          <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(520px_360px_at_75%_35%,rgba(245,158,11,0.35),rgba(245,158,11,0))]" />
+                          <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(520px_360px_at_50%_90%,rgba(99,102,241,0.25),rgba(99,102,241,0))]" />
+                          <div aria-hidden="true" className="absolute inset-0 opacity-25 [background-image:radial-gradient(rgba(255,255,255,0.65)_1px,transparent_1px)] [background-size:18px_18px]" />
+
+                          <div className="relative p-6">
                             <div className="flex items-center justify-between">
-                              <div className="text-xs font-medium text-[var(--mp-muted)]">
-                                {lang === "es" ? "Ticket" : "Ticket"} #1042
+                              <div className="inline-flex items-center gap-2">
+                                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white/90 shadow-sm">
+                                  <span className="h-5 w-5 rounded-full bg-[var(--mp-primary)]" />
+                                </span>
+                                <div>
+                                  <div className="text-sm font-semibold text-zinc-900">IslaPOS</div>
+                                  <div className="text-xs text-zinc-700/80">{lang === "es" ? "POS para PR" : "POS for PR"}</div>
+                                </div>
                               </div>
-                              <div className="text-xs font-medium text-[var(--mp-muted)]">IVU</div>
+                              <div className="rounded-full border border-white/40 bg-white/35 px-3 py-1 text-xs font-semibold text-zinc-900 backdrop-blur">
+                                {lang === "es" ? "Listo" : "Ready"}
+                              </div>
                             </div>
-                            <div className="mt-3 grid gap-2">
-                              <div className="flex items-center justify-between text-sm">
-                                <div className="font-medium">{lang === "es" ? "Mofongo" : "Mofongo"}</div>
-                                <div>$12.00</div>
+
+                            <div className="mt-6 grid gap-3">
+                              <div className="rounded-2xl border border-white/40 bg-white/75 px-4 py-3 backdrop-blur">
+                                <div className="text-xs font-semibold text-zinc-900">{lang === "es" ? "Cobro rápido" : "Fast checkout"}</div>
+                                <div className="mt-1 text-[11px] text-zinc-700/80">
+                                  {lang === "es" ? "Menos taps. Más ventas." : "Fewer taps. More sales."}
+                                </div>
                               </div>
-                              <div className="flex items-center justify-between text-sm">
-                                <div className="font-medium">{lang === "es" ? "Refresco" : "Soda"}</div>
-                                <div>$2.00</div>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="rounded-2xl border border-white/40 bg-white/70 px-4 py-3 backdrop-blur">
+                                  <div className="text-xs font-semibold text-zinc-900">IVU</div>
+                                  <div className="mt-1 text-[11px] text-zinc-700/80">{lang === "es" ? "Configuración" : "Setup"}</div>
+                                </div>
+                                <div className="rounded-2xl border border-white/40 bg-white/70 px-4 py-3 backdrop-blur">
+                                  <div className="text-xs font-semibold text-zinc-900">{lang === "es" ? "Menú" : "Menu"}</div>
+                                  <div className="mt-1 text-[11px] text-zinc-700/80">{lang === "es" ? "Productos" : "Items"}</div>
+                                </div>
                               </div>
-                              <div className="mt-3 border-t border-[var(--mp-border)] pt-3">
-                                <div className="flex items-center justify-between text-sm">
-                                  <div className="text-[var(--mp-muted)]">{lang === "es" ? "Subtotal" : "Subtotal"}</div>
-                                  <div>$14.00</div>
-                                </div>
-                                <div className="flex items-center justify-between text-sm">
-                                  <div className="text-[var(--mp-muted)]">IVU</div>
-                                  <div>$1.61</div>
-                                </div>
-                                <div className="mt-2 flex items-center justify-between text-sm font-semibold">
-                                  <div>{lang === "es" ? "Total" : "Total"}</div>
-                                  <div>$15.61</div>
-                                </div>
+                            </div>
+
+                            <div className="mt-6 flex items-center justify-between">
+                              <div className="text-xs font-semibold text-zinc-900/80">
+                                {lang === "es" ? "Diseñado para restaurantes" : "Built for restaurants"}
+                              </div>
+                              <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-white shadow-sm">
+                                {lang === "es" ? "Empezar" : "Start"}
+                                <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
                               </div>
                             </div>
                           </div>
