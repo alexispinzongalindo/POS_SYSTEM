@@ -270,6 +270,22 @@ export default function AdminPage() {
           </div>
 
           <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
+            <h2 className="text-base font-semibold">Profile</h2>
+            <p className="mt-2 text-sm text-[var(--mp-muted)]">
+              Account details and subscription.
+            </p>
+
+            <div className="mt-4">
+              <button
+                onClick={() => router.push("/admin/profile")}
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+              >
+                Open profile
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
             <h2 className="text-base font-semibold">Invite user</h2>
             <p className="mt-2 text-sm text-[var(--mp-muted)]">
               Invite staff to your restaurant.
