@@ -18,6 +18,7 @@ import {
 } from "@/lib/offlineOrders";
 import {
   createOrder,
+  findOrderByOfflineLocalId,
   findMenuItemByCode,
   getOrderDeliveryMeta,
   getOrderReceipt,
@@ -505,11 +506,19 @@ export default function PosPage() {
           let orderId = getSyncedCloudOrderId(restaurantId, o.local_id);
 
           if (!orderId) {
-            const created = await createOrder(o.payload);
-            if (created.error) throw created.error;
+            const existing = await findOrderByOfflineLocalId(restaurantId, o.local_id);
+            if (existing.error) throw existing.error;
 
-            orderId = created.data?.orderId ?? null;
-            if (!orderId) throw new Error("Failed to sync offline ticket");
+            orderId = existing.data?.id ?? "";
+
+            if (!orderId) {
+              const created = await createOrder({ ...o.payload, offline_local_id: o.local_id });
+              if (created.error) throw created.error;
+
+              orderId = created.data?.orderId ?? "";
+              if (!orderId) throw new Error("Failed to sync offline ticket");
+            }
+
             markOfflineOrderSynced(restaurantId, o.local_id, orderId);
           }
 

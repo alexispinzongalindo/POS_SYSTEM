@@ -75,6 +75,7 @@ export async function loadPosMenuData(): Promise<
 export type CreateOrderInput = {
   restaurant_id: string;
   created_by_user_id: string;
+  offline_local_id?: string | null;
   subtotal: number;
   tax: number;
   total: number;
@@ -181,6 +182,7 @@ export async function createOrder(input: CreateOrderInput) {
     .insert({
       restaurant_id: input.restaurant_id,
       created_by_user_id: input.created_by_user_id,
+      offline_local_id: input.offline_local_id ?? null,
       subtotal: input.subtotal,
       tax: input.tax,
       total: input.total,
@@ -219,6 +221,21 @@ export async function createOrder(input: CreateOrderInput) {
   if (itemsRes.error) return { data: null, error: itemsRes.error };
 
   return { data: { orderId, ticketNo: orderRes.data?.ticket_no ?? null }, error: null };
+}
+
+export async function findOrderByOfflineLocalId(restaurantId: string, offlineLocalId: string) {
+  const q = offlineLocalId.trim();
+  if (!q) return { data: null as { id: string; ticket_no: number | null } | null, error: null as Error | null };
+
+  const res = await supabase
+    .from("orders")
+    .select("id, ticket_no")
+    .eq("restaurant_id", restaurantId)
+    .eq("offline_local_id", q)
+    .limit(1)
+    .maybeSingle<{ id: string; ticket_no: number | null }>();
+
+  return { data: res.data ?? null, error: res.error };
 }
 
 export async function updateOrderStatus(orderId: string, status: "paid" | "canceled") {
