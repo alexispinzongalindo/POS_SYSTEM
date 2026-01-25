@@ -25,75 +25,69 @@ export default function Home() {
         <MarketingHeader ctaVariant="signin" />
 
         <main className="mt-14">
-          <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-[var(--mp-border)] bg-[var(--mp-surface)] px-3 py-1 text-xs font-medium text-[var(--mp-muted)] shadow-sm">
-                <span className="inline-block h-2 w-2 rounded-full bg-[var(--mp-primary)]" />
-                {lang === "es" ? "Nuevo: prueba gratis" : "New: free trial"}
-              </div>
-
-              <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-5xl">
-                {t.home.heroTitle}
-              </h1>
-              <p className="mt-4 text-base text-[var(--mp-muted)]">{t.home.heroSubtitle}</p>
-              <p className="mt-4 text-sm font-semibold tracking-tight">{t.tagline}</p>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <a
-                  className="inline-flex h-11 items-center justify-center rounded-lg bg-[var(--mp-primary)] px-5 text-sm font-medium text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
-                  href="/login"
-                >
-                  {t.home.ctaPrimary}
-                </a>
-                <a
-                  className="inline-flex h-11 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)] px-5 text-sm font-medium text-[var(--mp-fg)] hover:bg-white/60 focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
-                  href="/pricing"
-                >
-                  {t.home.ctaSecondary}
-                </a>
-              </div>
-
-              <div className="mt-10 grid gap-3 sm:grid-cols-3">
-                <MarketingCard
-                  title={t.home.cards.prReadyTitle}
-                  description={t.home.cards.prReadyBody}
-                  className="p-4 rounded-xl"
-                />
-                <MarketingCard
-                  title={t.home.cards.goLiveTitle}
-                  description={t.home.cards.goLiveBody}
-                  className="p-4 rounded-xl"
-                />
-                <MarketingCard
-                  title={t.home.cards.supportTitle}
-                  description={t.home.cards.supportBody}
-                  className="p-4 rounded-xl"
-                />
-              </div>
+          <div className="mx-auto max-w-4xl text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--mp-border)] bg-[var(--mp-surface)] px-3 py-1 text-xs font-medium text-[var(--mp-muted)] shadow-sm">
+              <span className="inline-block h-2 w-2 rounded-full bg-[var(--mp-primary)]" />
+              {lang === "es" ? "Nuevo: prueba gratis" : "New: free trial"}
             </div>
 
-            <div className="relative overflow-hidden rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] shadow-sm">
+            <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-6xl">
+              {t.home.heroTitle}
+            </h1>
+            <p className="mx-auto mt-4 max-w-2xl text-base text-[var(--mp-muted)]">{t.home.heroSubtitle}</p>
+
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <a
+                className="inline-flex h-11 items-center justify-center rounded-lg bg-[var(--mp-primary)] px-6 text-sm font-medium text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
+                href="/login"
+              >
+                {lang === "es" ? "Empieza gratis" : t.home.ctaPrimary}
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById("home-video");
+                  if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                }}
+                className="inline-flex h-11 items-center justify-center gap-3 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)] px-6 text-sm font-medium text-[var(--mp-fg)] hover:bg-white/60 focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
+              >
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </span>
+                {lang === "es" ? "Ver video" : "Watch Video"}
+              </button>
+            </div>
+
+            <p className="mt-5 text-sm font-semibold tracking-tight">{t.tagline}</p>
+          </div>
+
+          <div className="mt-10">
+            <div
+              id="home-video"
+              className="relative mx-auto w-full max-w-4xl overflow-hidden rounded-3xl border border-[var(--mp-border)] bg-[var(--mp-surface)] shadow-[0_30px_80px_rgba(0,0,0,0.12)]"
+            >
               <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-                <div className="absolute inset-0 bg-[radial-gradient(1200px_600px_at_20%_20%,rgba(16,185,129,0.18),rgba(16,185,129,0))]" />
-                <div className="absolute inset-0 bg-[radial-gradient(900px_500px_at_80%_30%,rgba(245,158,11,0.18),rgba(245,158,11,0))]" />
-                <div className="absolute inset-0 bg-[radial-gradient(900px_520px_at_40%_90%,rgba(0,0,0,0.10),rgba(0,0,0,0))]" />
-                <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(rgba(0,0,0,0.14)_1px,transparent_1px)] [background-size:20px_20px]" />
+                <div className="absolute inset-0 bg-[radial-gradient(1200px_600px_at_20%_20%,rgba(16,185,129,0.25),rgba(16,185,129,0))]" />
+                <div className="absolute inset-0 bg-[radial-gradient(900px_500px_at_70%_30%,rgba(245,158,11,0.22),rgba(245,158,11,0))]" />
+                <div className="absolute inset-0 bg-[radial-gradient(900px_520px_at_50%_100%,rgba(0,0,0,0.16),rgba(0,0,0,0))]" />
+                <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(rgba(0,0,0,0.14)_1px,transparent_1px)] [background-size:22px_22px]" />
               </div>
 
-              <div className="relative p-6">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold">{lang === "es" ? "Vista previa" : "Preview"}</div>
-                  <div className="text-xs text-[var(--mp-muted)]">IslaPOS</div>
-                </div>
+              <div className="relative aspect-[16/9]">
+                <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/15 to-white/10" />
 
-                <div className="mt-5 grid gap-6 lg:grid-cols-[1fr_220px] lg:items-center">
-                  <div className="relative mx-auto w-full max-w-[520px]">
-                    <div aria-hidden="true" className="pointer-events-none absolute -left-20 top-10 hidden h-56 w-64 rounded-[42px] bg-black/10 blur-2xl lg:block" />
+                <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/20 to-transparent" />
 
-                    <div className="relative mx-auto w-full max-w-[520px]">
-                      <div aria-hidden="true" className="absolute -left-12 top-28 hidden h-40 w-28 rounded-[28px] bg-black/15 blur-xl lg:block" />
-                      <div aria-hidden="true" className="absolute -left-10 top-16 hidden h-56 w-16 rounded-[999px] bg-gradient-to-b from-zinc-200/90 to-zinc-300/60 shadow-sm lg:block" />
-                      <div aria-hidden="true" className="absolute -left-3 top-20 hidden h-3 w-12 rounded-full bg-zinc-200 shadow-sm lg:block" />
+                <div className="absolute left-1/2 top-1/2 w-[86%] max-w-[760px] -translate-x-1/2 -translate-y-1/2">
+                  <div className="relative mx-auto">
+                    <div aria-hidden="true" className="absolute -inset-8 rounded-[40px] bg-black/10 blur-2xl" />
+
+                    <div className="relative mx-auto w-full max-w-[560px]">
+                      <div aria-hidden="true" className="absolute -left-12 top-28 hidden h-40 w-28 rounded-[28px] bg-black/15 blur-xl sm:block" />
+                      <div aria-hidden="true" className="absolute -left-10 top-16 hidden h-56 w-16 rounded-[999px] bg-gradient-to-b from-zinc-200/90 to-zinc-300/60 shadow-sm sm:block" />
+                      <div aria-hidden="true" className="absolute -left-3 top-20 hidden h-3 w-12 rounded-full bg-zinc-200 shadow-sm sm:block" />
 
                       <div className="relative rounded-[34px] bg-zinc-900 p-[10px] shadow-[0_22px_70px_rgba(0,0,0,0.35)]">
                         <div aria-hidden="true" className="absolute left-1/2 top-[10px] h-[5px] w-14 -translate-x-1/2 rounded-full bg-zinc-800" />
@@ -137,39 +131,37 @@ export default function Home() {
                                 </div>
                               </div>
                             </div>
-
-                            <div className="mt-6 flex items-center justify-between">
-                              <div className="text-xs font-semibold text-zinc-900/80">
-                                {lang === "es" ? "Diseñado para restaurantes" : "Built for restaurants"}
-                              </div>
-                              <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-4 py-2 text-xs font-semibold text-white shadow-sm">
-                                {lang === "es" ? "Empezar" : "Start"}
-                                <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                              </div>
-                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                    <div className="rounded-xl border border-[var(--mp-border)] bg-white/80 p-4 text-sm backdrop-blur">
-                      <div className="font-semibold">{lang === "es" ? "Cobro rápido" : "Fast checkout"}</div>
-                      <div className="mt-1 text-xs text-[var(--mp-muted)]">
-                        {lang === "es" ? "Menos pasos para cobrar." : "Fewer steps to get paid."}
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-[var(--mp-border)] bg-white/80 p-4 text-sm backdrop-blur">
-                      <div className="font-semibold">{lang === "es" ? "Setup guiado" : "Guided setup"}</div>
-                      <div className="mt-1 text-xs text-[var(--mp-muted)]">
-                        {lang === "es" ? "IVU, menú y productos." : "IVU, menu and products."}
-                      </div>
-                    </div>
+                    <button
+                      type="button"
+                      className="group absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+                      onClick={() => {
+                        window.open("https://youtu.be/vJZ8MyN-9kI?si=b3evTapDEXud9S4u", "_blank", "noopener,noreferrer");
+                      }}
+                    >
+                      <span className="absolute -inset-8 rounded-full bg-black/20 blur-xl" aria-hidden="true" />
+                      <span className="relative grid h-20 w-20 place-items-center rounded-full bg-white/95 shadow-xl ring-1 ring-black/10 transition-transform group-hover:scale-[1.03]">
+                        <span className="grid h-12 w-12 place-items-center rounded-full bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]">
+                          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor" aria-hidden="true">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </span>
+                      </span>
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="mt-10 grid gap-3 sm:grid-cols-3">
+            <MarketingCard title={t.home.cards.prReadyTitle} description={t.home.cards.prReadyBody} className="p-4 rounded-xl" />
+            <MarketingCard title={t.home.cards.goLiveTitle} description={t.home.cards.goLiveBody} className="p-4 rounded-xl" />
+            <MarketingCard title={t.home.cards.supportTitle} description={t.home.cards.supportBody} className="p-4 rounded-xl" />
           </div>
 
           <div className="mt-16">
