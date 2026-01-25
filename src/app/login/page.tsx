@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { getOrCreateAppConfig } from "@/lib/appConfig";
 import { supabase } from "@/lib/supabaseClient";
 import { marketingCopy } from "@/lib/marketingCopy";
 import { useMarketingLang } from "@/lib/useMarketingLang";
@@ -41,7 +42,27 @@ export default function LoginPage() {
         });
         if (signInError) throw signInError;
 
-        router.push("/admin");
+        const { data: sess } = await supabase.auth.getSession();
+        const session = sess.session;
+        const role = (session?.user.app_metadata as { role?: string } | undefined)?.role ?? null;
+
+        if (role === "cashier") {
+          router.push("/pos");
+          router.refresh();
+          return;
+        }
+
+        const userId = session?.user.id;
+        if (!userId) {
+          router.push("/admin");
+          router.refresh();
+          return;
+        }
+
+        const cfg = await getOrCreateAppConfig(userId);
+        if (cfg.error) throw cfg.error;
+
+        router.push(cfg.data?.setup_complete ? "/admin" : "/setup");
         router.refresh();
       }
     } catch (err) {

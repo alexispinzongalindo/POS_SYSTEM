@@ -82,7 +82,13 @@ export async function POST(req: Request) {
     }
   }
 
-  const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email);
+  const origin = req.headers.get("origin");
+  const baseUrl = (process.env.APP_BASE_URL?.trim() || origin || "").replace(/\/$/, "");
+  const redirectTo = baseUrl ? `${baseUrl}/auth/callback` : undefined;
+
+  const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+    redirectTo,
+  });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
