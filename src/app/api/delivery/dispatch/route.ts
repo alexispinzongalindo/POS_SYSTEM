@@ -15,6 +15,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: userError?.message ?? "Unauthorized" }, { status: 401 });
   }
 
+  const requester = userData.user;
+  const requesterRole = (requester.app_metadata as { role?: string } | undefined)?.role ?? null;
+  if (requesterRole === "cashier") {
+    return NextResponse.json({ error: "Cashiers cannot dispatch delivery orders" }, { status: 403 });
+  }
+
   const body = (await req.json().catch(() => null)) as
     | { orderId?: string; provider?: string }
     | null;
@@ -37,6 +43,28 @@ export async function POST(req: Request) {
   }
   if (!orderRes.data) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  }
+
+  // Multi-restaurant SaaS guard: requester must be scoped to the same restaurant.
+  // We accept either:
+  // - active restaurant in app_config (owners/managers)
+  // - restaurant_id in user.app_metadata (staff)
+  const cfgRes = await supabaseAdmin
+    .from("app_config")
+    .select("restaurant_id")
+    .eq("owner_user_id", requester.id)
+    .maybeSingle<{ restaurant_id: string | null }>();
+
+  if (cfgRes.error) {
+    return NextResponse.json({ error: cfgRes.error.message }, { status: 400 });
+  }
+
+  const activeRestaurantId = cfgRes.data?.restaurant_id ?? null;
+  const metaRestaurantId =
+    (requester.app_metadata as { restaurant_id?: string } | undefined)?.restaurant_id ?? null;
+
+  if (activeRestaurantId !== orderRes.data.restaurant_id && metaRestaurantId !== orderRes.data.restaurant_id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   if (orderRes.data.order_type !== "delivery") {
     return NextResponse.json({ error: "Only delivery orders can be dispatched" }, { status: 400 });
