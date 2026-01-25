@@ -57,6 +57,10 @@ export default function PosPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
 
+  const [activeCategoryId, setActiveCategoryId] = useState<string>("all");
+  const [productSearch, setProductSearch] = useState<string>("");
+  const [qtyInput, setQtyInput] = useState<string>("");
+
   const [isOffline, setIsOffline] = useState(false);
   const [offlineQueueCount, setOfflineQueueCount] = useState(0);
   const [syncingOffline, setSyncingOffline] = useState(false);
@@ -368,6 +372,25 @@ export default function PosPage() {
     const methods = Object.entries(byMethod).sort((a, b) => b[1].gross - a[1].gross);
     return { gross, tax, net, ticketCount, methods };
   }, [summaryRows]);
+
+  const qtyToAdd = useMemo(() => {
+    const n = Number(qtyInput);
+    if (!qtyInput.trim()) return 1;
+    if (!Number.isFinite(n)) return 1;
+    return Math.max(1, Math.min(99, Math.floor(n)));
+  }, [qtyInput]);
+
+  const filteredItems = useMemo(() => {
+    const q = productSearch.trim().toLowerCase();
+    const categoryId = activeCategoryId;
+    return data?.items
+      .filter((it) => {
+        if (categoryId !== "all" && (it.category_id ?? "") !== categoryId) return false;
+        if (!q) return true;
+        return it.name.toLowerCase().includes(q);
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [activeCategoryId, data?.items, productSearch]);
 
   const cartLines = useMemo(() => Object.values(cart), [cart]);
 
@@ -1173,239 +1196,128 @@ export default function PosPage() {
           </div>
         ) : null}
 
-        <div className="mt-8 grid gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2 flex flex-col gap-4">
-            <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-base font-semibold">Sales summary</h2>
-                <select
-                  value={summaryRange}
-                  onChange={(e) => setSummaryRange(e.target.value as typeof summaryRange)}
-                  className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-xs font-semibold outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                >
-                  <option value="today">Today</option>
-                  <option value="7d">Last 7 days</option>
-                  <option value="30d">Last 30 days</option>
-                </select>
-              </div>
-
-              {summaryLoading ? (
-                <div className="mt-4 text-sm text-[var(--mp-muted)]">Loading...</div>
-              ) : (
-                <div className="mt-4 grid gap-4">
-                  <div className="grid gap-2 sm:grid-cols-4">
-                    <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
-                      <div className="text-xs text-[var(--mp-muted)]">Gross sales</div>
-                      <div className="mt-1 text-sm font-semibold tabular-nums">${salesSummary.gross.toFixed(2)}</div>
-                    </div>
-                    <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
-                      <div className="text-xs text-[var(--mp-muted)]">Net sales</div>
-                      <div className="mt-1 text-sm font-semibold tabular-nums">${salesSummary.net.toFixed(2)}</div>
-                    </div>
-                    <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
-                      <div className="text-xs text-[var(--mp-muted)]">Tax</div>
-                      <div className="mt-1 text-sm font-semibold tabular-nums">${salesSummary.tax.toFixed(2)}</div>
-                    </div>
-                    <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
-                      <div className="text-xs text-[var(--mp-muted)]">Paid tickets</div>
-                      <div className="mt-1 text-sm font-semibold tabular-nums">{salesSummary.ticketCount}</div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
-                    <div className="text-sm font-medium">By payment method</div>
-                    <div className="mt-3 grid gap-2">
-                      {salesSummary.methods.length === 0 ? (
-                        <div className="text-sm text-[var(--mp-muted)]">No paid orders.</div>
-                      ) : (
-                        salesSummary.methods.map(([method, s]) => (
-                          <div key={method} className="flex items-center justify-between text-sm">
-                            <div className="text-[var(--mp-fg)]">
-                              {method.replace("_", " ")} ({s.count})
-                            </div>
-                            <div className="font-semibold tabular-nums">${s.gross.toFixed(2)}</div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-base font-semibold">Order history</h2>
-                <button
-                  onClick={() => data && refreshOrders(data.restaurantId)}
-                  className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-xs font-semibold hover:bg-white"
-                >
-                  Refresh
-                </button>
-              </div>
-
-              <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                <select
-                  value={orderStatusFilter}
-                  onChange={(e) => setOrderStatusFilter(e.target.value as typeof orderStatusFilter)}
-                  className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                >
-                  <option value="all">All statuses</option>
-                  <option value="open">Open</option>
-                  <option value="paid">Paid</option>
-                  <option value="canceled">Canceled</option>
-                  <option value="refunded">Refunded</option>
-                </select>
-                <select
-                  value={orderDateFilter}
-                  onChange={(e) => setOrderDateFilter(e.target.value as typeof orderDateFilter)}
-                  className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                >
-                  <option value="all">All time</option>
-                  <option value="today">Today</option>
-                  <option value="7d">Last 7 days</option>
-                  <option value="30d">Last 30 days</option>
-                </select>
-                <input
-                  value={orderSearch}
-                  onChange={(e) => setOrderSearch(e.target.value)}
-                  placeholder="Search by ticket # or id"
-                  className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                />
-              </div>
-
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                {filteredOrders.length === 0 ? (
-                  <div className="text-sm text-zinc-600 dark:text-zinc-400">No orders yet.</div>
-                ) : (
-                  filteredOrders.map((o) => (
-                    <div
-                      key={o.id}
-                      className={`rounded-2xl border px-4 py-4 text-left ${
-                        activeOrderId === o.id
-                          ? "border-[var(--mp-primary)] bg-white"
-                          : "border-[var(--mp-border)] bg-white"
+        <div className="mt-8 grid gap-4 lg:grid-cols-[1fr_380px]">
+          <div className="flex flex-col gap-4">
+            <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-5 shadow-sm">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveCategoryId("all")}
+                    className={`inline-flex h-10 items-center justify-center rounded-full border px-4 text-sm font-semibold transition-colors ${
+                      activeCategoryId === "all"
+                        ? "border-[var(--mp-primary)] bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]"
+                        : "border-[var(--mp-border)] bg-white text-[var(--mp-fg)] hover:bg-black/[0.03]"
+                    }`}
+                  >
+                    All
+                  </button>
+                  {data.categories.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setActiveCategoryId(c.id)}
+                      className={`inline-flex h-10 items-center justify-center rounded-full border px-4 text-sm font-semibold transition-colors ${
+                        activeCategoryId === c.id
+                          ? "border-[var(--mp-primary)] bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]"
+                          : "border-[var(--mp-border)] bg-white text-[var(--mp-fg)] hover:bg-black/[0.03]"
                       }`}
                     >
-                      <button
-                        onClick={() => openOrder(o.id)}
-                        className="block w-full text-left rounded-xl hover:bg-black/[0.03]"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="text-sm font-medium">
-                            {o.ticket_no != null ? `#${o.ticket_no} ` : ""}
-                            {o.status}
-                          </div>
-                          <div className="text-sm">${Number(o.total).toFixed(2)}</div>
-                        </div>
-                        {o.order_type ? (
-                          <div className="mt-1 text-xs text-[var(--mp-muted)]">
-                            Type: {o.order_type.replace("_", " ")}
-                            {o.order_type === "delivery" && o.delivery_status
-                              ? ` • Delivery: ${o.delivery_status.replace("_", " ")}`
-                              : ""}
-                          </div>
-                        ) : null}
-                        {o.status === "paid" && o.payment_method ? (
-                          <div className="mt-1 text-xs text-[var(--mp-muted)]">
-                            {o.payment_method.replace("_", " ")}
-                            {o.paid_at ? ` • ${new Date(o.paid_at).toLocaleString()}` : ""}
-                            {o.payment_method === "cash" &&
-                            o.amount_tendered != null &&
-                            o.change_due != null
-                              ? ` • Tendered: $${Number(o.amount_tendered).toFixed(2)} • Change: $${Number(o.change_due).toFixed(2)}`
-                              : ""}
-                          </div>
-                        ) : null}
-                        {o.status === "refunded" && o.refunded_at ? (
-                          <div className="mt-1 text-xs text-[var(--mp-muted)]">
-                            {new Date(o.refunded_at).toLocaleString()}
-                            {o.refund_reason ? ` • ${o.refund_reason}` : ""}
-                          </div>
-                        ) : null}
-                        <div className="mt-1 text-xs text-[var(--mp-muted)]">
-                          {new Date(o.created_at).toLocaleString()}
-                        </div>
-                        <div className="mt-1 text-[11px] text-zinc-500 break-all">
-                          {o.id}
-                        </div>
-                      </button>
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
 
-                      {o.status === "paid" ? (
-                        <div className="mt-3 flex justify-end gap-2">
-                          <button
-                            onClick={() => openReceipt(o.id)}
-                            className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-xs font-semibold hover:bg-white"
-                          >
-                            Receipt
-                          </button>
-                          <button
-                            onClick={() => {
-                              setError(null);
-                              setSuccess(null);
-                              setRefundReason("");
-                              setActiveOrderId(o.id);
-                              setActiveOrderStatus(o.status);
-                              setShowRefundModal(true);
-                            }}
-                            className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-xs font-semibold hover:bg-white"
-                          >
-                            Refund
-                          </button>
-                        </div>
-                      ) : null}
-                    </div>
-                  ))
-                )}
+                <div className="flex gap-2">
+                  <input
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    placeholder="Search items"
+                    className="h-10 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)] md:w-64"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
-              <h2 className="text-base font-semibold">Products</h2>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                {data.items.length === 0 ? (
-                  <div className="text-sm text-[var(--mp-muted)]">No products. Add products in Setup.</div>
-                ) : (
-                  data.items.map((it) => (
-                    <button
-                      key={it.id}
-                      onClick={() => tryAddItem(it.id, it.name, Number(it.price))}
-                      disabled={(() => {
-                        const stock = getTrackedStock(it.id);
-                        return stock != null && stock <= 0;
-                      })()}
-                      className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-4 text-left hover:bg-black/[0.03] disabled:opacity-60"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-sm font-medium">{it.name}</div>
-                        <div className="text-sm">${Number(it.price).toFixed(2)}</div>
-                      </div>
+            <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-5 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold">Menu</div>
+                <div className="text-xs text-[var(--mp-muted)]">Tap to add • Qty: {qtyToAdd}</div>
+              </div>
 
-                      {(() => {
-                        const stock = getTrackedStock(it.id);
-                        if (stock == null) return null;
-                        return (
-                          <div
-                            className={`mt-2 text-xs ${
-                              stock <= 0 ? "text-rose-600" : "text-[var(--mp-muted)]"
-                            }`}
-                          >
-                            {stock <= 0 ? "Out of stock" : `Stock: ${stock}`}
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {(filteredItems ?? []).length === 0 ? (
+                  <div className="text-sm text-[var(--mp-muted)]">No items found.</div>
+                ) : (
+                  (filteredItems ?? []).map((it) => {
+                    const stock = getTrackedStock(it.id);
+                    const out = stock != null && stock <= 0;
+                    return (
+                      <button
+                        key={it.id}
+                        onClick={() => {
+                          tryAddItem(it.id, it.name, Number(it.price), qtyToAdd);
+                          setQtyInput("");
+                        }}
+                        disabled={out}
+                        className="group rounded-3xl border border-[var(--mp-border)] bg-white p-4 text-left shadow-sm transition-colors hover:bg-black/[0.03] disabled:opacity-60"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-semibold">{it.name}</div>
+                            <div className="mt-1 text-xs text-[var(--mp-muted)]">
+                              {it.sku ? `SKU ${it.sku}` : it.barcode ? `Barcode ${it.barcode}` : ""}
+                            </div>
                           </div>
-                        );
-                      })()}
-                    </button>
-                  ))
+                          <div className="shrink-0 rounded-2xl bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-900">
+                            ${Number(it.price).toFixed(2)}
+                          </div>
+                        </div>
+                        {stock != null ? (
+                          <div className={`mt-3 text-xs ${out ? "text-rose-600" : "text-[var(--mp-muted)]"}`}>
+                            {out ? "Out of stock" : `Stock: ${stock}`}
+                          </div>
+                        ) : null}
+                      </button>
+                    );
+                  })
                 )}
               </div>
             </div>
           </div>
 
-          <div>
-            <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
-              <h2 className="text-base font-semibold">Cart</h2>
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-base font-semibold">Order</div>
+                <div className="mt-1 text-xs text-[var(--mp-muted)]">
+                  {orderType === "dine_in" && customerName.trim() ? customerName.trim() : orderType.replace("_", " ")}
+                  {activeOrderId ? " • editing" : ""}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={clearCart}
+                  disabled={placing || cartLines.length === 0}
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-xs font-semibold hover:bg-white disabled:opacity-60"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
 
-              <div className="mt-3 md:hidden">
+            <div className="mt-4 grid gap-3">
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={orderType}
+                  onChange={(e) => setOrderType(e.target.value as OrderType)}
+                  className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                >
+                  <option value="counter">Counter</option>
+                  <option value="pickup">Pickup</option>
+                  <option value="delivery">Delivery</option>
+                  <option value="dine_in">Dine-in</option>
+                </select>
                 <input
                   value={scanCode}
                   onChange={(e) => setScanCode(e.target.value)}
@@ -1422,197 +1334,118 @@ export default function PosPage() {
                 />
               </div>
 
-              {activeOrderId ? (
-                <div className="mt-2 text-xs text-[var(--mp-muted)]">
-                  Editing ticket:
-                  {orders.find((o) => o.id === activeOrderId)?.ticket_no != null
-                    ? ` #${orders.find((o) => o.id === activeOrderId)?.ticket_no}`
-                    : ""}{" "}
-                  <span className="break-all">{activeOrderId}</span>
-                </div>
+              {orderType === "dine_in" ? (
+                <input
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="Table 1"
+                  className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                />
               ) : null}
 
-              <div className="mt-4 grid gap-3">
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Order type</label>
-                  <select
-                    value={orderType}
-                    onChange={(e) => setOrderType(e.target.value as OrderType)}
-                    className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                  >
-                    <option value="counter">Counter</option>
-                    <option value="pickup">Pickup</option>
-                    <option value="delivery">Delivery</option>
-                    <option value="dine_in">Dine-in</option>
-                  </select>
+              <div className="rounded-2xl border border-[var(--mp-border)] bg-white p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-semibold">Cart</div>
+                  <div className="text-xs text-[var(--mp-muted)]">Items: {cartLines.reduce((s, it) => s + it.qty, 0)}</div>
                 </div>
 
-                {orderType === "delivery" ? (
-                  <div className="grid gap-3 rounded-2xl border border-[var(--mp-border)] bg-white p-4">
+                <div className="mt-3 max-h-[340px] overflow-auto pr-1">
+                  {cartLines.length === 0 ? (
+                    <div className="text-sm text-[var(--mp-muted)]">Cart is empty.</div>
+                  ) : (
                     <div className="grid gap-2">
-                      <label className="text-sm font-medium">Customer name</label>
-                      <input
-                        value={customerName}
-                        onChange={(e) => setCustomerName(e.target.value)}
-                        placeholder="Full name"
-                        className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Customer phone</label>
-                      <input
-                        value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
-                        placeholder="(787) 000-0000"
-                        className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Address line 1</label>
-                      <input
-                        value={deliveryAddress1}
-                        onChange={(e) => setDeliveryAddress1(e.target.value)}
-                        placeholder="Street address"
-                        className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Address line 2 (optional)</label>
-                      <input
-                        value={deliveryAddress2}
-                        onChange={(e) => setDeliveryAddress2(e.target.value)}
-                        placeholder="Apt / suite"
-                        className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      <div className="grid gap-2 sm:col-span-2">
-                        <label className="text-sm font-medium">City</label>
-                        <input
-                          value={deliveryCity}
-                          onChange={(e) => setDeliveryCity(e.target.value)}
-                          placeholder="San Juan"
-                          className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <label className="text-sm font-medium">State</label>
-                        <input
-                          value={deliveryState}
-                          onChange={(e) => setDeliveryState(e.target.value)}
-                          placeholder="PR"
-                          className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Postal code</label>
-                      <input
-                        value={deliveryPostalCode}
-                        onChange={(e) => setDeliveryPostalCode(e.target.value)}
-                        placeholder="00901"
-                        className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Delivery instructions (optional)</label>
-                      <input
-                        value={deliveryInstructions}
-                        onChange={(e) => setDeliveryInstructions(e.target.value)}
-                        placeholder="Gate code, call on arrival, etc."
-                        className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                      />
-                    </div>
-                  </div>
-                ) : null}
-
-                {orderType === "dine_in" ? (
-                  <div className="grid gap-2">
-                    <label className="text-sm font-medium">Table label</label>
-                    <input
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="Table 1"
-                      className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                    />
-                    <div className="text-xs text-[var(--mp-muted)]">
-                      Tip: use the Tables screen to open a table automatically.
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="mt-4 flex flex-col gap-2">
-                {cartLines.length === 0 ? (
-                  <div className="text-sm text-[var(--mp-muted)]">Cart is empty.</div>
-                ) : (
-                  cartLines.map((line) => (
-                    <div
-                      key={line.id}
-                      className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3"
-                    >
-                      <div>
-                        <div className="text-sm font-medium">{line.name}</div>
-                        <div className="text-xs text-[var(--mp-muted)]">
-                          ${line.unitPrice.toFixed(2)} x {line.qty}
+                      {cartLines.map((line) => (
+                        <div
+                          key={line.id}
+                          className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--mp-border)] bg-white px-3 py-2"
+                        >
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-semibold">{line.name}</div>
+                            <div className="mt-0.5 text-xs text-[var(--mp-muted)]">
+                              ${line.unitPrice.toFixed(2)} x {line.qty}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => decItem(line.id)}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white text-sm font-semibold hover:bg-white"
+                            >
+                              -
+                            </button>
+                            <button
+                              onClick={() => tryAddItem(line.id, line.name, line.unitPrice)}
+                              disabled={(() => {
+                                const stock = getTrackedStock(line.id);
+                                return stock != null && line.qty + 1 > stock;
+                              })()}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white text-sm font-semibold hover:bg-white disabled:opacity-60"
+                            >
+                              +
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => decItem(line.id)}
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white text-sm font-semibold hover:bg-white"
-                        >
-                          -
-                        </button>
-                        <button
-                          onClick={() => tryAddItem(line.id, line.name, line.unitPrice)}
-                          disabled={(() => {
-                            const stock = getTrackedStock(line.id);
-                            return stock != null && line.qty + 1 > stock;
-                          })()}
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white text-sm font-semibold hover:bg-white disabled:opacity-60"
-                        >
-                          +
-                        </button>
-                      </div>
+                      ))}
                     </div>
-                  ))
-                )}
-              </div>
-
-              <div className="mt-6 border-t border-[var(--mp-border)] pt-4 text-sm">
-                <div className="flex items-center justify-between">
-                  <div className="text-[var(--mp-muted)]">Subtotal</div>
-                  <div>${totals.subtotal.toFixed(2)}</div>
-                </div>
-                <div className="mt-2 flex items-center justify-between">
-                  <div className="text-[var(--mp-muted)]">Tax</div>
-                  <div>${totals.tax.toFixed(2)}</div>
-                </div>
-                <div className="mt-2 flex items-center justify-between font-medium">
-                  <div>Total</div>
-                  <div>${totals.total.toFixed(2)}</div>
+                  )}
                 </div>
               </div>
 
-              <div className="mt-6">
-                <button
-                  onClick={placeOrder}
-                  disabled={placing || cartLines.length === 0}
-                  className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
-                >
-                  {placing ? "Saving..." : activeOrderId ? "Update ticket" : "Place order"}
-                </button>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border border-[var(--mp-border)] bg-white p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-[var(--mp-muted)]">Subtotal</div>
+                    <div className="text-sm font-semibold tabular-nums">${totals.subtotal.toFixed(2)}</div>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <div className="text-xs text-[var(--mp-muted)]">Tax</div>
+                    <div className="text-sm font-semibold tabular-nums">${totals.tax.toFixed(2)}</div>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <div className="text-xs font-semibold">Total</div>
+                    <div className="text-base font-semibold tabular-nums">${totals.total.toFixed(2)}</div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-[var(--mp-border)] bg-white p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-[var(--mp-muted)]">Qty keypad</div>
+                    <div className="text-sm font-semibold">{qtyToAdd}</div>
+                  </div>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    {(["1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", ""] as const).map((k) => (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => {
+                          if (k === "C") {
+                            setQtyInput("");
+                            return;
+                          }
+                          if (k === "") {
+                            setQtyInput((prev) => prev.slice(0, -1));
+                            return;
+                          }
+                          setQtyInput((prev) => `${prev}${k}`.slice(0, 2));
+                        }}
+                        className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white text-sm font-semibold hover:bg-black/[0.03]"
+                      >
+                        {k === "C" ? "CLR" : k === "" ? "DEL" : k}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
+
+              <button
+                onClick={placeOrder}
+                disabled={placing || cartLines.length === 0}
+                className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
+              >
+                {placing ? "Saving..." : activeOrderId ? "Update ticket" : "Place order"}
+              </button>
 
               {activeOrderId && (activeOrderStatus ?? "open") === "open" ? (
-                <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => {
                       setError(null);
@@ -1622,21 +1455,21 @@ export default function PosPage() {
                       setShowPaymentModal(true);
                     }}
                     disabled={placing}
-                    className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-white disabled:opacity-60"
+                    className="inline-flex h-11 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-white disabled:opacity-60"
                   >
                     Close (Paid)
                   </button>
                   <button
                     onClick={() => setTicketStatus("canceled")}
                     disabled={placing}
-                    className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-white disabled:opacity-60"
+                    className="inline-flex h-11 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-white disabled:opacity-60"
                   >
                     Cancel
                   </button>
                 </div>
               ) : null}
 
-              <div className="mt-2 text-xs text-[var(--mp-muted)]">
+              <div className="text-xs text-[var(--mp-muted)]">
                 Tax settings: {(data.ivuRate * 100).toFixed(2)}%{data.pricesIncludeTax ? " (prices include tax)" : ""}
               </div>
             </div>
