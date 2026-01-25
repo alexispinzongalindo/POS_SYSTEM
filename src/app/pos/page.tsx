@@ -47,6 +47,7 @@ type CartLine = {
 export default function PosPage() {
   const router = useRouter();
   const [tableQuery, setTableQuery] = useState<string | null>(null);
+  const [offlineQuery, setOfflineQuery] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -238,11 +239,24 @@ export default function PosPage() {
     try {
       const params = new URLSearchParams(window.location.search);
       const table = params.get("table");
+      const offline = params.get("offline");
       setTableQuery(table);
+      setOfflineQuery(offline);
     } catch {
       setTableQuery(null);
+      setOfflineQuery(null);
     }
   }, []);
+
+  useEffect(() => {
+    if (!data) return;
+    if (loading) return;
+
+    const id = (offlineQuery ?? "").trim();
+    if (!id) return;
+
+    void openOrder(id);
+  }, [data, loading, offlineQuery]);
 
   useEffect(() => {
     if (!data) return;
@@ -1079,6 +1093,13 @@ export default function PosPage() {
                 <div className="text-xs opacity-90">Queued tickets: {offlineQueueCount}</div>
               </div>
               <div className="flex gap-2">
+                <button
+                  onClick={() => router.push("/pos/offline")}
+                  className="inline-flex h-9 items-center justify-center rounded-lg border border-amber-300 bg-white px-3 text-xs font-medium text-amber-900 hover:bg-amber-50 disabled:opacity-60 dark:border-amber-900/50 dark:bg-black dark:text-amber-100 dark:hover:bg-amber-950/40"
+                >
+                  Manage
+                </button>
+
                 <button
                   onClick={() => data && void syncOfflineOrders(data.restaurantId)}
                   disabled={syncingOffline || (typeof navigator !== "undefined" && !navigator.onLine)}
