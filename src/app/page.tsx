@@ -72,60 +72,82 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold">{lang === "es" ? "Vista previa" : "Preview"}</div>
-                <div className="text-xs text-[var(--mp-muted)]">IslaPOS</div>
+            <div className="relative overflow-hidden rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] shadow-sm">
+              <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+                <div className="absolute inset-0 bg-[radial-gradient(1200px_600px_at_20%_20%,rgba(16,185,129,0.18),rgba(16,185,129,0))]" />
+                <div className="absolute inset-0 bg-[radial-gradient(900px_500px_at_80%_30%,rgba(245,158,11,0.18),rgba(245,158,11,0))]" />
+                <div className="absolute inset-0 bg-[radial-gradient(900px_520px_at_40%_90%,rgba(0,0,0,0.10),rgba(0,0,0,0))]" />
+                <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(rgba(0,0,0,0.14)_1px,transparent_1px)] [background-size:20px_20px]" />
               </div>
 
-              <div className="mt-4 rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-4">
+              <div className="relative p-6">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs font-medium text-[var(--mp-muted)]">
-                    {lang === "es" ? "Ticket" : "Ticket"} #1042
-                  </div>
-                  <div className="text-xs font-medium text-[var(--mp-muted)]">IVU</div>
+                  <div className="text-sm font-semibold">{lang === "es" ? "Vista previa" : "Preview"}</div>
+                  <div className="text-xs text-[var(--mp-muted)]">IslaPOS</div>
                 </div>
-                <div className="mt-3 grid gap-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="font-medium">{lang === "es" ? "Mofongo" : "Mofongo"}</div>
-                    <div>$12.00</div>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="font-medium">{lang === "es" ? "Refresco" : "Soda"}</div>
-                    <div>$2.00</div>
-                  </div>
-                  <div className="mt-3 border-t border-[var(--mp-border)] pt-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="text-[var(--mp-muted)]">{lang === "es" ? "Subtotal" : "Subtotal"}</div>
-                      <div>$14.00</div>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="text-[var(--mp-muted)]">IVU</div>
-                      <div>$1.61</div>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between text-sm font-semibold">
-                      <div>{lang === "es" ? "Total" : "Total"}</div>
-                      <div>$15.61</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-4 text-sm">
-                  <div className="font-semibold">
-                    {lang === "es" ? "Cobro rápido" : "Fast checkout"}
+                <div className="mt-5 grid gap-6 lg:grid-cols-[1fr_220px] lg:items-center">
+                  <div className="relative mx-auto w-full max-w-[520px]">
+                    <div aria-hidden="true" className="pointer-events-none absolute -left-20 top-10 hidden h-56 w-64 rounded-[42px] bg-black/10 blur-2xl lg:block" />
+
+                    <div className="relative mx-auto w-full max-w-[520px]">
+                      <div aria-hidden="true" className="absolute -left-12 top-28 hidden h-40 w-28 rounded-[28px] bg-black/15 blur-xl lg:block" />
+                      <div aria-hidden="true" className="absolute -left-10 top-16 hidden h-56 w-16 rounded-[999px] bg-gradient-to-b from-zinc-200/90 to-zinc-300/60 shadow-sm lg:block" />
+                      <div aria-hidden="true" className="absolute -left-3 top-20 hidden h-3 w-12 rounded-full bg-zinc-200 shadow-sm lg:block" />
+
+                      <div className="relative rounded-[34px] bg-zinc-900 p-[10px] shadow-[0_22px_70px_rgba(0,0,0,0.35)]">
+                        <div aria-hidden="true" className="absolute left-1/2 top-[10px] h-[5px] w-14 -translate-x-1/2 rounded-full bg-zinc-800" />
+                        <div className="rounded-[26px] bg-[var(--mp-surface)] p-4">
+                          <div className="rounded-2xl border border-[var(--mp-border)] bg-white p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="text-xs font-medium text-[var(--mp-muted)]">
+                                {lang === "es" ? "Ticket" : "Ticket"} #1042
+                              </div>
+                              <div className="text-xs font-medium text-[var(--mp-muted)]">IVU</div>
+                            </div>
+                            <div className="mt-3 grid gap-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <div className="font-medium">{lang === "es" ? "Mofongo" : "Mofongo"}</div>
+                                <div>$12.00</div>
+                              </div>
+                              <div className="flex items-center justify-between text-sm">
+                                <div className="font-medium">{lang === "es" ? "Refresco" : "Soda"}</div>
+                                <div>$2.00</div>
+                              </div>
+                              <div className="mt-3 border-t border-[var(--mp-border)] pt-3">
+                                <div className="flex items-center justify-between text-sm">
+                                  <div className="text-[var(--mp-muted)]">{lang === "es" ? "Subtotal" : "Subtotal"}</div>
+                                  <div>$14.00</div>
+                                </div>
+                                <div className="flex items-center justify-between text-sm">
+                                  <div className="text-[var(--mp-muted)]">IVU</div>
+                                  <div>$1.61</div>
+                                </div>
+                                <div className="mt-2 flex items-center justify-between text-sm font-semibold">
+                                  <div>{lang === "es" ? "Total" : "Total"}</div>
+                                  <div>$15.61</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-1 text-xs text-[var(--mp-muted)]">
-                    {lang === "es" ? "Menos pasos para cobrar." : "Fewer steps to get paid."}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-4 text-sm">
-                  <div className="font-semibold">
-                    {lang === "es" ? "Setup guiado" : "Guided setup"}
-                  </div>
-                  <div className="mt-1 text-xs text-[var(--mp-muted)]">
-                    {lang === "es" ? "IVU, menú y productos." : "IVU, menu and products."}
+
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                    <div className="rounded-xl border border-[var(--mp-border)] bg-white/80 p-4 text-sm backdrop-blur">
+                      <div className="font-semibold">{lang === "es" ? "Cobro rápido" : "Fast checkout"}</div>
+                      <div className="mt-1 text-xs text-[var(--mp-muted)]">
+                        {lang === "es" ? "Menos pasos para cobrar." : "Fewer steps to get paid."}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-[var(--mp-border)] bg-white/80 p-4 text-sm backdrop-blur">
+                      <div className="font-semibold">{lang === "es" ? "Setup guiado" : "Guided setup"}</div>
+                      <div className="mt-1 text-xs text-[var(--mp-muted)]">
+                        {lang === "es" ? "IVU, menú y productos." : "IVU, menu and products."}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
