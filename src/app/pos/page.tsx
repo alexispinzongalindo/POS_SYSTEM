@@ -1053,7 +1053,7 @@ export default function PosPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+      <div className="islapos-marketing flex min-h-screen items-center justify-center bg-[var(--mp-bg)] text-[var(--mp-fg)]">
         <div className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</div>
       </div>
     );
@@ -1061,19 +1061,19 @@ export default function PosPage() {
 
   if (!data) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+      <div className="islapos-marketing flex min-h-screen items-center justify-center bg-[var(--mp-bg)] text-[var(--mp-fg)]">
         <div className="text-sm text-zinc-600 dark:text-zinc-400">No data.</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+    <div className="islapos-marketing min-h-screen bg-[var(--mp-bg)] text-[var(--mp-fg)]">
       <div className="mx-auto w-full max-w-6xl px-6 py-10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">POS</h1>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Add items and place an order.</p>
+            <h1 className="text-3xl font-semibold tracking-tight">POS</h1>
+            <p className="text-sm text-[var(--mp-muted)]">Add items and place an order.</p>
           </div>
           <div className="flex gap-2">
             <div className="hidden md:block">
@@ -1089,24 +1089,24 @@ export default function PosPage() {
                   setScanCode("");
                 }}
                 placeholder="Scan barcode / SKU"
-                className="h-10 w-56 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
+                className="h-11 w-64 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
               />
             </div>
             <button
               onClick={() => router.push("/pos/tables")}
-              className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
             >
               Tables
             </button>
             <button
               onClick={() => router.push("/admin")}
-              className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
             >
               Admin
             </button>
             <button
               onClick={clearCart}
-              className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white disabled:opacity-60"
               disabled={cartLines.length === 0}
             >
               Clear
@@ -1117,7 +1117,7 @@ export default function PosPage() {
                 setError(null);
                 setSuccess(null);
               }}
-              className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
             >
               New ticket
             </button>
@@ -1125,7 +1125,7 @@ export default function PosPage() {
         </div>
 
         {isOffline || offlineQueueCount > 0 ? (
-          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="font-medium">
@@ -1136,7 +1136,7 @@ export default function PosPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => router.push("/pos/offline")}
-                  className="inline-flex h-9 items-center justify-center rounded-lg border border-amber-300 bg-white px-3 text-xs font-medium text-amber-900 hover:bg-amber-50 disabled:opacity-60 dark:border-amber-900/50 dark:bg-black dark:text-amber-100 dark:hover:bg-amber-950/40"
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-300 bg-white px-4 text-xs font-semibold text-amber-900 hover:bg-amber-50 disabled:opacity-60"
                 >
                   Manage
                 </button>
@@ -1144,7 +1144,7 @@ export default function PosPage() {
                 <button
                   onClick={() => data && void syncOfflineOrders(data.restaurantId)}
                   disabled={syncingOffline || (typeof navigator !== "undefined" && !navigator.onLine)}
-                  className="inline-flex h-9 items-center justify-center rounded-lg bg-amber-900 px-3 text-xs font-medium text-white hover:bg-amber-800 disabled:opacity-60 dark:bg-amber-200 dark:text-amber-950 dark:hover:bg-amber-100"
+                  className="inline-flex h-10 items-center justify-center rounded-xl bg-amber-900 px-4 text-xs font-semibold text-white hover:bg-amber-800 disabled:opacity-60"
                 >
                   {syncingOffline ? "Syncing..." : "Sync now"}
                 </button>
@@ -1152,7 +1152,7 @@ export default function PosPage() {
                 <button
                   onClick={() => data && exportOfflineTickets(data.restaurantId)}
                   disabled={!data || offlineQueueCount === 0}
-                  className="inline-flex h-9 items-center justify-center rounded-lg border border-amber-300 bg-white px-3 text-xs font-medium text-amber-900 hover:bg-amber-50 disabled:opacity-60 dark:border-amber-900/50 dark:bg-black dark:text-amber-100 dark:hover:bg-amber-950/40"
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-300 bg-white px-4 text-xs font-semibold text-amber-900 hover:bg-amber-50 disabled:opacity-60"
                 >
                   Export
                 </button>
@@ -1162,26 +1162,26 @@ export default function PosPage() {
         ) : null}
 
         {success ? (
-          <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
+          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
             {success}
           </div>
         ) : null}
 
         {error ? (
-          <div className="mt-6 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50">
+          <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         ) : null}
 
         <div className="mt-8 grid gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2 flex flex-col gap-4">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-base font-semibold">Sales summary</h2>
                 <select
                   value={summaryRange}
                   onChange={(e) => setSummaryRange(e.target.value as typeof summaryRange)}
-                  className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-xs font-medium dark:border-zinc-800 dark:bg-black"
+                  className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-xs font-semibold outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                 >
                   <option value="today">Today</option>
                   <option value="7d">Last 7 days</option>
@@ -1190,40 +1190,40 @@ export default function PosPage() {
               </div>
 
               {summaryLoading ? (
-                <div className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">Loading...</div>
+                <div className="mt-4 text-sm text-[var(--mp-muted)]">Loading...</div>
               ) : (
                 <div className="mt-4 grid gap-4">
                   <div className="grid gap-2 sm:grid-cols-4">
-                    <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-black">
-                      <div className="text-xs text-zinc-600 dark:text-zinc-400">Gross sales</div>
-                      <div className="mt-1 text-sm font-medium">${salesSummary.gross.toFixed(2)}</div>
+                    <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
+                      <div className="text-xs text-[var(--mp-muted)]">Gross sales</div>
+                      <div className="mt-1 text-sm font-semibold tabular-nums">${salesSummary.gross.toFixed(2)}</div>
                     </div>
-                    <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-black">
-                      <div className="text-xs text-zinc-600 dark:text-zinc-400">Net sales</div>
-                      <div className="mt-1 text-sm font-medium">${salesSummary.net.toFixed(2)}</div>
+                    <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
+                      <div className="text-xs text-[var(--mp-muted)]">Net sales</div>
+                      <div className="mt-1 text-sm font-semibold tabular-nums">${salesSummary.net.toFixed(2)}</div>
                     </div>
-                    <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-black">
-                      <div className="text-xs text-zinc-600 dark:text-zinc-400">Tax</div>
-                      <div className="mt-1 text-sm font-medium">${salesSummary.tax.toFixed(2)}</div>
+                    <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
+                      <div className="text-xs text-[var(--mp-muted)]">Tax</div>
+                      <div className="mt-1 text-sm font-semibold tabular-nums">${salesSummary.tax.toFixed(2)}</div>
                     </div>
-                    <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-black">
-                      <div className="text-xs text-zinc-600 dark:text-zinc-400">Paid tickets</div>
-                      <div className="mt-1 text-sm font-medium">{salesSummary.ticketCount}</div>
+                    <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
+                      <div className="text-xs text-[var(--mp-muted)]">Paid tickets</div>
+                      <div className="mt-1 text-sm font-semibold tabular-nums">{salesSummary.ticketCount}</div>
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-black">
+                  <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
                     <div className="text-sm font-medium">By payment method</div>
                     <div className="mt-3 grid gap-2">
                       {salesSummary.methods.length === 0 ? (
-                        <div className="text-sm text-zinc-600 dark:text-zinc-400">No paid orders.</div>
+                        <div className="text-sm text-[var(--mp-muted)]">No paid orders.</div>
                       ) : (
                         salesSummary.methods.map(([method, s]) => (
                           <div key={method} className="flex items-center justify-between text-sm">
-                            <div className="text-zinc-700 dark:text-zinc-300">
+                            <div className="text-[var(--mp-fg)]">
                               {method.replace("_", " ")} ({s.count})
                             </div>
-                            <div className="font-medium">${s.gross.toFixed(2)}</div>
+                            <div className="font-semibold tabular-nums">${s.gross.toFixed(2)}</div>
                           </div>
                         ))
                       )}
@@ -1233,12 +1233,12 @@ export default function PosPage() {
               )}
             </div>
 
-            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-base font-semibold">Order history</h2>
                 <button
                   onClick={() => data && refreshOrders(data.restaurantId)}
-                  className="inline-flex h-9 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-xs font-semibold hover:bg-white"
                 >
                   Refresh
                 </button>
@@ -1248,7 +1248,7 @@ export default function PosPage() {
                 <select
                   value={orderStatusFilter}
                   onChange={(e) => setOrderStatusFilter(e.target.value as typeof orderStatusFilter)}
-                  className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                  className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                 >
                   <option value="all">All statuses</option>
                   <option value="open">Open</option>
@@ -1259,7 +1259,7 @@ export default function PosPage() {
                 <select
                   value={orderDateFilter}
                   onChange={(e) => setOrderDateFilter(e.target.value as typeof orderDateFilter)}
-                  className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                  className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                 >
                   <option value="all">All time</option>
                   <option value="today">Today</option>
@@ -1270,7 +1270,7 @@ export default function PosPage() {
                   value={orderSearch}
                   onChange={(e) => setOrderSearch(e.target.value)}
                   placeholder="Search by ticket # or id"
-                  className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                  className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                 />
               </div>
 
@@ -1281,15 +1281,15 @@ export default function PosPage() {
                   filteredOrders.map((o) => (
                     <div
                       key={o.id}
-                      className={`rounded-lg border px-3 py-3 text-left dark:bg-black ${
+                      className={`rounded-2xl border px-4 py-4 text-left ${
                         activeOrderId === o.id
-                          ? "border-zinc-900 bg-zinc-50 dark:border-zinc-50"
-                          : "border-zinc-200 bg-white dark:border-zinc-800"
+                          ? "border-[var(--mp-primary)] bg-white"
+                          : "border-[var(--mp-border)] bg-white"
                       }`}
                     >
                       <button
                         onClick={() => openOrder(o.id)}
-                        className="block w-full text-left hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-md"
+                        className="block w-full text-left rounded-xl hover:bg-black/[0.03]"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="text-sm font-medium">
@@ -1299,7 +1299,7 @@ export default function PosPage() {
                           <div className="text-sm">${Number(o.total).toFixed(2)}</div>
                         </div>
                         {o.order_type ? (
-                          <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                          <div className="mt-1 text-xs text-[var(--mp-muted)]">
                             Type: {o.order_type.replace("_", " ")}
                             {o.order_type === "delivery" && o.delivery_status
                               ? ` • Delivery: ${o.delivery_status.replace("_", " ")}`
@@ -1307,7 +1307,7 @@ export default function PosPage() {
                           </div>
                         ) : null}
                         {o.status === "paid" && o.payment_method ? (
-                          <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                          <div className="mt-1 text-xs text-[var(--mp-muted)]">
                             {o.payment_method.replace("_", " ")}
                             {o.paid_at ? ` • ${new Date(o.paid_at).toLocaleString()}` : ""}
                             {o.payment_method === "cash" &&
@@ -1318,15 +1318,15 @@ export default function PosPage() {
                           </div>
                         ) : null}
                         {o.status === "refunded" && o.refunded_at ? (
-                          <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                          <div className="mt-1 text-xs text-[var(--mp-muted)]">
                             {new Date(o.refunded_at).toLocaleString()}
                             {o.refund_reason ? ` • ${o.refund_reason}` : ""}
                           </div>
                         ) : null}
-                        <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                        <div className="mt-1 text-xs text-[var(--mp-muted)]">
                           {new Date(o.created_at).toLocaleString()}
                         </div>
-                        <div className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-500 break-all">
+                        <div className="mt-1 text-[11px] text-zinc-500 break-all">
                           {o.id}
                         </div>
                       </button>
@@ -1335,7 +1335,7 @@ export default function PosPage() {
                         <div className="mt-3 flex justify-end gap-2">
                           <button
                             onClick={() => openReceipt(o.id)}
-                            className="inline-flex h-9 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                            className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-xs font-semibold hover:bg-white"
                           >
                             Receipt
                           </button>
@@ -1348,7 +1348,7 @@ export default function PosPage() {
                               setActiveOrderStatus(o.status);
                               setShowRefundModal(true);
                             }}
-                            className="inline-flex h-9 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                            className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-xs font-semibold hover:bg-white"
                           >
                             Refund
                           </button>
@@ -1360,11 +1360,11 @@ export default function PosPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
               <h2 className="text-base font-semibold">Products</h2>
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 {data.items.length === 0 ? (
-                  <div className="text-sm text-zinc-600 dark:text-zinc-400">No products. Add products in Setup.</div>
+                  <div className="text-sm text-[var(--mp-muted)]">No products. Add products in Setup.</div>
                 ) : (
                   data.items.map((it) => (
                     <button
@@ -1374,7 +1374,7 @@ export default function PosPage() {
                         const stock = getTrackedStock(it.id);
                         return stock != null && stock <= 0;
                       })()}
-                      className="rounded-lg border border-zinc-200 bg-white px-3 py-3 text-left hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                      className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-4 text-left hover:bg-black/[0.03] disabled:opacity-60"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-sm font-medium">{it.name}</div>
@@ -1387,7 +1387,7 @@ export default function PosPage() {
                         return (
                           <div
                             className={`mt-2 text-xs ${
-                              stock <= 0 ? "text-rose-600 dark:text-rose-300" : "text-zinc-600 dark:text-zinc-400"
+                              stock <= 0 ? "text-rose-600" : "text-[var(--mp-muted)]"
                             }`}
                           >
                             {stock <= 0 ? "Out of stock" : `Stock: ${stock}`}
@@ -1402,7 +1402,7 @@ export default function PosPage() {
           </div>
 
           <div>
-            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
               <h2 className="text-base font-semibold">Cart</h2>
 
               <div className="mt-3 md:hidden">
@@ -1418,12 +1418,12 @@ export default function PosPage() {
                     setScanCode("");
                   }}
                   placeholder="Scan barcode / SKU"
-                  className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
+                  className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                 />
               </div>
 
               {activeOrderId ? (
-                <div className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+                <div className="mt-2 text-xs text-[var(--mp-muted)]">
                   Editing ticket:
                   {orders.find((o) => o.id === activeOrderId)?.ticket_no != null
                     ? ` #${orders.find((o) => o.id === activeOrderId)?.ticket_no}`
@@ -1438,7 +1438,7 @@ export default function PosPage() {
                   <select
                     value={orderType}
                     onChange={(e) => setOrderType(e.target.value as OrderType)}
-                    className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                    className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                   >
                     <option value="counter">Counter</option>
                     <option value="pickup">Pickup</option>
@@ -1448,14 +1448,14 @@ export default function PosPage() {
                 </div>
 
                 {orderType === "delivery" ? (
-                  <div className="grid gap-3 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-black">
+                  <div className="grid gap-3 rounded-2xl border border-[var(--mp-border)] bg-white p-4">
                     <div className="grid gap-2">
                       <label className="text-sm font-medium">Customer name</label>
                       <input
                         value={customerName}
                         onChange={(e) => setCustomerName(e.target.value)}
                         placeholder="Full name"
-                        className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                        className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                       />
                     </div>
 
@@ -1465,7 +1465,7 @@ export default function PosPage() {
                         value={customerPhone}
                         onChange={(e) => setCustomerPhone(e.target.value)}
                         placeholder="(787) 000-0000"
-                        className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                        className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                       />
                     </div>
 
@@ -1475,7 +1475,7 @@ export default function PosPage() {
                         value={deliveryAddress1}
                         onChange={(e) => setDeliveryAddress1(e.target.value)}
                         placeholder="Street address"
-                        className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                        className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                       />
                     </div>
 
@@ -1485,7 +1485,7 @@ export default function PosPage() {
                         value={deliveryAddress2}
                         onChange={(e) => setDeliveryAddress2(e.target.value)}
                         placeholder="Apt / suite"
-                        className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                        className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                       />
                     </div>
 
@@ -1496,7 +1496,7 @@ export default function PosPage() {
                           value={deliveryCity}
                           onChange={(e) => setDeliveryCity(e.target.value)}
                           placeholder="San Juan"
-                          className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                          className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                         />
                       </div>
                       <div className="grid gap-2">
@@ -1505,7 +1505,7 @@ export default function PosPage() {
                           value={deliveryState}
                           onChange={(e) => setDeliveryState(e.target.value)}
                           placeholder="PR"
-                          className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                          className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                         />
                       </div>
                     </div>
@@ -1516,7 +1516,7 @@ export default function PosPage() {
                         value={deliveryPostalCode}
                         onChange={(e) => setDeliveryPostalCode(e.target.value)}
                         placeholder="00901"
-                        className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                        className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                       />
                     </div>
 
@@ -1526,7 +1526,7 @@ export default function PosPage() {
                         value={deliveryInstructions}
                         onChange={(e) => setDeliveryInstructions(e.target.value)}
                         placeholder="Gate code, call on arrival, etc."
-                        className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                        className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                       />
                     </div>
                   </div>
@@ -1539,9 +1539,9 @@ export default function PosPage() {
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="Table 1"
-                      className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                      className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                     />
-                    <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                    <div className="text-xs text-[var(--mp-muted)]">
                       Tip: use the Tables screen to open a table automatically.
                     </div>
                   </div>
@@ -1550,20 +1550,23 @@ export default function PosPage() {
 
               <div className="mt-4 flex flex-col gap-2">
                 {cartLines.length === 0 ? (
-                  <div className="text-sm text-zinc-600 dark:text-zinc-400">Cart is empty.</div>
+                  <div className="text-sm text-[var(--mp-muted)]">Cart is empty.</div>
                 ) : (
                   cartLines.map((line) => (
-                    <div key={line.id} className="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800">
+                    <div
+                      key={line.id}
+                      className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3"
+                    >
                       <div>
                         <div className="text-sm font-medium">{line.name}</div>
-                        <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                        <div className="text-xs text-[var(--mp-muted)]">
                           ${line.unitPrice.toFixed(2)} x {line.qty}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => decItem(line.id)}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white text-sm font-semibold hover:bg-white"
                         >
                           -
                         </button>
@@ -1573,7 +1576,7 @@ export default function PosPage() {
                             const stock = getTrackedStock(line.id);
                             return stock != null && line.qty + 1 > stock;
                           })()}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white text-sm font-semibold hover:bg-white disabled:opacity-60"
                         >
                           +
                         </button>
@@ -1583,13 +1586,13 @@ export default function PosPage() {
                 )}
               </div>
 
-              <div className="mt-6 border-t border-zinc-200 pt-4 text-sm dark:border-zinc-800">
+              <div className="mt-6 border-t border-[var(--mp-border)] pt-4 text-sm">
                 <div className="flex items-center justify-between">
-                  <div className="text-zinc-600 dark:text-zinc-400">Subtotal</div>
+                  <div className="text-[var(--mp-muted)]">Subtotal</div>
                   <div>${totals.subtotal.toFixed(2)}</div>
                 </div>
                 <div className="mt-2 flex items-center justify-between">
-                  <div className="text-zinc-600 dark:text-zinc-400">Tax</div>
+                  <div className="text-[var(--mp-muted)]">Tax</div>
                   <div>${totals.tax.toFixed(2)}</div>
                 </div>
                 <div className="mt-2 flex items-center justify-between font-medium">
@@ -1602,7 +1605,7 @@ export default function PosPage() {
                 <button
                   onClick={placeOrder}
                   disabled={placing || cartLines.length === 0}
-                  className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+                  className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
                 >
                   {placing ? "Saving..." : activeOrderId ? "Update ticket" : "Place order"}
                 </button>
@@ -1619,21 +1622,21 @@ export default function PosPage() {
                       setShowPaymentModal(true);
                     }}
                     disabled={placing}
-                    className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                    className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-white disabled:opacity-60"
                   >
                     Close (Paid)
                   </button>
                   <button
                     onClick={() => setTicketStatus("canceled")}
                     disabled={placing}
-                    className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                    className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-white disabled:opacity-60"
                   >
                     Cancel
                   </button>
                 </div>
               ) : null}
 
-              <div className="mt-2 text-xs text-zinc-500 dark:text-zinc-500">
+              <div className="mt-2 text-xs text-[var(--mp-muted)]">
                 Tax settings: {(data.ivuRate * 100).toFixed(2)}%{data.pricesIncludeTax ? " (prices include tax)" : ""}
               </div>
             </div>
@@ -1643,16 +1646,16 @@ export default function PosPage() {
 
       {showPaymentModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-200 bg-[#fffdf7] p-6 shadow-xl">
             <div className="text-base font-semibold">Close ticket as paid</div>
-            <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Select payment method</div>
+            <div className="mt-1 text-sm text-[var(--mp-muted)]">Select payment method</div>
 
             <div className="mt-4 grid gap-2">
               <label className="text-sm font-medium">Payment method</label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)}
-                className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
               >
                 <option value="cash">Cash</option>
                 <option value="card">Card</option>
@@ -1669,16 +1672,16 @@ export default function PosPage() {
                   value={amountTendered}
                   onChange={(e) => setAmountTendered(e.target.value)}
                   placeholder={totals.total.toFixed(2)}
-                  className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-800 dark:bg-black"
+                  className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                 />
-                <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                <div className="text-xs text-[var(--mp-muted)]">
                   Total: ${totals.total.toFixed(2)}
                   {amountTendered && Number.isFinite(tenderedNumber)
                     ? ` • Change due: $${changeDueDisplay.toFixed(2)}`
                     : ""}
                 </div>
                 {amountTendered && !cashTenderedValid ? (
-                  <div className="text-xs text-rose-600 dark:text-rose-300">
+                  <div className="text-xs text-rose-600">
                     Amount tendered must be at least ${totals.total.toFixed(2)}
                   </div>
                 ) : null}
@@ -1689,14 +1692,14 @@ export default function PosPage() {
               <button
                 onClick={() => setShowPaymentModal(false)}
                 disabled={placing}
-                className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-white disabled:opacity-60"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmPayment}
                 disabled={placing || !cashTenderedValid}
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
               >
                 {placing ? "Saving..." : "Mark paid"}
               </button>

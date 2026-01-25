@@ -112,166 +112,172 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+      <div className="islapos-marketing flex min-h-screen items-center justify-center bg-[var(--mp-bg)] text-[var(--mp-fg)]">
         <div className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+    <div className="islapos-marketing min-h-screen bg-[var(--mp-bg)] text-[var(--mp-fg)]">
       <div className="mx-auto w-full max-w-5xl px-6 py-10">
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">Admin</h1>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <h1 className="text-3xl font-semibold tracking-tight">Admin</h1>
+          <p className="text-sm text-[var(--mp-muted)]">
             Signed in as {email ?? "(unknown)"}
           </p>
         </div>
 
         {error ? (
-          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
+          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         ) : null}
 
+        {inviteStatus ? (
+          <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+            {inviteStatus}
+          </div>
+        ) : null}
+
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
             <h2 className="text-base font-semibold">Restaurants</h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-sm text-[var(--mp-muted)]">
               Create and switch between restaurants.
             </p>
 
             <div className="mt-4">
               <button
                 onClick={() => router.push("/admin/restaurants")}
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
               >
                 Manage restaurants
               </button>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
             <h2 className="text-base font-semibold">Staff</h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-sm text-[var(--mp-muted)]">
               Manage staff access and roles.
             </p>
 
             <div className="mt-4">
               <button
                 onClick={() => router.push("/admin/staff")}
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
               >
                 Manage staff
               </button>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
             <h2 className="text-base font-semibold">Reports</h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-sm text-[var(--mp-muted)]">
               Sales totals, taxes, and payment methods.
             </p>
 
             <div className="mt-4">
               <button
                 onClick={() => router.push("/admin/reports")}
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
               >
                 View reports
               </button>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
             <h2 className="text-base font-semibold">Reservations</h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-sm text-[var(--mp-muted)]">
               Create and manage reservations.
             </p>
 
             <div className="mt-4">
               <button
                 onClick={() => router.push("/admin/reservations")}
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
               >
                 Manage reservations
               </button>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
             <h2 className="text-base font-semibold">Inventory</h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-sm text-[var(--mp-muted)]">
               Track stock for products.
             </p>
 
             <div className="mt-4">
               <button
                 onClick={() => router.push("/admin/inventory")}
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
               >
                 Manage inventory
               </button>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
             <h2 className="text-base font-semibold">Settings</h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-sm text-[var(--mp-muted)]">
               Update business info, location, taxes, and products.
             </p>
 
              <div className="mt-4">
                <button
                  onClick={() => router.push("/setup")}
-                 className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+                 className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
                >
                  Edit setup
                </button>
              </div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
             <h2 className="text-base font-semibold">Integrations</h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-sm text-[var(--mp-muted)]">
               Configure delivery providers for your business.
             </p>
 
             <div className="mt-4">
               <button
                 onClick={() => router.push("/admin/integrations/delivery")}
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
               >
                 Delivery integrations
               </button>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
             <h2 className="text-base font-semibold">POS</h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-sm text-[var(--mp-muted)]">
               Create orders using your menu.
             </p>
 
             <div className="mt-4">
               <button
                 onClick={() => router.push("/pos")}
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
               >
                 Open POS
               </button>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
             <h2 className="text-base font-semibold">Invite user</h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-sm text-[var(--mp-muted)]">
               Invite staff to your restaurant.
             </p>
 
             <div className="mt-4 flex flex-col gap-3">
               <select
-                className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
+                className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm font-medium outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as "manager" | "cashier")}
               >
@@ -280,7 +286,7 @@ export default function AdminPage() {
               </select>
 
               <input
-                className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
+                className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                 type="email"
                 placeholder="user@email.com"
                 value={inviteEmail}
@@ -290,24 +296,24 @@ export default function AdminPage() {
               <button
                 onClick={inviteUser}
                 disabled={!inviteEmail}
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
               >
                 Send invite
               </button>
 
               {inviteStatus ? (
-                <div className="text-sm text-emerald-600 dark:text-emerald-400">
+                <div className="text-sm text-emerald-800">
                   {inviteStatus}
                 </div>
               ) : null}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
             <h2 className="text-base font-semibold">Account</h2>
             <button
               onClick={signOut}
-              className="mt-3 inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+              className="mt-4 inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-white"
             >
               Sign out
             </button>
