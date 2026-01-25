@@ -160,6 +160,71 @@ export default function PosPage() {
     );
   }
 
+  function downloadTextFile(filename: string, content: string, mime: string) {
+    if (typeof window === "undefined") return;
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function csvEscape(value: unknown) {
+    const s = String(value ?? "");
+    if (/[\n\r",]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    return s;
+  }
+
+  function exportOfflineTickets(restaurantId: string) {
+    const rows = loadOfflineOrders(restaurantId);
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+
+    downloadTextFile(
+      `offline-tickets-${restaurantId}-${stamp}.json`,
+      JSON.stringify({ exported_at: new Date().toISOString(), restaurant_id: restaurantId, tickets: rows }, null, 2),
+      "application/json",
+    );
+
+    const header = [
+      "local_id",
+      "created_at",
+      "status",
+      "order_type",
+      "subtotal",
+      "tax",
+      "total",
+      "item_count",
+      "payment_method",
+      "paid_at",
+    ];
+
+    const lines = [header.join(",")];
+    for (const o of rows) {
+      lines.push(
+        [
+          o.local_id,
+          o.created_at,
+          o.status,
+          o.payload.order_type ?? "counter",
+          o.payload.subtotal,
+          o.payload.tax,
+          o.payload.total,
+          (o.payload.items ?? []).reduce((sum, it) => sum + Number(it.qty), 0),
+          o.payment?.payment_method ?? "",
+          o.payment?.paid_at ?? "",
+        ]
+          .map(csvEscape)
+          .join(","),
+      );
+    }
+
+    downloadTextFile(`offline-tickets-${restaurantId}-${stamp}.csv`, lines.join("\n"), "text/csv");
+  }
+
   const refreshOfflineQueueCount = useCallback(
     (restaurantId: string) => {
       const count = listOfflineOrderSummaries(restaurantId).length;
@@ -1020,6 +1085,14 @@ export default function PosPage() {
                   className="inline-flex h-9 items-center justify-center rounded-lg bg-amber-900 px-3 text-xs font-medium text-white hover:bg-amber-800 disabled:opacity-60 dark:bg-amber-200 dark:text-amber-950 dark:hover:bg-amber-100"
                 >
                   {syncingOffline ? "Syncing..." : "Sync now"}
+                </button>
+
+                <button
+                  onClick={() => data && exportOfflineTickets(data.restaurantId)}
+                  disabled={!data || offlineQueueCount === 0}
+                  className="inline-flex h-9 items-center justify-center rounded-lg border border-amber-300 bg-white px-3 text-xs font-medium text-amber-900 hover:bg-amber-50 disabled:opacity-60 dark:border-amber-900/50 dark:bg-black dark:text-amber-100 dark:hover:bg-amber-950/40"
+                >
+                  Export
                 </button>
               </div>
             </div>
