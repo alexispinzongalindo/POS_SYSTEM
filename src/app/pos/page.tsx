@@ -6,6 +6,15 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { applyInventoryDelta } from "@/lib/inventory";
 import {
+  getOfflineOrder,
+  isOfflineOrderId,
+  listOfflineOrderSummaries,
+  loadOfflineOrders,
+  removeOfflineOrder,
+  upsertOfflineOrder,
+  type OfflineOrderPayment,
+} from "@/lib/offlineOrders";
+import {
   createOrder,
   findMenuItemByCode,
   getOrderDeliveryMeta,
@@ -42,6 +51,10 @@ export default function PosPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
+
+  const [isOffline, setIsOffline] = useState(false);
+  const [offlineQueueCount, setOfflineQueueCount] = useState(0);
+  const [syncingOffline, setSyncingOffline] = useState(false);
 
   const [scanCode, setScanCode] = useState<string>("");
 
@@ -108,6 +121,9 @@ export default function PosPage() {
 
       setData(res.data);
 
+      setIsOffline(typeof navigator !== "undefined" ? !navigator.onLine : false);
+      setOfflineQueueCount(listOfflineOrderSummaries(res.data.restaurantId).length);
+
       const history = await listRecentOrders(res.data.restaurantId, 20);
       if (cancelled) return;
       if (history.error) {
@@ -131,6 +147,26 @@ export default function PosPage() {
       authListener.subscription.unsubscribe();
     };
   }, [router]);
+
+  function isLikelyOfflineError(e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    const m = msg.toLowerCase();
+    return (
+      m.includes("failed to fetch") ||
+      m.includes("fetch failed") ||
+      m.includes("network") ||
+      m.includes("load failed") ||
+      m.includes("timeout")
+    );
+  }
+
+  const refreshOfflineQueueCount = useCallback(
+    (restaurantId: string) => {
+      const count = listOfflineOrderSummaries(restaurantId).length;
+      setOfflineQueueCount(count);
+    },
+    [setOfflineQueueCount],
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -346,13 +382,109 @@ export default function PosPage() {
             since,
           });
     if (history.error) {
+      if (isLikelyOfflineError(history.error)) {
+        setIsOffline(true);
+        const offline = listOfflineOrderSummaries(restaurantId);
+        setOrders(offline);
+        refreshOfflineQueueCount(restaurantId);
+        return;
+      }
       setError(history.error.message);
       return;
     }
-    setOrders(history.data ?? []);
+
+    const cloud = history.data ?? [];
+    const offline = listOfflineOrderSummaries(restaurantId);
+    const merged = [...offline, ...cloud].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+    setOrders(merged);
+    refreshOfflineQueueCount(restaurantId);
     },
-    [orderDateFilter, orderStatusFilter],
+    [orderDateFilter, orderStatusFilter, refreshOfflineQueueCount],
   );
+
+  const syncOfflineOrders = useCallback(
+    async (restaurantId: string) => {
+      if (typeof navigator !== "undefined" && !navigator.onLine) return;
+      if (syncingOffline) return;
+
+      const queued = loadOfflineOrders(restaurantId)
+        .filter((o) => o.status === "open" || o.status === "paid")
+        .reverse();
+
+      if (queued.length === 0) {
+        refreshOfflineQueueCount(restaurantId);
+        return;
+      }
+
+      setSyncingOffline(true);
+      try {
+        for (const o of queued) {
+          const created = await createOrder(o.payload);
+          if (created.error) throw created.error;
+
+          const orderId = created.data?.orderId;
+          if (!orderId) throw new Error("Failed to sync offline ticket");
+
+          if (o.status === "paid" && o.payment) {
+            const paid = await markOrderPaid(orderId, {
+              payment_method: o.payment.payment_method,
+              paid_at: o.payment.paid_at,
+              amount_tendered: o.payment.amount_tendered,
+              change_due: o.payment.change_due,
+            });
+            if (paid.error) throw paid.error;
+
+            try {
+              applyInventoryDelta(
+                restaurantId,
+                o.payload.items.map((r) => ({ menu_item_id: r.menu_item_id, qty: r.qty })),
+              );
+            } catch {
+              // ignore
+            }
+          }
+
+          removeOfflineOrder(restaurantId, o.local_id);
+        }
+
+        refreshOfflineQueueCount(restaurantId);
+        await refreshOrders(restaurantId);
+        setSuccess("Offline tickets synced");
+      } catch (e) {
+        if (isLikelyOfflineError(e)) setIsOffline(true);
+        const msg = e instanceof Error ? e.message : "Failed to sync offline tickets";
+        setError(msg);
+      } finally {
+        setSyncingOffline(false);
+      }
+    },
+    [refreshOrders, refreshOfflineQueueCount, syncingOffline],
+  );
+
+  useEffect(() => {
+    if (!data) return;
+    if (typeof window === "undefined") return;
+
+    const restaurantId = data.restaurantId;
+
+    function handleOnline() {
+      setIsOffline(false);
+      void syncOfflineOrders(restaurantId);
+    }
+    function handleOffline() {
+      setIsOffline(true);
+    }
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [data, syncOfflineOrders]);
 
   useEffect(() => {
     if (!data) return;
@@ -379,6 +511,38 @@ export default function PosPage() {
     if (!data) return;
     setError(null);
     setSuccess(null);
+
+    if (isOfflineOrderId(orderId)) {
+      const offline = getOfflineOrder(data.restaurantId, orderId);
+      if (!offline) {
+        setError("Offline ticket not found");
+        return;
+      }
+
+      setOrderType(offline.payload.order_type ?? "counter");
+      setCustomerName(String(offline.payload.customer_name ?? ""));
+      setCustomerPhone(String(offline.payload.customer_phone ?? ""));
+      setDeliveryAddress1(String(offline.payload.delivery_address1 ?? ""));
+      setDeliveryAddress2(String(offline.payload.delivery_address2 ?? ""));
+      setDeliveryCity(String(offline.payload.delivery_city ?? ""));
+      setDeliveryState(String(offline.payload.delivery_state ?? "PR"));
+      setDeliveryPostalCode(String(offline.payload.delivery_postal_code ?? ""));
+      setDeliveryInstructions(String(offline.payload.delivery_instructions ?? ""));
+
+      const next: Record<string, CartLine> = {};
+      for (const row of offline.payload.items ?? []) {
+        next[row.menu_item_id] = {
+          id: row.menu_item_id,
+          name: row.name,
+          unitPrice: Number(row.unit_price),
+          qty: row.qty,
+        };
+      }
+      setCart(next);
+      setActiveOrderId(orderId);
+      setActiveOrderStatus(offline.status);
+      return;
+    }
 
     const summary = orders.find((o) => o.id === orderId);
     const status = summary?.status ?? null;
@@ -485,12 +649,49 @@ export default function PosPage() {
     setSuccess(null);
     setPlacing(true);
 
+    const payment: OfflineOrderPayment = {
+      payment_method: paymentMethod,
+      paid_at: new Date().toISOString(),
+      amount_tendered: isCash ? Number(tendered.toFixed(2)) : null,
+      change_due: isCash ? Number(changeDue.toFixed(2)) : null,
+    };
+
     try {
+      if (isOfflineOrderId(activeOrderId)) {
+        const offline = getOfflineOrder(data.restaurantId, activeOrderId);
+        if (!offline) throw new Error("Offline ticket not found");
+
+        upsertOfflineOrder(data.restaurantId, {
+          local_id: offline.local_id,
+          created_by_user_id: offline.created_by_user_id,
+          payload: offline.payload,
+          status: "paid",
+          payment,
+          created_at: offline.created_at,
+        });
+
+        try {
+          applyInventoryDelta(
+            data.restaurantId,
+            offline.payload.items.map((r) => ({ menu_item_id: r.menu_item_id, qty: r.qty })),
+          );
+        } catch {
+          // ignore
+        }
+
+        setIsOffline(true);
+        setShowPaymentModal(false);
+        clearCart();
+        await refreshOrders(data.restaurantId);
+        setSuccess(`Ticket marked paid OFFLINE (${paymentMethod.replace("_", " ")})`);
+        return;
+      }
+
       const res = await markOrderPaid(activeOrderId, {
         payment_method: paymentMethod,
-        paid_at: new Date().toISOString(),
-        amount_tendered: isCash ? Number(tendered.toFixed(2)) : null,
-        change_due: isCash ? Number(changeDue.toFixed(2)) : null,
+        paid_at: payment.paid_at,
+        amount_tendered: payment.amount_tendered,
+        change_due: payment.change_due,
       });
       if (res.error) throw res.error;
 
@@ -511,6 +712,39 @@ export default function PosPage() {
       await refreshOrders(data.restaurantId);
       setSuccess(`Ticket marked paid (${paymentMethod.replace("_", " ")})`);
     } catch (e) {
+      if (isLikelyOfflineError(e)) {
+        const offline = getOfflineOrder(data.restaurantId, activeOrderId);
+        if (!offline) {
+          setError("Offline save failed");
+          return;
+        }
+
+        upsertOfflineOrder(data.restaurantId, {
+          local_id: offline.local_id,
+          created_by_user_id: offline.created_by_user_id,
+          payload: offline.payload,
+          status: "paid",
+          payment,
+          created_at: offline.created_at,
+        });
+
+        try {
+          applyInventoryDelta(
+            data.restaurantId,
+            offline.payload.items.map((r) => ({ menu_item_id: r.menu_item_id, qty: r.qty })),
+          );
+        } catch {
+          // ignore
+        }
+
+        setIsOffline(true);
+        setShowPaymentModal(false);
+        clearCart();
+        await refreshOrders(data.restaurantId);
+        setSuccess(`Ticket marked paid OFFLINE (${paymentMethod.replace("_", " ")})`);
+        return;
+      }
+
       const msg = e instanceof Error ? e.message : "Failed to mark ticket paid";
       setError(msg);
     } finally {
@@ -562,10 +796,35 @@ export default function PosPage() {
     setSuccess(null);
     setPlacing(true);
 
+    let userId: string | null = null;
+    let payload: {
+      restaurant_id: string;
+      created_by_user_id: string;
+      subtotal: number;
+      tax: number;
+      total: number;
+      order_type: OrderType;
+      customer_name: string | null;
+      customer_phone: string | null;
+      delivery_address1: string | null;
+      delivery_address2: string | null;
+      delivery_city: string | null;
+      delivery_state: string | null;
+      delivery_postal_code: string | null;
+      delivery_instructions: string | null;
+      items: Array<{
+        menu_item_id: string;
+        name: string;
+        unit_price: number;
+        qty: number;
+        line_total: number;
+      }>;
+    } | null = null;
+
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) throw sessionError;
-      const userId = sessionData.session?.user.id;
+      userId = sessionData.session?.user.id ?? null;
       if (!userId) {
         router.replace("/login");
         return;
@@ -594,7 +853,7 @@ export default function PosPage() {
         }
       }
 
-      const payload = {
+      payload = {
         restaurant_id: data.restaurantId,
         created_by_user_id: userId,
         subtotal: Number(totals.subtotal.toFixed(2)),
@@ -615,10 +874,22 @@ export default function PosPage() {
       };
 
       const res = activeOrderId
-        ? await updateOrder(activeOrderId, payload)
+        ? isOfflineOrderId(activeOrderId)
+          ? { data: { orderId: activeOrderId, ticketNo: null }, error: null }
+          : await updateOrder(activeOrderId, payload)
         : await createOrder(payload);
 
       if (res.error) throw res.error;
+
+      if (activeOrderId && isOfflineOrderId(activeOrderId)) {
+        upsertOfflineOrder(data.restaurantId, {
+          local_id: activeOrderId,
+          created_by_user_id: userId,
+          payload,
+          status: "open",
+        });
+        refreshOfflineQueueCount(data.restaurantId);
+      }
 
       clearCart();
       await refreshOrders(data.restaurantId);
@@ -630,6 +901,29 @@ export default function PosPage() {
           : `Order created${ticketNo != null ? ` (#${ticketNo})` : ""}: ${res.data?.orderId}`,
       );
     } catch (e) {
+      if (isLikelyOfflineError(e)) {
+        setIsOffline(true);
+
+        if (!payload) {
+          setError("Failed to save offline ticket");
+          return;
+        }
+
+        const { local_id } = upsertOfflineOrder(data.restaurantId, {
+          local_id: activeOrderId && isOfflineOrderId(activeOrderId) ? activeOrderId : undefined,
+          created_by_user_id: userId ?? payload.created_by_user_id,
+          payload,
+          status: "open",
+        });
+
+        setActiveOrderId(local_id);
+        setActiveOrderStatus("open");
+        refreshOfflineQueueCount(data.restaurantId);
+        await refreshOrders(data.restaurantId);
+        setSuccess(`Saved OFFLINE: ${local_id}`);
+        return;
+      }
+
       const msg = e instanceof Error ? e.message : "Failed to place order";
       setError(msg);
     } finally {
@@ -709,6 +1003,28 @@ export default function PosPage() {
             </button>
           </div>
         </div>
+
+        {isOffline || offlineQueueCount > 0 ? (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="font-medium">
+                  {isOffline ? "OFFLINE MODE" : "Offline queue"}
+                </div>
+                <div className="text-xs opacity-90">Queued tickets: {offlineQueueCount}</div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => data && void syncOfflineOrders(data.restaurantId)}
+                  disabled={syncingOffline || (typeof navigator !== "undefined" && !navigator.onLine)}
+                  className="inline-flex h-9 items-center justify-center rounded-lg bg-amber-900 px-3 text-xs font-medium text-white hover:bg-amber-800 disabled:opacity-60 dark:bg-amber-200 dark:text-amber-950 dark:hover:bg-amber-100"
+                >
+                  {syncingOffline ? "Syncing..." : "Sync now"}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {success ? (
           <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
