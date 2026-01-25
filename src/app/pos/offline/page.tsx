@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 
 import { applyInventoryDelta } from "@/lib/inventory";
 import {
+  getSyncedCloudOrderId,
   loadOfflineOrders,
+  markOfflineOrderSynced,
   removeOfflineOrder,
   saveOfflineOrders,
   type OfflineOrder,
@@ -148,11 +150,17 @@ export default function OfflineQueuePage() {
   const syncOne = useCallback(
     async (o: OfflineOrder) => {
       if (!restaurantId) return;
-      const created = await createOrder(o.payload);
-      if (created.error) throw created.error;
 
-      const orderId = created.data?.orderId;
-      if (!orderId) throw new Error("Failed to sync offline ticket");
+      let orderId = getSyncedCloudOrderId(restaurantId, o.local_id);
+
+      if (!orderId) {
+        const created = await createOrder(o.payload);
+        if (created.error) throw created.error;
+
+        orderId = created.data?.orderId ?? null;
+        if (!orderId) throw new Error("Failed to sync offline ticket");
+        markOfflineOrderSynced(restaurantId, o.local_id, orderId);
+      }
 
       if (o.status === "paid" && o.payment) {
         const paid = await markOrderPaid(orderId, {

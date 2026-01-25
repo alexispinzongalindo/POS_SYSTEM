@@ -21,6 +21,10 @@ function storageKey(restaurantId: string) {
   return `pos.offlineOrders.${restaurantId}`;
 }
 
+function syncKey(restaurantId: string) {
+  return `pos.offlineOrdersSynced.${restaurantId}`;
+}
+
 export function isOfflineOrderId(id: string) {
   return id.startsWith("local_");
 }
@@ -41,6 +45,32 @@ export function loadOfflineOrders(restaurantId: string): OfflineOrder[] {
 export function saveOfflineOrders(restaurantId: string, orders: OfflineOrder[]) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(storageKey(restaurantId), JSON.stringify(orders));
+}
+
+export function loadOfflineSyncedMap(restaurantId: string): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(syncKey(restaurantId));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object") return {};
+    return parsed as Record<string, string>;
+  } catch {
+    return {};
+  }
+}
+
+export function markOfflineOrderSynced(restaurantId: string, localId: string, orderId: string) {
+  if (typeof window === "undefined") return;
+  const prev = loadOfflineSyncedMap(restaurantId);
+  const next = { ...prev, [localId]: orderId };
+  window.localStorage.setItem(syncKey(restaurantId), JSON.stringify(next));
+  return next;
+}
+
+export function getSyncedCloudOrderId(restaurantId: string, localId: string) {
+  const map = loadOfflineSyncedMap(restaurantId);
+  return map[localId] ?? null;
 }
 
 export function upsertOfflineOrder(

@@ -7,9 +7,11 @@ import { supabase } from "@/lib/supabaseClient";
 import { applyInventoryDelta } from "@/lib/inventory";
 import {
   getOfflineOrder,
+  getSyncedCloudOrderId,
   isOfflineOrderId,
   listOfflineOrderSummaries,
   loadOfflineOrders,
+  markOfflineOrderSynced,
   removeOfflineOrder,
   upsertOfflineOrder,
   type OfflineOrderPayment,
@@ -500,11 +502,16 @@ export default function PosPage() {
       setSyncingOffline(true);
       try {
         for (const o of queued) {
-          const created = await createOrder(o.payload);
-          if (created.error) throw created.error;
+          let orderId = getSyncedCloudOrderId(restaurantId, o.local_id);
 
-          const orderId = created.data?.orderId;
-          if (!orderId) throw new Error("Failed to sync offline ticket");
+          if (!orderId) {
+            const created = await createOrder(o.payload);
+            if (created.error) throw created.error;
+
+            orderId = created.data?.orderId ?? null;
+            if (!orderId) throw new Error("Failed to sync offline ticket");
+            markOfflineOrderSynced(restaurantId, o.local_id, orderId);
+          }
 
           if (o.status === "paid" && o.payment) {
             const paid = await markOrderPaid(orderId, {
