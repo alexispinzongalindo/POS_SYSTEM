@@ -82,6 +82,9 @@ export type CreateOrderInput = {
   order_type?: OrderType;
   customer_name?: string | null;
   customer_phone?: string | null;
+  id_verified?: boolean | null;
+  id_verified_at?: string | null;
+  id_verified_by_user_id?: string | null;
   delivery_address1?: string | null;
   delivery_address2?: string | null;
   delivery_city?: string | null;
@@ -190,6 +193,9 @@ export async function createOrder(input: CreateOrderInput) {
       order_type: input.order_type ?? "counter",
       customer_name: input.customer_name ?? null,
       customer_phone: input.customer_phone ?? null,
+      id_verified: input.id_verified ?? null,
+      id_verified_at: input.id_verified_at ?? null,
+      id_verified_by_user_id: input.id_verified_by_user_id ?? null,
       delivery_address1: input.delivery_address1 ?? null,
       delivery_address2: input.delivery_address2 ?? null,
       delivery_city: input.delivery_city ?? null,
@@ -206,19 +212,21 @@ export async function createOrder(input: CreateOrderInput) {
   const orderId = orderRes.data?.id;
   if (!orderId) return { data: null, error: new Error("Failed to create order") };
 
-  const itemsRes = await supabase.from("order_items").insert(
-    input.items.map((it) => ({
-      restaurant_id: input.restaurant_id,
-      order_id: orderId,
-      menu_item_id: it.menu_item_id,
-      name: it.name,
-      unit_price: it.unit_price,
-      qty: it.qty,
-      line_total: it.line_total,
-    })),
-  );
+  if (input.items.length > 0) {
+    const itemsRes = await supabase.from("order_items").insert(
+      input.items.map((it) => ({
+        restaurant_id: input.restaurant_id,
+        order_id: orderId,
+        menu_item_id: it.menu_item_id,
+        name: it.name,
+        unit_price: it.unit_price,
+        qty: it.qty,
+        line_total: it.line_total,
+      })),
+    );
 
-  if (itemsRes.error) return { data: null, error: itemsRes.error };
+    if (itemsRes.error) return { data: null, error: itemsRes.error };
+  }
 
   return { data: { orderId, ticketNo: orderRes.data?.ticket_no ?? null }, error: null };
 }
@@ -445,7 +453,7 @@ export async function getOrderDeliveryMeta(orderId: string) {
   return supabase
     .from("orders")
     .select(
-      "id, order_type, customer_name, customer_phone, delivery_address1, delivery_address2, delivery_city, delivery_state, delivery_postal_code, delivery_instructions, delivery_status, delivery_provider, delivery_tracking_url",
+      "id, order_type, customer_name, customer_phone, id_verified, id_verified_at, id_verified_by_user_id, delivery_address1, delivery_address2, delivery_city, delivery_state, delivery_postal_code, delivery_instructions, delivery_status, delivery_provider, delivery_tracking_url",
     )
     .eq("id", orderId)
     .maybeSingle<{
@@ -453,6 +461,9 @@ export async function getOrderDeliveryMeta(orderId: string) {
       order_type?: OrderType | null;
       customer_name?: string | null;
       customer_phone?: string | null;
+      id_verified?: boolean | null;
+      id_verified_at?: string | null;
+      id_verified_by_user_id?: string | null;
       delivery_address1?: string | null;
       delivery_address2?: string | null;
       delivery_city?: string | null;
@@ -478,6 +489,9 @@ export async function updateOrder(
       order_type: input.order_type ?? "counter",
       customer_name: input.customer_name ?? null,
       customer_phone: input.customer_phone ?? null,
+      id_verified: input.id_verified ?? null,
+      id_verified_at: input.id_verified_at ?? null,
+      id_verified_by_user_id: input.id_verified_by_user_id ?? null,
       delivery_address1: input.delivery_address1 ?? null,
       delivery_address2: input.delivery_address2 ?? null,
       delivery_city: input.delivery_city ?? null,
@@ -496,19 +510,21 @@ export async function updateOrder(
   const del = await supabase.from("order_items").delete().eq("order_id", orderId);
   if (del.error) return { data: null, error: del.error };
 
-  const itemsRes = await supabase.from("order_items").insert(
-    input.items.map((it) => ({
-      restaurant_id: input.restaurant_id,
-      order_id: orderId,
-      menu_item_id: it.menu_item_id,
-      name: it.name,
-      unit_price: it.unit_price,
-      qty: it.qty,
-      line_total: it.line_total,
-    })),
-  );
+  if (input.items.length > 0) {
+    const itemsRes = await supabase.from("order_items").insert(
+      input.items.map((it) => ({
+        restaurant_id: input.restaurant_id,
+        order_id: orderId,
+        menu_item_id: it.menu_item_id,
+        name: it.name,
+        unit_price: it.unit_price,
+        qty: it.qty,
+        line_total: it.line_total,
+      })),
+    );
 
-  if (itemsRes.error) return { data: null, error: itemsRes.error };
+    if (itemsRes.error) return { data: null, error: itemsRes.error };
+  }
 
   return { data: { orderId, ticketNo: updated.data?.ticket_no ?? null }, error: null };
 }

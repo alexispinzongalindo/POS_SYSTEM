@@ -34,6 +34,7 @@ import {
   refundOrder,
   updateOrderStatus,
   updateOrder,
+  type CreateOrderInput,
   type OrderType,
   type OrderSummary,
   type OrderReceipt,
@@ -104,6 +105,9 @@ export default function PosPage() {
   const [deliveryState, setDeliveryState] = useState<string>("PR");
   const [deliveryPostalCode, setDeliveryPostalCode] = useState<string>("");
   const [deliveryInstructions, setDeliveryInstructions] = useState<string>("");
+
+  const [showOpenTicketModal, setShowOpenTicketModal] = useState(false);
+  const [idVerified, setIdVerified] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -480,12 +484,82 @@ export default function PosPage() {
     setOrderType("counter");
     setCustomerName("");
     setCustomerPhone("");
+    setIdVerified(false);
     setDeliveryAddress1("");
     setDeliveryAddress2("");
     setDeliveryCity("");
     setDeliveryState("PR");
     setDeliveryPostalCode("");
     setDeliveryInstructions("");
+  }
+
+  async function confirmOpenTicket() {
+    if (!data) return;
+
+    setError(null);
+    setSuccess(null);
+    setPlacing(true);
+
+    try {
+      if (orderType === "dine_in") {
+        setError("Open Ticket is for counter/pickup/delivery (non-table)");
+        return;
+      }
+
+      const name = customerName.trim();
+      if (!name) {
+        setError("Customer name is required to open a ticket");
+        return;
+      }
+
+      if (!idVerified) {
+        setError("Driver's license must be verified by staff");
+        return;
+      }
+
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      const userId = sessionData.session?.user.id;
+      if (!userId) {
+        router.replace("/login");
+        return;
+      }
+
+      const payload: CreateOrderInput = {
+        restaurant_id: data.restaurantId,
+        created_by_user_id: userId,
+        subtotal: 0,
+        tax: 0,
+        total: 0,
+        order_type: orderType,
+        customer_name: name,
+        customer_phone: customerPhone.trim() ? customerPhone.trim() : null,
+        id_verified: true,
+        id_verified_at: new Date().toISOString(),
+        id_verified_by_user_id: userId,
+        delivery_address1: null,
+        delivery_address2: null,
+        delivery_city: null,
+        delivery_state: null,
+        delivery_postal_code: null,
+        delivery_instructions: null,
+        items: [],
+      };
+
+      const created = await createOrder(payload);
+      if (created.error) throw created.error;
+
+      setActiveOrderId(created.data?.orderId ?? null);
+      setActiveOrderStatus("open");
+      setShowOpenTicketModal(false);
+      await refreshOrders(data.restaurantId);
+      setSuccess("Ticket opened");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to open ticket";
+      setError(msg);
+    } finally {
+      setPlacing(false);
+    }
   }
 
   const refreshOrders = useCallback(
@@ -710,6 +784,7 @@ export default function PosPage() {
     setOrderType(meta?.order_type ?? "counter");
     setCustomerName(meta?.customer_name ?? "");
     setCustomerPhone(meta?.customer_phone ?? "");
+    setIdVerified(Boolean(meta?.id_verified));
     setDeliveryAddress1(meta?.delivery_address1 ?? "");
     setDeliveryAddress2(meta?.delivery_address2 ?? "");
     setDeliveryCity(meta?.delivery_city ?? "");
@@ -938,29 +1013,7 @@ export default function PosPage() {
     setPlacing(true);
 
     let userId: string | null = null;
-    let payload: {
-      restaurant_id: string;
-      created_by_user_id: string;
-      subtotal: number;
-      tax: number;
-      total: number;
-      order_type: OrderType;
-      customer_name: string | null;
-      customer_phone: string | null;
-      delivery_address1: string | null;
-      delivery_address2: string | null;
-      delivery_city: string | null;
-      delivery_state: string | null;
-      delivery_postal_code: string | null;
-      delivery_instructions: string | null;
-      items: Array<{
-        menu_item_id: string;
-        name: string;
-        unit_price: number;
-        qty: number;
-        line_total: number;
-      }>;
-    } | null = null;
+    let payload: CreateOrderInput | null = null;
 
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -994,6 +1047,17 @@ export default function PosPage() {
         }
       }
 
+      if (orderType !== "dine_in") {
+        if (!customerName.trim()) {
+          setError("Customer name is required");
+          return;
+        }
+        if (!idVerified) {
+          setError("Driver's license must be verified by staff");
+          return;
+        }
+      }
+
       payload = {
         restaurant_id: data.restaurantId,
         created_by_user_id: userId,
@@ -1003,6 +1067,9 @@ export default function PosPage() {
         order_type: orderType,
         customer_name: customerName.trim() ? customerName.trim() : null,
         customer_phone: customerPhone.trim() ? customerPhone.trim() : null,
+        id_verified: orderType === "dine_in" ? null : idVerified,
+        id_verified_at: orderType === "dine_in" || !idVerified ? null : new Date().toISOString(),
+        id_verified_by_user_id: orderType === "dine_in" || !idVerified ? null : userId,
         delivery_address1: orderType === "delivery" && deliveryAddress1.trim() ? deliveryAddress1.trim() : null,
         delivery_address2: orderType === "delivery" && deliveryAddress2.trim() ? deliveryAddress2.trim() : null,
         delivery_city: orderType === "delivery" && deliveryCity.trim() ? deliveryCity.trim() : null,
@@ -1013,6 +1080,8 @@ export default function PosPage() {
           orderType === "delivery" && deliveryInstructions.trim() ? deliveryInstructions.trim() : null,
         items,
       };
+
+      if (!payload) throw new Error("Failed to build ticket payload");
 
       const res = activeOrderId
         ? isOfflineOrderId(activeOrderId)
@@ -1302,6 +1371,19 @@ export default function PosPage() {
                 </div>
               </div>
               <div className="flex gap-2">
+                {!activeOrderId && orderType !== "dine_in" ? (
+                  <button
+                    onClick={() => {
+                      setError(null);
+                      setSuccess(null);
+                      setShowOpenTicketModal(true);
+                    }}
+                    disabled={placing}
+                    className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-xs font-semibold hover:bg-white disabled:opacity-60"
+                  >
+                    Open Ticket
+                  </button>
+                ) : null}
                 <button
                   onClick={clearCart}
                   disabled={placing || cartLines.length === 0}
@@ -1347,6 +1429,26 @@ export default function PosPage() {
                   placeholder="Table 1"
                   className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                 />
+              ) : null}
+
+              {orderType !== "dine_in" ? (
+                <div className="grid gap-2">
+                  <input
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Customer name"
+                    className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                  />
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={idVerified}
+                      onChange={(e) => setIdVerified(e.target.checked)}
+                      className="h-4 w-4"
+                    />
+                    <span>Driver's license verified (staff)</span>
+                  </label>
+                </div>
               ) : null}
 
               <div className="rounded-2xl border border-[var(--mp-border)] bg-white p-3">
@@ -1710,6 +1812,51 @@ export default function PosPage() {
                 className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
               >
                 {placing ? "Saving..." : "Confirm refund"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showOpenTicketModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-200 bg-[#fffdf7] p-6 shadow-xl">
+            <div className="text-base font-semibold">Open ticket</div>
+            <div className="mt-2 text-sm text-[var(--mp-muted)]">Customer name + staff ID verification required.</div>
+
+            <div className="mt-4 grid gap-3">
+              <input
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Customer name"
+                className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+              />
+
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={idVerified}
+                  onChange={(e) => setIdVerified(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                <span>Driver's license verified by staff</span>
+              </label>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                onClick={() => setShowOpenTicketModal(false)}
+                disabled={placing}
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-white disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmOpenTicket}
+                disabled={placing}
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
+              >
+                {placing ? "Saving..." : "Open"}
               </button>
             </div>
           </div>
