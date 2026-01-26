@@ -1128,6 +1128,12 @@ export default function PosPage() {
               Admin
             </button>
             <button
+              onClick={() => router.push("/pos/menu")}
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
+            >
+              Edit Menu
+            </button>
+            <button
               onClick={clearCart}
               className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white disabled:opacity-60"
               disabled={cartLines.length === 0}

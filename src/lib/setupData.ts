@@ -215,6 +215,15 @@ export async function addMenuCategory(input: { restaurant_id: string; name: stri
     .maybeSingle<MenuCategory>();
 }
 
+export async function updateMenuCategory(input: { id: string; name: string }) {
+  return supabase
+    .from("menu_categories")
+    .update({ name: input.name })
+    .eq("id", input.id)
+    .select("*")
+    .maybeSingle<MenuCategory>();
+}
+
 export async function deleteMenuCategory(categoryId: string) {
   return supabase.from("menu_categories").delete().eq("id", categoryId);
 }
@@ -253,6 +262,36 @@ export async function addMenuItem(input: {
       is_weighted: input.is_weighted ?? false,
       is_active: true,
     })
+    .select("*")
+    .maybeSingle<MenuItem>();
+}
+
+export async function updateMenuItem(input: {
+  id: string;
+  category_id: string | null;
+  name: string;
+  price: number;
+  sku?: string;
+  barcode?: string;
+  department?: string;
+  unit?: string;
+  is_weighted?: boolean;
+  is_active?: boolean;
+}) {
+  return supabase
+    .from("menu_items")
+    .update({
+      category_id: input.category_id,
+      name: input.name,
+      price: input.price,
+      sku: input.sku?.trim() || null,
+      barcode: input.barcode?.trim() || null,
+      department: input.department?.trim() || null,
+      unit: input.unit?.trim() || null,
+      is_weighted: input.is_weighted ?? false,
+      is_active: input.is_active ?? true,
+    })
+    .eq("id", input.id)
     .select("*")
     .maybeSingle<MenuItem>();
 }
