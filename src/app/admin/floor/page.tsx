@@ -335,9 +335,15 @@ export default function AdminFloorPlanPage() {
     const startX = (target as { x: number }).x;
     const startY = (target as { y: number }).y;
 
+    let latestX = startX;
+    let latestY = startY;
+
     function onMove(ev: MouseEvent) {
       const dx = ev.clientX - startClientX;
       const dy = ev.clientY - startClientY;
+
+      latestX = clamp(Math.round(startX + dx), 0, areaWidth - 10);
+      latestY = clamp(Math.round(startY + dy), 0, areaHeight - 10);
 
       if (kind === "table") {
         setTables((prev) =>
@@ -345,8 +351,8 @@ export default function AdminFloorPlanPage() {
             t.id === id
               ? {
                   ...t,
-                  x: clamp(Math.round(startX + dx), 0, areaWidth - 10),
-                  y: clamp(Math.round(startY + dy), 0, areaHeight - 10),
+                  x: latestX,
+                  y: latestY,
                 }
               : t,
           ),
@@ -357,8 +363,8 @@ export default function AdminFloorPlanPage() {
             o.id === id
               ? {
                   ...o,
-                  x: clamp(Math.round(startX + dx), 0, areaWidth - 10),
-                  y: clamp(Math.round(startY + dy), 0, areaHeight - 10),
+                  x: latestX,
+                  y: latestY,
                 }
               : o,
           ),
@@ -370,9 +376,13 @@ export default function AdminFloorPlanPage() {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
 
-      const latest = kind === "table" ? tables.find((t) => t.id === id) : objects.find((o) => o.id === id);
-      if (!latest) return;
-      await persistSelected(kind === "table" ? { kind: "table", row: latest as FloorTable } : { kind: "object", row: latest as FloorObject });
+      if (kind === "table") {
+        const res = await updateFloorTable({ id, x: latestX, y: latestY });
+        if (res.error) setError(res.error.message);
+      } else {
+        const res = await updateFloorObject({ id, x: latestX, y: latestY });
+        if (res.error) setError(res.error.message);
+      }
 
       if (activeAreaId) await refreshAreaContents(activeAreaId);
     }
