@@ -5,6 +5,14 @@ import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
 import { loadPosMenuData, listOpenDineInOrders, type DineInTableOrder } from "@/lib/posData";
+import {
+  listFloorAreas,
+  listFloorObjects,
+  listFloorTables,
+  type FloorArea,
+  type FloorObject,
+  type FloorTable,
+} from "@/lib/floorPlan";
 
 type TableRow = {
   tableNumber: number;
@@ -23,6 +31,11 @@ export default function PosTablesPage() {
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [tableCount, setTableCount] = useState<number>(DEFAULT_TABLE_COUNT);
   const [orders, setOrders] = useState<DineInTableOrder[]>([]);
+
+  const [areas, setAreas] = useState<FloorArea[]>([]);
+  const [activeAreaId, setActiveAreaId] = useState<string | null>(null);
+  const [floorTables, setFloorTables] = useState<FloorTable[]>([]);
+  const [floorObjects, setFloorObjects] = useState<FloorObject[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,6 +65,13 @@ export default function PosTablesPage() {
 
         setRestaurantId(res.data.restaurantId);
 
+        const areasRes = await listFloorAreas(res.data.restaurantId);
+        if (cancelled) return;
+        if (areasRes.error) throw areasRes.error;
+        const nextAreas = areasRes.data ?? [];
+        setAreas(nextAreas);
+        if (nextAreas.length > 0) setActiveAreaId((prev) => prev ?? nextAreas[0].id);
+
         const dineIn = await listOpenDineInOrders(res.data.restaurantId);
         if (cancelled) return;
         if (dineIn.error) throw dineIn.error;
@@ -77,6 +97,38 @@ export default function PosTablesPage() {
     };
   }, [router]);
 
+  useEffect(() => {
+    if (!activeAreaId) {
+      setFloorTables([]);
+      setFloorObjects([]);
+      return;
+    }
+
+    const areaId = activeAreaId;
+    let cancelled = false;
+
+    async function loadArea() {
+      setError(null);
+      try {
+        const [tRes, oRes] = await Promise.all([listFloorTables(areaId), listFloorObjects(areaId)]);
+        if (cancelled) return;
+        if (tRes.error) throw tRes.error;
+        if (oRes.error) throw oRes.error;
+        setFloorTables(tRes.data ?? []);
+        setFloorObjects(oRes.data ?? []);
+      } catch (e) {
+        if (cancelled) return;
+        const msg = e instanceof Error ? e.message : "Failed to load floor plan";
+        setError(msg);
+      }
+    }
+
+    void loadArea();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeAreaId]);
+
   const tables = useMemo(() => {
     const map = new Map<string, DineInTableOrder>();
     for (const o of orders) {
@@ -94,6 +146,19 @@ export default function PosTablesPage() {
     return rows;
   }, [orders, tableCount]);
 
+  const openOrdersByNumber = useMemo(() => {
+    const map = new Map<number, DineInTableOrder>();
+    for (const o of orders) {
+      const label = (o.customer_name ?? "").trim();
+      if (!label) continue;
+      const m = /^Table\s+(\d+)$/i.exec(label);
+      if (!m) continue;
+      const n = Number(m[1]);
+      if (Number.isFinite(n) && !map.has(n)) map.set(n, o);
+    }
+    return map;
+  }, [orders]);
+
   async function saveTableCount(next: number) {
     setError(null);
     const safe = Math.max(1, Math.min(200, Math.floor(next)));
@@ -107,24 +172,27 @@ export default function PosTablesPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</div>
+      <div className="islapos-marketing flex min-h-screen items-center justify-center bg-[var(--mp-bg)] text-[var(--mp-fg)]">
+        <div className="text-sm text-[var(--mp-muted)]">Loading...</div>
       </div>
     );
   }
 
+  const hasFloorPlan = areas.length > 0;
+  const activeArea = activeAreaId ? areas.find((a) => a.id === activeAreaId) ?? null : null;
+
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
+    <div className="islapos-marketing min-h-screen bg-[var(--mp-bg)] text-[var(--mp-fg)]">
       <div className="mx-auto w-full max-w-6xl px-6 py-10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold tracking-tight">Tables</h1>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Tap a table to open its ticket.</p>
+            <p className="text-sm text-[var(--mp-muted)]">Tap a table to open its ticket.</p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => router.push("/pos")}
-              className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
+              className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white"
             >
               Back to POS
             </button>
@@ -132,90 +200,165 @@ export default function PosTablesPage() {
         </div>
 
         {error ? (
-          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
+          <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         ) : null}
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <h2 className="text-base font-semibold">Table count</h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Stored per device (no DB changes).
-            </p>
-
-            <div className="mt-4 flex gap-2">
-              <input
-                inputMode="numeric"
-                value={String(tableCount)}
-                onChange={(e) => void saveTableCount(Number(e.target.value))}
-                className="h-10 w-32 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
-              />
-              <button
-                onClick={() => router.refresh()}
-                className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
-              >
-                Refresh
-              </button>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <h2 className="text-base font-semibold">Status</h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Occupied tables are detected from open dine-in tickets.
-            </p>
-
-            <div className="mt-4 rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-800">
-              <div className="flex items-center justify-between">
-                <div className="text-zinc-600 dark:text-zinc-400">Open tables</div>
-                <div className="font-medium">{orders.length}</div>
-              </div>
-              <div className="mt-2 flex items-center justify-between">
-                <div className="text-zinc-600 dark:text-zinc-400">Active restaurant</div>
-                <div className="font-medium">{restaurantId ? restaurantId.slice(0, 8) : "-"}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {tables.map((t) => {
-            const occupied = !!t.openOrder;
-            return (
-              <button
-                key={t.tableNumber}
-                onClick={() => router.push(`/pos?table=${t.tableNumber}`)}
-                className={`rounded-2xl border p-5 text-left shadow-sm transition-colors dark:bg-zinc-950 ${
-                  occupied
-                    ? "border-emerald-200 bg-emerald-50 hover:bg-emerald-100 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30"
-                    : "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-base font-semibold">Table {t.tableNumber}</div>
-                  <div
-                    className={`text-xs font-medium ${
-                      occupied ? "text-emerald-800 dark:text-emerald-200" : "text-zinc-600 dark:text-zinc-400"
-                    }`}
-                  >
-                    {occupied ? "Occupied" : "Available"}
-                  </div>
+        {hasFloorPlan ? (
+          <div className="mt-8">
+            <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-5 shadow-sm">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-wrap gap-2">
+                  {areas.map((a) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => setActiveAreaId(a.id)}
+                      className={`inline-flex h-10 items-center justify-center rounded-full border px-4 text-sm font-semibold transition-colors ${
+                        activeAreaId === a.id
+                          ? "border-[var(--mp-primary)] bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]"
+                          : "border-[var(--mp-border)] bg-white text-[var(--mp-fg)] hover:bg-black/[0.03]"
+                      }`}
+                    >
+                      {a.name}
+                    </button>
+                  ))}
                 </div>
 
-                {occupied ? (
-                  <div className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
-                    {t.openOrder?.ticket_no != null ? `Ticket #${t.openOrder.ticket_no}` : "Open ticket"} • ${
-                      Number(t.openOrder?.total ?? 0).toFixed(2)
-                    }
+                <button
+                  onClick={() => router.refresh()}
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              {activeArea ? (
+                <div className="mt-6">
+                  <div className="relative overflow-hidden rounded-3xl border border-[var(--mp-border)] bg-[var(--mp-bg)]" style={{ height: 520 }}>
+                    <div className="relative" style={{ width: activeArea.width, height: activeArea.height }}>
+                      {floorObjects.map((o) => (
+                        <div
+                          key={o.id}
+                          className="absolute rounded-xl border border-[var(--mp-border)] bg-white/90 px-3 py-2 text-xs font-semibold shadow-sm"
+                          style={{ left: o.x, top: o.y, width: o.width, height: o.height }}
+                          title={o.kind}
+                        >
+                          {o.kind === "door" ? "Door" : "Bar"}
+                        </div>
+                      ))}
+
+                      {floorTables.map((t) => {
+                        const open = openOrdersByNumber.get(t.table_number) ?? null;
+                        const occupied = !!open;
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => router.push(`/pos?table=${t.table_number}`)}
+                            className={`absolute grid place-items-center border text-sm font-bold shadow-sm transition-colors ${
+                              t.shape === "round" ? "rounded-full" : "rounded-2xl"
+                            } ${
+                              occupied
+                                ? "border-emerald-200 bg-emerald-50 hover:bg-emerald-100"
+                                : "border-[var(--mp-border)] bg-white hover:bg-black/[0.03]"
+                            }`}
+                            style={{ left: t.x, top: t.y, width: t.width, height: t.height }}
+                            title={`Table ${t.table_number}`}
+                          >
+                            {t.table_number}
+                            <span className="mt-1 text-[10px] font-semibold text-[var(--mp-muted)]">{t.seats} seats</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                ) : (
-                  <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Tap to open ticket</div>
-                )}
-              </button>
-            );
-          })}
-        </div>
+
+                  <div className="mt-4 text-xs text-[var(--mp-muted)]">
+                    Occupied tables are detected from open dine-in tickets.
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-6 text-sm text-[var(--mp-muted)]">No active area.</div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-6 shadow-sm">
+                <h2 className="text-base font-semibold">Table count</h2>
+                <p className="mt-2 text-sm text-[var(--mp-muted)]">Stored per device (no DB changes).</p>
+
+                <div className="mt-4 flex gap-2">
+                  <input
+                    inputMode="numeric"
+                    value={String(tableCount)}
+                    onChange={(e) => void saveTableCount(Number(e.target.value))}
+                    className="h-10 w-32 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                  />
+                  <button
+                    onClick={() => router.refresh()}
+                    className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white"
+                  >
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-6 shadow-sm">
+                <h2 className="text-base font-semibold">Status</h2>
+                <p className="mt-2 text-sm text-[var(--mp-muted)]">Occupied tables are detected from open dine-in tickets.</p>
+
+                <div className="mt-4 rounded-2xl border border-[var(--mp-border)] px-4 py-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[var(--mp-muted)]">Open tables</div>
+                    <div className="font-semibold">{orders.length}</div>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <div className="text-[var(--mp-muted)]">Active restaurant</div>
+                    <div className="font-semibold">{restaurantId ? restaurantId.slice(0, 8) : "-"}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {tables.map((t) => {
+                const occupied = !!t.openOrder;
+                return (
+                  <button
+                    key={t.tableNumber}
+                    onClick={() => router.push(`/pos?table=${t.tableNumber}`)}
+                    className={`rounded-2xl border p-5 text-left shadow-sm transition-colors ${
+                      occupied
+                        ? "border-emerald-200 bg-emerald-50 hover:bg-emerald-100"
+                        : "border-[var(--mp-border)] bg-white hover:bg-black/[0.03]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-base font-semibold">Table {t.tableNumber}</div>
+                      <div className={`text-xs font-medium ${occupied ? "text-emerald-800" : "text-[var(--mp-muted)]"}`}>
+                        {occupied ? "Occupied" : "Available"}
+                      </div>
+                    </div>
+
+                    {occupied ? (
+                      <div className="mt-2 text-sm text-[var(--mp-fg)]">
+                        {t.openOrder?.ticket_no != null ? `Ticket #${t.openOrder.ticket_no}` : "Open ticket"} • ${
+                          Number(t.openOrder?.total ?? 0).toFixed(2)
+                        }
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-sm text-[var(--mp-muted)]">Tap to open ticket</div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
