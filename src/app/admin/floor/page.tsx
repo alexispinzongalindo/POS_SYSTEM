@@ -12,6 +12,7 @@ import {
   deleteFloorTable,
   listFloorAreas,
   listFloorObjects,
+  listRestaurantFloorTables,
   listFloorTables,
   updateFloorArea,
   updateFloorObject,
@@ -214,7 +215,13 @@ export default function AdminFloorPlanPage() {
     if (!restaurantId || !activeAreaId || !canEdit) return;
     setError(null);
 
-    const used = new Set(tables.map((t) => t.table_number));
+    const allRes = await listRestaurantFloorTables(restaurantId);
+    if (allRes.error) {
+      setError(allRes.error.message);
+      return;
+    }
+
+    const used = new Set((allRes.data ?? []).map((t) => t.table_number));
     let nextNum = 1;
     while (used.has(nextNum)) nextNum += 1;
 

@@ -104,6 +104,15 @@ export async function listFloorTables(areaId: string) {
     .returns<FloorTable[]>();
 }
 
+export async function listRestaurantFloorTables(restaurantId: string) {
+  return supabase
+    .from("floor_tables")
+    .select("id, table_number")
+    .eq("restaurant_id", restaurantId)
+    .order("table_number", { ascending: true })
+    .returns<Pick<FloorTable, "id" | "table_number">[]>();
+}
+
 export async function addFloorTable(input: {
   restaurant_id: string;
   area_id: string;
