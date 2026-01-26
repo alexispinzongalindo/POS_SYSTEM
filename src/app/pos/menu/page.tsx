@@ -8,6 +8,7 @@ import {
   addMenuItem,
   deleteMenuCategory,
   deleteMenuItem,
+  getRestaurant,
   getSetupContext,
   listMenuCategories,
   listMenuItems,
@@ -87,11 +88,6 @@ export default function PosMenuManagerPage() {
       const resolvedRole: Role = rawRole === "owner" || rawRole === "manager" || rawRole === "cashier" ? rawRole : null;
       setRole(resolvedRole);
 
-      if (resolvedRole === "cashier") {
-        router.replace("/pos");
-        return;
-      }
-
       const rid = (ctx.config?.restaurant_id as string | null) ?? null;
       if (!rid) {
         router.replace("/setup/restaurant");
@@ -99,6 +95,21 @@ export default function PosMenuManagerPage() {
       }
 
       setRestaurantId(rid);
+
+      if (resolvedRole === "cashier") {
+        router.replace("/pos");
+        return;
+      }
+
+      if (!resolvedRole) {
+        const restaurantRes = await getRestaurant(rid);
+        if (cancelled) return;
+        if (restaurantRes.error) {
+          setError(restaurantRes.error.message);
+        } else if (restaurantRes.data?.owner_user_id === ctx.session.user.id) {
+          setRole("owner");
+        }
+      }
 
       try {
         await refresh(rid);
