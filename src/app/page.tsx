@@ -39,9 +39,16 @@ export default function Home() {
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <a
                 className="inline-flex h-11 items-center justify-center rounded-lg bg-[var(--mp-primary)] px-6 text-sm font-medium text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
-                href="/login"
+                href="/login?mode=signup"
               >
-                {lang === "es" ? "Empieza gratis" : t.home.ctaPrimary}
+                {lang === "es" ? "Crear cuenta" : "Create account"}
+              </a>
+
+              <a
+                className="inline-flex h-11 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-white px-6 text-sm font-medium text-[var(--mp-fg)] hover:bg-black/[0.03] focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
+                href="/login?mode=signin"
+              >
+                {lang === "es" ? "Entrar" : "Sign in"}
               </a>
             </div>
 
