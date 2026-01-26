@@ -24,7 +24,7 @@ export default function Home() {
         </div>
         <MarketingHeader ctaVariant="signin" />
 
-        <main className="mt-14">
+        <main className="mt-12">
           <div className="mx-auto max-w-4xl text-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-[var(--mp-border)] bg-[var(--mp-surface)] px-3 py-1 text-xs font-medium text-[var(--mp-muted)] shadow-sm">
               <span className="inline-block h-2 w-2 rounded-full bg-[var(--mp-primary)]" />
@@ -48,13 +48,13 @@ export default function Home() {
             <p className="mt-5 text-sm font-semibold tracking-tight">{t.tagline}</p>
           </div>
 
-          <div className="mt-10">
-            <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-3xl border border-[var(--mp-border)] bg-[var(--mp-surface)] shadow-[0_30px_80px_rgba(0,0,0,0.12)]">
-              <div className="relative grid place-items-center px-4 py-6 sm:px-6 sm:py-8">
+          <div className="mt-8">
+            <div className="mx-auto w-full max-w-4xl overflow-hidden rounded-3xl border border-[var(--mp-border)] bg-[var(--mp-surface)] shadow-[0_30px_80px_rgba(0,0,0,0.12)]">
+              <div className="relative grid place-items-center p-4 sm:p-6">
                 <img
                   alt={lang === "es" ? "Vista del POS" : "POS preview"}
                   src="/hero/PART2.png"
-                  className="h-[520px] w-full max-w-[920px] rounded-2xl object-contain sm:h-[600px]"
+                  className="w-full max-w-[920px] max-h-[70vh] rounded-2xl object-contain"
                 />
               </div>
             </div>
