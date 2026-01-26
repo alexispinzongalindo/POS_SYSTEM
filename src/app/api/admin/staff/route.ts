@@ -38,7 +38,16 @@ async function requireRestaurantOwnerOrManager(userId: string, userRole: string 
   }
 
   // Managers are allowed (they belong to the restaurant), owners are allowed if they own it.
-  if (userRole === "manager") return { ok: true, error: null as Error | null };
+  if (userRole === "manager") {
+    const u = await supabaseAdmin.auth.admin.getUserById(userId);
+    if (u.error) return { ok: false, error: new Error(u.error.message) };
+    const meta = (u.data.user?.app_metadata ?? {}) as Record<string, unknown>;
+    const assigned = typeof meta.restaurant_id === "string" ? meta.restaurant_id : null;
+    if (!assigned || assigned !== restaurantId) {
+      return { ok: false, error: new Error("Managers can only manage staff for their assigned restaurant") };
+    }
+    return { ok: true, error: null as Error | null };
+  }
 
   // Default/unknown role: treat as owner only if restaurant owner matches.
   const restaurantRes = await supabaseAdmin

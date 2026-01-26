@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+type StaffRole = "manager" | "cashier";
+
 export async function POST(req: Request) {
   const ownerEmail = process.env.OWNER_EMAIL;
   if (!ownerEmail) {
@@ -32,6 +34,7 @@ export async function POST(req: Request) {
   const requester = userData.user;
   const requesterEmail = requester.email;
   const isSystemOwner = !!requesterEmail && requesterEmail.toLowerCase() === ownerEmail.toLowerCase();
+  const requesterRole = (requester.app_metadata as { role?: string } | undefined)?.role ?? null;
 
   const body = (await req.json().catch(() => null)) as
     | { email?: string; role?: "manager" | "cashier" }
@@ -48,7 +51,7 @@ export async function POST(req: Request) {
   }
 
   // If not system owner, enforce that the requester is a restaurant owner
-  // inviting staff into their currently active restaurant.
+  // (or manager assigned to the restaurant) inviting staff into their currently active restaurant.
   let restaurantId: string | null = null;
 
   if (!isSystemOwner) {
@@ -67,18 +70,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No active restaurant selected" }, { status: 400 });
     }
 
-    const restaurantRes = await supabaseAdmin
-      .from("restaurants")
-      .select("id, owner_user_id")
-      .eq("id", restaurantId)
-      .maybeSingle<{ id: string; owner_user_id: string }>();
-
-    if (restaurantRes.error) {
-      return NextResponse.json({ error: restaurantRes.error.message }, { status: 400 });
+    if (requesterRole === "cashier") {
+      return NextResponse.json({ error: "Cashiers cannot invite staff" }, { status: 403 });
     }
 
-    if (!restaurantRes.data || restaurantRes.data.owner_user_id !== requester.id) {
-      return NextResponse.json({ error: "Only the restaurant owner can invite staff" }, { status: 403 });
+    if (requesterRole === "manager") {
+      const meta = (requester.app_metadata ?? {}) as Record<string, unknown>;
+      const assigned = typeof meta.restaurant_id === "string" ? meta.restaurant_id : null;
+      if (!assigned || assigned !== restaurantId) {
+        return NextResponse.json(
+          { error: "Managers can only invite staff for their assigned restaurant" },
+          { status: 403 },
+        );
+      }
+    } else {
+      const restaurantRes = await supabaseAdmin
+        .from("restaurants")
+        .select("id, owner_user_id")
+        .eq("id", restaurantId)
+        .maybeSingle<{ id: string; owner_user_id: string }>();
+
+      if (restaurantRes.error) {
+        return NextResponse.json({ error: restaurantRes.error.message }, { status: 400 });
+      }
+
+      if (!restaurantRes.data || restaurantRes.data.owner_user_id !== requester.id) {
+        return NextResponse.json({ error: "Only the restaurant owner or manager can invite staff" }, { status: 403 });
+      }
     }
   }
 

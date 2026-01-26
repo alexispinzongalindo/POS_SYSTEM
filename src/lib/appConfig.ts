@@ -54,6 +54,32 @@ export async function setRestaurantId(restaurantId: string) {
     return { data: null as AppConfig | null, error: new Error("Not signed in") };
   }
 
+  const session = sessionData.session;
+  const meta = (session?.user.app_metadata ?? {}) as { role?: string; restaurant_id?: string | null };
+  const role = meta.role ?? null;
+  const assignedRestaurantId = typeof meta.restaurant_id === "string" ? meta.restaurant_id : null;
+
+  if (role === "cashier" || role === "manager") {
+    if (!assignedRestaurantId) {
+      return { data: null as AppConfig | null, error: new Error("No restaurant assigned") };
+    }
+    if (assignedRestaurantId !== restaurantId) {
+      return { data: null as AppConfig | null, error: new Error("Forbidden: cannot switch restaurants") };
+    }
+  } else {
+    const owned = await supabase
+      .from("restaurants")
+      .select("id, owner_user_id")
+      .eq("id", restaurantId)
+      .maybeSingle<{ id: string; owner_user_id: string }>();
+
+    if (owned.error) return { data: null as AppConfig | null, error: owned.error };
+    if (!owned.data) return { data: null as AppConfig | null, error: new Error("Restaurant not found") };
+    if (owned.data.owner_user_id !== userId) {
+      return { data: null as AppConfig | null, error: new Error("Forbidden: not restaurant owner") };
+    }
+  }
+
   const cfg = await getOrCreateAppConfig(userId);
   if (cfg.error || !cfg.data) return { data: null as AppConfig | null, error: cfg.error ?? new Error("Missing app config") };
 
