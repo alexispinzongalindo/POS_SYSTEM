@@ -560,6 +560,7 @@ export default function PosPage() {
           total: 0,
           created_at: new Date().toISOString(),
           order_type: orderType,
+          customer_name: name,
           delivery_status: orderType === "delivery" ? "needs_dispatch" : null,
           delivery_provider: null,
           delivery_tracking_url: null,
@@ -746,9 +747,17 @@ export default function PosPage() {
     return orders.filter((o) => {
       const idMatch = o.id.toLowerCase().includes(q);
       const ticketMatch = o.ticket_no != null ? String(o.ticket_no).includes(q) : false;
-      return idMatch || ticketMatch;
+      const nameMatch = (o.customer_name ?? "").toLowerCase().includes(q);
+      return idMatch || ticketMatch || nameMatch;
     });
   }, [orders, orderSearch]);
+
+  const openNonTableTickets = useMemo(() => {
+    return orders
+      .filter((o) => (o.status ?? "") === "open")
+      .filter((o) => (o.order_type ?? "counter") !== "dine_in")
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [orders]);
 
   async function openOrder(orderId: string) {
     if (!data) return;
@@ -1391,6 +1400,38 @@ export default function PosPage() {
           </div>
 
           <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-5 shadow-sm">
+            {openNonTableTickets.length > 0 ? (
+              <div className="mb-4 rounded-2xl border border-[var(--mp-border)] bg-white p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-semibold">Open tickets</div>
+                  <div className="text-xs text-[var(--mp-muted)]">{openNonTableTickets.length}</div>
+                </div>
+                <div className="mt-3 grid gap-2">
+                  {openNonTableTickets.slice(0, 8).map((t) => {
+                    const label = (t.customer_name ?? "").trim() || (t.ticket_no != null ? `#${t.ticket_no}` : t.id.slice(0, 8));
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => void openOrder(t.id)}
+                        className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left text-sm font-semibold transition-colors hover:bg-black/[0.03] ${
+                          activeOrderId === t.id ? "border-[var(--mp-primary)] bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]" : "border-[var(--mp-border)] bg-white"
+                        }`}
+                      >
+                        <span className="truncate">{label}</span>
+                        <span className={`shrink-0 text-xs ${activeOrderId === t.id ? "opacity-90" : "text-[var(--mp-muted)]"}`}>
+                          {(t.order_type ?? "counter").replace("_", " ")}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {openNonTableTickets.length > 8 ? (
+                  <div className="mt-2 text-xs text-[var(--mp-muted)]">Showing first 8 open tickets</div>
+                ) : null}
+              </div>
+            ) : null}
+
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-base font-semibold">Order</div>

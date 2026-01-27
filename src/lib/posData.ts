@@ -107,6 +107,7 @@ export type OrderSummary = {
   total: number;
   created_at: string;
   order_type?: OrderType | null;
+  customer_name?: string | null;
   delivery_status?: string | null;
   delivery_provider?: string | null;
   delivery_tracking_url?: string | null;
@@ -331,7 +332,7 @@ export async function listRecentOrdersFiltered(
   let q = supabase
     .from("orders")
     .select(
-      "id, ticket_no, status, total, created_at, order_type, delivery_status, delivery_provider, delivery_tracking_url, payment_method, paid_at, amount_tendered, change_due, refunded_at, refunded_by_user_id, refund_reason",
+      "id, ticket_no, status, total, created_at, order_type, customer_name, delivery_status, delivery_provider, delivery_tracking_url, payment_method, paid_at, amount_tendered, change_due, refunded_at, refunded_by_user_id, refund_reason",
     )
     .eq("restaurant_id", restaurantId);
 
