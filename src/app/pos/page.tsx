@@ -53,6 +53,7 @@ export default function PosPage() {
   const router = useRouter();
 
   const openTicketsRef = useRef<HTMLDivElement | null>(null);
+  const [showOpenTickets, setShowOpenTickets] = useState(false);
   const [tableQuery, setTableQuery] = useState<string | null>(null);
   const [offlineQuery, setOfflineQuery] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -110,6 +111,14 @@ export default function PosPage() {
 
   const [showOpenTicketModal, setShowOpenTicketModal] = useState(false);
   const [idVerified, setIdVerified] = useState(false);
+
+  const openNonTableTickets = useMemo(() => {
+    return (orders ?? []).filter((o) => (o.status ?? "open") === "open" && (o.order_type ?? "counter") !== "dine_in");
+  }, [orders]);
+
+  useEffect(() => {
+    if (openNonTableTickets.length === 0) setShowOpenTickets(false);
+  }, [openNonTableTickets.length]);
 
   useEffect(() => {
     let cancelled = false;
@@ -752,17 +761,11 @@ export default function PosPage() {
       const nameMatch = (o.customer_name ?? "").toLowerCase().includes(q);
       return idMatch || ticketMatch || nameMatch;
     });
-  }, [orders, orderSearch]);
-
-  const openNonTableTickets = useMemo(() => {
-    return orders
-      .filter((o) => (o.status ?? "") === "open")
-      .filter((o) => (o.order_type ?? "counter") !== "dine_in")
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [orders]);
+  }, [orderSearch, orders]);
 
   async function openOrder(orderId: string) {
     if (!data) return;
+
     setError(null);
     setSuccess(null);
 
@@ -1233,7 +1236,11 @@ export default function PosPage() {
             <button
               type="button"
               onClick={() => {
-                openTicketsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                if (openNonTableTickets.length === 0) return;
+                setShowOpenTickets((prev) => !prev);
+                window.setTimeout(() => {
+                  openTicketsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 0);
               }}
               className={`inline-flex h-11 items-center justify-center rounded-xl border px-5 text-sm font-semibold transition-colors ${
                 openNonTableTickets.length > 0
@@ -1242,11 +1249,7 @@ export default function PosPage() {
               }`}
             >
               <span>Manual Orders</span>
-              {openNonTableTickets.length > 0 ? (
-                <span className="ml-2 inline-flex items-center rounded-full bg-white/15 px-2 py-0.5 text-xs font-extrabold">
-                  MANUAL ORDER {openNonTableTickets.length}
-                </span>
-              ) : null}
+              {openNonTableTickets.length > 0 ? <span className="ml-2 text-xs font-extrabold">{openNonTableTickets.length}</span> : null}
             </button>
             <button
               onClick={() => router.push("/admin")}
@@ -1420,7 +1423,7 @@ export default function PosPage() {
           </div>
 
           <div className="flex flex-col rounded-3xl border border-[var(--mp-border)] bg-white p-5 shadow-sm">
-            {openNonTableTickets.length > 0 ? (
+            {showOpenTickets && openNonTableTickets.length > 0 ? (
               <div ref={openTicketsRef} className="mb-4 rounded-2xl border border-[var(--mp-border)] bg-white p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-semibold">Open tickets</div>
