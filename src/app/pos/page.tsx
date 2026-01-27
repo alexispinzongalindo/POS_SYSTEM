@@ -74,6 +74,8 @@ export default function PosPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "ath_movil" | "other">("cash");
   const [amountTendered, setAmountTendered] = useState<string>("");
+  const [otherPaymentReason, setOtherPaymentReason] = useState<string>("");
+  const [otherPaymentApproved, setOtherPaymentApproved] = useState(false);
 
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [receiptLoading, setReceiptLoading] = useState(false);
@@ -897,10 +899,23 @@ export default function PosPage() {
 
     const tendered = Number(amountTendered);
     const isCash = paymentMethod === "cash";
+    const isOther = paymentMethod === "other";
     const changeDue = isCash && Number.isFinite(tendered) ? tendered - totals.total : 0;
     if (isCash && (!Number.isFinite(tendered) || tendered < totals.total)) {
       setError("Cash payment requires amount tendered >= total");
       return;
+    }
+
+    if (isOther) {
+      const reason = otherPaymentReason.trim();
+      if (!reason) {
+        setError("Other payment requires a written reason");
+        return;
+      }
+      if (!otherPaymentApproved) {
+        setError("Other payment requires staff approval");
+        return;
+      }
     }
 
     setError(null);
@@ -1668,6 +1683,8 @@ export default function PosPage() {
                         setSuccess(null);
                         setPaymentMethod("cash");
                         setAmountTendered("");
+                        setOtherPaymentReason("");
+                        setOtherPaymentApproved(false);
                         setShowPaymentModal(true);
                       }}
                       disabled={placing}
@@ -1734,6 +1751,31 @@ export default function PosPage() {
               </div>
             ) : null}
 
+            {paymentMethod === "other" ? (
+              <div className="mt-4 grid gap-3">
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">Reason</label>
+                  <input
+                    value={otherPaymentReason}
+                    onChange={(e) => setOtherPaymentReason(e.target.value)}
+                    placeholder="Write reason"
+                    className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                  />
+                  <div className="text-xs text-[var(--mp-muted)]">Required for Other payments.</div>
+                </div>
+
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={otherPaymentApproved}
+                    onChange={(e) => setOtherPaymentApproved(e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  <span>Staff approval</span>
+                </label>
+              </div>
+            ) : null}
+
             <div className="mt-6 flex justify-end gap-2">
               <button
                 onClick={() => setShowPaymentModal(false)}
@@ -1744,7 +1786,11 @@ export default function PosPage() {
               </button>
               <button
                 onClick={confirmPayment}
-                disabled={placing || !cashTenderedValid}
+                disabled={
+                  placing ||
+                  (paymentMethod === "cash" && !cashTenderedValid) ||
+                  (paymentMethod === "other" && (!otherPaymentReason.trim() || !otherPaymentApproved))
+                }
                 className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
               >
                 {placing ? "Saving..." : "Mark paid"}
