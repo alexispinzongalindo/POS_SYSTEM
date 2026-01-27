@@ -37,6 +37,20 @@ export default function PosTablesPage() {
   const [floorTables, setFloorTables] = useState<FloorTable[]>([]);
   const [floorObjects, setFloorObjects] = useState<FloorObject[]>([]);
 
+  async function reloadOpenOrders(nextRestaurantId: string) {
+    const dineIn = await listOpenDineInOrders(nextRestaurantId);
+    if (dineIn.error) throw dineIn.error;
+    setOrders(dineIn.data ?? []);
+  }
+
+  async function reloadActiveArea(nextAreaId: string) {
+    const [tRes, oRes] = await Promise.all([listFloorTables(nextAreaId), listFloorObjects(nextAreaId)]);
+    if (tRes.error) throw tRes.error;
+    if (oRes.error) throw oRes.error;
+    setFloorTables(tRes.data ?? []);
+    setFloorObjects(oRes.data ?? []);
+  }
+
   useEffect(() => {
     let cancelled = false;
 
@@ -72,11 +86,8 @@ export default function PosTablesPage() {
         setAreas(nextAreas);
         if (nextAreas.length > 0) setActiveAreaId((prev) => prev ?? nextAreas[0].id);
 
-        const dineIn = await listOpenDineInOrders(res.data.restaurantId);
+        await reloadOpenOrders(res.data.restaurantId);
         if (cancelled) return;
-        if (dineIn.error) throw dineIn.error;
-
-        setOrders(dineIn.data ?? []);
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Failed to load tables";
         setError(msg);
@@ -110,12 +121,7 @@ export default function PosTablesPage() {
     async function loadArea() {
       setError(null);
       try {
-        const [tRes, oRes] = await Promise.all([listFloorTables(areaId), listFloorObjects(areaId)]);
-        if (cancelled) return;
-        if (tRes.error) throw tRes.error;
-        if (oRes.error) throw oRes.error;
-        setFloorTables(tRes.data ?? []);
-        setFloorObjects(oRes.data ?? []);
+        await reloadActiveArea(areaId);
       } catch (e) {
         if (cancelled) return;
         const msg = e instanceof Error ? e.message : "Failed to load floor plan";
@@ -128,6 +134,29 @@ export default function PosTablesPage() {
       cancelled = true;
     };
   }, [activeAreaId]);
+
+  useEffect(() => {
+    if (!restaurantId) return;
+
+    let cancelled = false;
+    const id = window.setInterval(() => {
+      void (async () => {
+        try {
+          if (cancelled) return;
+          await reloadOpenOrders(restaurantId);
+          if (cancelled) return;
+          if (activeAreaId) await reloadActiveArea(activeAreaId);
+        } catch {
+          // ignore polling errors
+        }
+      })();
+    }, 2500);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [restaurantId, activeAreaId]);
 
   const tables = useMemo(() => {
     const map = new Map<string, DineInTableOrder>();
@@ -225,13 +254,6 @@ export default function PosTablesPage() {
                     </button>
                   ))}
                 </div>
-
-                <button
-                  onClick={() => router.refresh()}
-                  className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white"
-                >
-                  Refresh
-                </button>
               </div>
 
               {activeArea ? (
@@ -298,12 +320,6 @@ export default function PosTablesPage() {
                     onChange={(e) => void saveTableCount(Number(e.target.value))}
                     className="h-10 w-32 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                   />
-                  <button
-                    onClick={() => router.refresh()}
-                    className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white"
-                  >
-                    Refresh
-                  </button>
                 </div>
               </div>
 
