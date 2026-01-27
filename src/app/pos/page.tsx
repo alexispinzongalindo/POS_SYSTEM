@@ -549,10 +549,39 @@ export default function PosPage() {
       const created = await createOrder(payload);
       if (created.error) throw created.error;
 
-      setActiveOrderId(created.data?.orderId ?? null);
+      const orderId = created.data?.orderId ?? null;
+      if (!orderId) throw new Error("Failed to open ticket");
+
+      setOrders((prev) => {
+        const nextRow: OrderSummary = {
+          id: orderId,
+          ticket_no: created.data?.ticketNo ?? null,
+          status: "open",
+          total: 0,
+          created_at: new Date().toISOString(),
+          order_type: orderType,
+          delivery_status: orderType === "delivery" ? "needs_dispatch" : null,
+          delivery_provider: null,
+          delivery_tracking_url: null,
+          payment_method: null,
+          paid_at: null,
+          amount_tendered: null,
+          change_due: null,
+          refunded_at: null,
+          refunded_by_user_id: null,
+          refund_reason: null,
+        };
+
+        const merged = [nextRow, ...prev.filter((o) => o.id !== orderId)];
+        return merged;
+      });
+
+      setOrderStatusFilter("open");
+      setOrderSearch("");
+
+      setActiveOrderId(orderId);
       setActiveOrderStatus("open");
       setShowOpenTicketModal(false);
-      await refreshOrders(data.restaurantId);
       setSuccess("Ticket opened");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to open ticket";
