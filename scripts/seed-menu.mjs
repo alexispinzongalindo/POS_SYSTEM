@@ -102,6 +102,35 @@ async function main() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
+  const restaurantRes = await supabase
+    .from("restaurants")
+    .select("id, name")
+    .eq("id", restaurantId)
+    .maybeSingle();
+
+  if (restaurantRes.error) {
+    throw new Error(`Failed to verify restaurantId: ${restaurantRes.error.message}`);
+  }
+
+  if (!restaurantRes.data) {
+    const listRes = await supabase
+      .from("restaurants")
+      .select("id, name")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    console.error(`Restaurant not found: ${restaurantId}`);
+    if (listRes.error) {
+      console.error(`Also failed to list restaurants: ${listRes.error.message}`);
+    } else {
+      console.error("Copy a restaurant id from this list and re-run:");
+      for (const r of listRes.data ?? []) {
+        console.error(`- ${r.id}  (${r.name ?? "no name"})`);
+      }
+    }
+    process.exit(1);
+  }
+
   const categories = [
     {
       name: "Appetizers",
