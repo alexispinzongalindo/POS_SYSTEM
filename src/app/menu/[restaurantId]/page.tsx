@@ -22,9 +22,17 @@ type MenuItem = {
   restaurant_id: string;
   category_id: string | null;
   name: string;
+  description?: string | null;
   price: number;
+  image_path?: string | null;
   is_active: boolean;
 };
+
+function menuImageUrl(path: string) {
+  const base = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "");
+  if (!base) return "";
+  return `${base}/storage/v1/object/public/menu/${path}`;
+}
 
 export default async function PublicMenuPage(props: PageProps) {
   const { restaurantId } = await props.params;
@@ -43,7 +51,7 @@ export default async function PublicMenuPage(props: PageProps) {
       .returns<MenuCategory[]>(),
     supabase
       .from("menu_items")
-      .select("id, restaurant_id, category_id, name, price, is_active")
+      .select("id, restaurant_id, category_id, name, description, price, image_path, is_active")
       .eq("restaurant_id", restaurantId)
       .eq("is_active", true)
       .order("created_at", { ascending: true })
@@ -129,7 +137,23 @@ export default async function PublicMenuPage(props: PageProps) {
                     key={it.id}
                     className="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800"
                   >
-                    <div className="text-sm font-medium">{it.name}</div>
+                    <div className="flex min-w-0 items-center gap-3">
+                      {it.image_path ? (
+                        <img
+                          alt={it.name}
+                          src={menuImageUrl(it.image_path)}
+                          className="h-12 w-12 flex-none rounded-lg object-cover"
+                        />
+                      ) : null}
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-medium">{it.name}</div>
+                        {it.description ? (
+                          <div className="mt-0.5 line-clamp-2 text-xs text-zinc-600 dark:text-zinc-400">
+                            {it.description}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
                     <div className="text-sm tabular-nums">${it.price.toFixed(2)}</div>
                   </div>
                 ))}
@@ -153,7 +177,23 @@ export default async function PublicMenuPage(props: PageProps) {
                       key={it.id}
                       className="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800"
                     >
-                      <div className="text-sm font-medium">{it.name}</div>
+                      <div className="flex min-w-0 items-center gap-3">
+                        {it.image_path ? (
+                          <img
+                            alt={it.name}
+                            src={menuImageUrl(it.image_path)}
+                            className="h-12 w-12 flex-none rounded-lg object-cover"
+                          />
+                        ) : null}
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-medium">{it.name}</div>
+                          {it.description ? (
+                            <div className="mt-0.5 line-clamp-2 text-xs text-zinc-600 dark:text-zinc-400">
+                              {it.description}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
                       <div className="text-sm tabular-nums">${it.price.toFixed(2)}</div>
                     </div>
                   ))}

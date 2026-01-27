@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { supabase } from "@/lib/supabaseClient";
 import {
   addMenuCategory,
   addMenuItem,
@@ -33,6 +34,7 @@ export default function PosMenuManagerPage() {
 
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newItemName, setNewItemName] = useState("");
+  const [newItemDescription, setNewItemDescription] = useState("");
   const [newItemPrice, setNewItemPrice] = useState("0.00");
   const [newItemCategoryId, setNewItemCategoryId] = useState<string | "">("");
   const [newItemSku, setNewItemSku] = useState("");
@@ -40,12 +42,14 @@ export default function PosMenuManagerPage() {
   const [newItemDepartment, setNewItemDepartment] = useState("");
   const [newItemUnit, setNewItemUnit] = useState("");
   const [newItemIsWeighted, setNewItemIsWeighted] = useState(false);
+  const [newItemImageFile, setNewItemImageFile] = useState<File | null>(null);
 
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState<string>("");
 
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemName, setEditingItemName] = useState<string>("");
+  const [editingItemDescription, setEditingItemDescription] = useState<string>("");
   const [editingItemPrice, setEditingItemPrice] = useState<string>("0.00");
   const [editingItemCategoryId, setEditingItemCategoryId] = useState<string | "">("");
   const [editingItemSku, setEditingItemSku] = useState<string>("");
@@ -54,8 +58,29 @@ export default function PosMenuManagerPage() {
   const [editingItemUnit, setEditingItemUnit] = useState<string>("");
   const [editingItemIsWeighted, setEditingItemIsWeighted] = useState<boolean>(false);
   const [editingItemIsActive, setEditingItemIsActive] = useState<boolean>(true);
+  const [editingItemImageFile, setEditingItemImageFile] = useState<File | null>(null);
+  const [editingItemImagePath, setEditingItemImagePath] = useState<string | null>(null);
 
   const canEdit = role === "owner" || role === "manager";
+
+  function getMenuImageUrl(path: string) {
+    const { data } = supabase.storage.from("menu").getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  async function uploadMenuImage(params: {
+    restaurantId: string;
+    menuItemId: string;
+    file: File;
+  }): Promise<{ path: string } | { error: Error }> {
+    const safe = params.file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+    const path = `${params.restaurantId}/items/${params.menuItemId}/${Date.now()}-${safe}`;
+    const res = await supabase.storage
+      .from("menu")
+      .upload(path, params.file, { upsert: true, contentType: params.file.type || undefined });
+    if (res.error) return { error: new Error(res.error.message) };
+    return { path };
+  }
 
   const categoryOptions = useMemo(() => {
     const opts: Array<{ id: string; name: string }> = [{ id: "", name: "(No category)" }];
@@ -194,11 +219,24 @@ export default function PosMenuManagerPage() {
 
     const categoryId = newItemCategoryId === "" ? null : newItemCategoryId;
 
+    let imagePath: string | undefined;
+    if (newItemImageFile) {
+      const tmpId = crypto.randomUUID();
+      const uploaded = await uploadMenuImage({ restaurantId, menuItemId: tmpId, file: newItemImageFile });
+      if ("error" in uploaded) {
+        setError(uploaded.error.message);
+        return;
+      }
+      imagePath = uploaded.path;
+    }
+
     const res = await addMenuItem({
       restaurant_id: restaurantId,
       category_id: categoryId,
       name,
+      description: newItemDescription,
       price,
+      image_path: imagePath,
       sku: newItemSku,
       barcode: newItemBarcode,
       department: newItemDepartment,
@@ -212,6 +250,7 @@ export default function PosMenuManagerPage() {
     }
 
     setNewItemName("");
+    setNewItemDescription("");
     setNewItemPrice("0.00");
     setNewItemCategoryId("");
     setNewItemSku("");
@@ -219,6 +258,7 @@ export default function PosMenuManagerPage() {
     setNewItemDepartment("");
     setNewItemUnit("");
     setNewItemIsWeighted(false);
+    setNewItemImageFile(null);
 
     await refresh(restaurantId);
   }
@@ -226,6 +266,7 @@ export default function PosMenuManagerPage() {
   function beginEditItem(it: MenuItem) {
     setEditingItemId(it.id);
     setEditingItemName(it.name);
+    setEditingItemDescription((it.description ?? "") as string);
     setEditingItemPrice(Number(it.price).toFixed(2));
     setEditingItemCategoryId(it.category_id ?? "");
     setEditingItemSku(it.sku ?? "");
@@ -234,11 +275,14 @@ export default function PosMenuManagerPage() {
     setEditingItemUnit(it.unit ?? "");
     setEditingItemIsWeighted(!!it.is_weighted);
     setEditingItemIsActive(!!it.is_active);
+    setEditingItemImagePath((it.image_path ?? null) as string | null);
+    setEditingItemImageFile(null);
   }
 
   function cancelEditItem() {
     setEditingItemId(null);
     setEditingItemName("");
+    setEditingItemDescription("");
     setEditingItemPrice("0.00");
     setEditingItemCategoryId("");
     setEditingItemSku("");
@@ -247,6 +291,8 @@ export default function PosMenuManagerPage() {
     setEditingItemUnit("");
     setEditingItemIsWeighted(false);
     setEditingItemIsActive(true);
+    setEditingItemImageFile(null);
+    setEditingItemImagePath(null);
   }
 
   async function onSaveItem() {
@@ -265,11 +311,23 @@ export default function PosMenuManagerPage() {
 
     const categoryId = editingItemCategoryId === "" ? null : editingItemCategoryId;
 
+    let imagePath = editingItemImagePath ?? undefined;
+    if (editingItemImageFile) {
+      const uploaded = await uploadMenuImage({ restaurantId, menuItemId: editingItemId, file: editingItemImageFile });
+      if ("error" in uploaded) {
+        setError(uploaded.error.message);
+        return;
+      }
+      imagePath = uploaded.path;
+    }
+
     const res = await updateMenuItem({
       id: editingItemId,
       category_id: categoryId,
       name,
+      description: editingItemDescription,
       price,
+      image_path: imagePath,
       sku: editingItemSku,
       barcode: editingItemBarcode,
       department: editingItemDepartment,
@@ -441,6 +499,14 @@ export default function PosMenuManagerPage() {
                 disabled={!canEdit}
               />
 
+              <textarea
+                className="min-h-[96px] w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 py-3 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                placeholder="Description (optional)"
+                value={newItemDescription}
+                onChange={(e) => setNewItemDescription(e.target.value)}
+                disabled={!canEdit}
+              />
+
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <input
                   className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
@@ -509,6 +575,17 @@ export default function PosMenuManagerPage() {
                 <span className="text-sm">Weighted item (sold by weight)</span>
               </label>
 
+              <label className="flex flex-col gap-2">
+                <span className="text-sm font-medium">Image (optional)</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={!canEdit}
+                  onChange={(e) => setNewItemImageFile(e.target.files?.[0] ?? null)}
+                  className="block w-full text-sm"
+                />
+              </label>
+
               <button
                 type="submit"
                 className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-4 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
@@ -528,6 +605,34 @@ export default function PosMenuManagerPage() {
                     value={editingItemName}
                     onChange={(e) => setEditingItemName(e.target.value)}
                   />
+
+                  <textarea
+                    className="min-h-[96px] w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 py-3 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                    placeholder="Description (optional)"
+                    value={editingItemDescription}
+                    onChange={(e) => setEditingItemDescription(e.target.value)}
+                  />
+
+                  {editingItemImagePath ? (
+                    <div className="rounded-2xl border border-[var(--mp-border)] bg-white p-3">
+                      <div className="text-xs font-semibold text-[var(--mp-muted)]">Current image</div>
+                      <img
+                        alt="Menu item"
+                        src={getMenuImageUrl(editingItemImagePath)}
+                        className="mt-2 h-32 w-32 rounded-xl object-cover"
+                      />
+                    </div>
+                  ) : null}
+
+                  <label className="flex flex-col gap-2">
+                    <span className="text-sm font-medium">Replace image (optional)</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setEditingItemImageFile(e.target.files?.[0] ?? null)}
+                      className="block w-full text-sm"
+                    />
+                  </label>
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <input
@@ -627,10 +732,30 @@ export default function PosMenuManagerPage() {
                     key={it.id}
                     className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3"
                   >
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold">{it.name}</div>
-                      <div className="mt-1 text-xs text-[var(--mp-muted)]">
-                        ${Number(it.price).toFixed(2)}{it.is_active ? "" : " • inactive"}
+                    <div className="flex min-w-0 items-center gap-3">
+                      {it.image_path ? (
+                        <img
+                          alt={it.name}
+                          src={getMenuImageUrl(it.image_path)}
+                          className="h-12 w-12 flex-none rounded-xl object-cover"
+                        />
+                      ) : null}
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold">{it.name}</div>
+                        {it.description ? (
+                          <div className="mt-1 line-clamp-2 text-xs text-[var(--mp-muted)]">
+                            {it.description}
+                          </div>
+                        ) : (
+                          <div className="mt-1 text-xs text-[var(--mp-muted)]">
+                            ${Number(it.price).toFixed(2)}{it.is_active ? "" : " • inactive"}
+                          </div>
+                        )}
+                        {!it.description ? null : (
+                          <div className="mt-1 text-xs text-[var(--mp-muted)]">
+                            ${Number(it.price).toFixed(2)}{it.is_active ? "" : " • inactive"}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">

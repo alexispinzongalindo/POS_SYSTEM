@@ -41,13 +41,16 @@ export type MenuItem = {
   restaurant_id: string;
   category_id: string | null;
   name: string;
+  description?: string | null;
   price: number;
+  image_path?: string | null;
   sku: string | null;
   barcode: string | null;
   department: string | null;
   unit: string | null;
   is_weighted: boolean;
   is_active: boolean;
+  sort_order?: number | null;
 };
 
 export type DeliveryProvider = "uber_direct" | "doordash_drive" | "aggregator";
@@ -241,12 +244,15 @@ export async function addMenuItem(input: {
   restaurant_id: string;
   category_id: string | null;
   name: string;
+  description?: string;
   price: number;
+  image_path?: string;
   sku?: string;
   barcode?: string;
   department?: string;
   unit?: string;
   is_weighted?: boolean;
+  sort_order?: number;
 }) {
   return supabase
     .from("menu_items")
@@ -254,13 +260,16 @@ export async function addMenuItem(input: {
       restaurant_id: input.restaurant_id,
       category_id: input.category_id,
       name: input.name,
+      description: input.description?.trim() || null,
       price: input.price,
+      image_path: input.image_path?.trim() || null,
       sku: input.sku?.trim() || null,
       barcode: input.barcode?.trim() || null,
       department: input.department?.trim() || null,
       unit: input.unit?.trim() || null,
       is_weighted: input.is_weighted ?? false,
       is_active: true,
+      sort_order: typeof input.sort_order === "number" ? input.sort_order : null,
     })
     .select("*")
     .maybeSingle<MenuItem>();
@@ -270,26 +279,32 @@ export async function updateMenuItem(input: {
   id: string;
   category_id: string | null;
   name: string;
+  description?: string;
   price: number;
+  image_path?: string;
   sku?: string;
   barcode?: string;
   department?: string;
   unit?: string;
   is_weighted?: boolean;
   is_active?: boolean;
+  sort_order?: number;
 }) {
   return supabase
     .from("menu_items")
     .update({
       category_id: input.category_id,
       name: input.name,
+      description: input.description?.trim() || null,
       price: input.price,
+      image_path: input.image_path?.trim() || null,
       sku: input.sku?.trim() || null,
       barcode: input.barcode?.trim() || null,
       department: input.department?.trim() || null,
       unit: input.unit?.trim() || null,
       is_weighted: input.is_weighted ?? false,
       is_active: input.is_active ?? true,
+      sort_order: typeof input.sort_order === "number" ? input.sort_order : null,
     })
     .eq("id", input.id)
     .select("*")
