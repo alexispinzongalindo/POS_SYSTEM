@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
@@ -51,6 +51,8 @@ type CartLine = {
 
 export default function PosPage() {
   const router = useRouter();
+
+  const openTicketsRef = useRef<HTMLDivElement | null>(null);
   const [tableQuery, setTableQuery] = useState<string | null>(null);
   const [offlineQuery, setOfflineQuery] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1229,6 +1231,24 @@ export default function PosPage() {
               Tables
             </button>
             <button
+              type="button"
+              onClick={() => {
+                openTicketsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className={`inline-flex h-11 items-center justify-center rounded-xl border px-5 text-sm font-semibold transition-colors ${
+                openNonTableTickets.length > 0
+                  ? "border-red-700 bg-red-600 text-white hover:bg-red-700"
+                  : "border-[var(--mp-border)] bg-white/90 text-[var(--mp-fg)] hover:bg-white"
+              }`}
+            >
+              <span>Manual Orders</span>
+              {openNonTableTickets.length > 0 ? (
+                <span className="ml-2 inline-flex items-center rounded-full bg-white/15 px-2 py-0.5 text-xs font-extrabold">
+                  MANUAL ORDER {openNonTableTickets.length}
+                </span>
+              ) : null}
+            </button>
+            <button
               onClick={() => router.push("/admin")}
               className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
             >
@@ -1401,7 +1421,7 @@ export default function PosPage() {
 
           <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-5 shadow-sm">
             {openNonTableTickets.length > 0 ? (
-              <div className="mb-4 rounded-2xl border border-[var(--mp-border)] bg-white p-3">
+              <div ref={openTicketsRef} className="mb-4 rounded-2xl border border-[var(--mp-border)] bg-white p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-semibold">Open tickets</div>
                   <div className="text-xs text-[var(--mp-muted)]">{openNonTableTickets.length}</div>
