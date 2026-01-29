@@ -49,6 +49,8 @@ export default function PosMenuManagerPage() {
   const [editingCategoryName, setEditingCategoryName] = useState<string>("");
   const [editingCategoryColor, setEditingCategoryColor] = useState<string>("#00b3a4");
 
+  const [savingCategoryColorId, setSavingCategoryColorId] = useState<string | null>(null);
+
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemName, setEditingItemName] = useState<string>("");
   const [editingItemDescription, setEditingItemDescription] = useState<string>("");
@@ -224,6 +226,27 @@ export default function PosMenuManagerPage() {
     setEditingCategoryId(null);
     setEditingCategoryName("");
     setEditingCategoryColor("#00b3a4");
+    setCategories(verify.data ?? []);
+  }
+
+  async function onChangeCategoryColor(categoryId: string, name: string, color: string) {
+    if (!restaurantId || !canEdit) return;
+    setError(null);
+    setSavingCategoryColorId(categoryId);
+
+    const res = await updateMenuCategory({ id: categoryId, name, color });
+    if (res.error) {
+      setSavingCategoryColorId(null);
+      setError(res.error.message);
+      return;
+    }
+
+    const verify = await listMenuCategories(restaurantId);
+    setSavingCategoryColorId(null);
+    if (verify.error) {
+      setError(verify.error.message);
+      return;
+    }
     setCategories(verify.data ?? []);
   }
 
@@ -518,6 +541,14 @@ export default function PosMenuManagerPage() {
                       <div className="text-sm font-semibold">{c.name}</div>
                     </div>
                     <div className="flex gap-2">
+                      <input
+                        className="h-9 w-12 rounded-xl border border-[var(--mp-border)] bg-white px-2"
+                        type="color"
+                        value={c.color ?? "#00b3a4"}
+                        onChange={(e) => void onChangeCategoryColor(c.id, c.name, e.target.value)}
+                        disabled={!canEdit || savingCategoryColorId === c.id}
+                        aria-label="Category color"
+                      />
                       <button
                         type="button"
                         onClick={() => {
