@@ -34,6 +34,7 @@ export type MenuCategory = {
   id: string;
   restaurant_id: string;
   name: string;
+  color?: string | null;
 };
 
 export type MenuItem = {
@@ -210,21 +211,58 @@ export async function listMenuCategories(restaurantId: string) {
     .returns<MenuCategory[]>();
 }
 
-export async function addMenuCategory(input: { restaurant_id: string; name: string }) {
-  return supabase
+export async function addMenuCategory(input: { restaurant_id: string; name: string; color?: string | null }) {
+  const payloadWithColor = {
+    restaurant_id: input.restaurant_id,
+    name: input.name,
+    color: Object.prototype.hasOwnProperty.call(input, "color") ? input.color ?? null : null,
+  };
+
+  const payloadWithoutColor = {
+    restaurant_id: input.restaurant_id,
+    name: input.name,
+  };
+
+  const res = await supabase
     .from("menu_categories")
-    .insert({ restaurant_id: input.restaurant_id, name: input.name })
+    .insert(payloadWithColor)
     .select("*")
     .maybeSingle<MenuCategory>();
+
+  if (res.error && res.error.message.toLowerCase().includes("color")) {
+    return supabase
+      .from("menu_categories")
+      .insert(payloadWithoutColor)
+      .select("*")
+      .maybeSingle<MenuCategory>();
+  }
+
+  return res;
 }
 
-export async function updateMenuCategory(input: { id: string; name: string }) {
-  return supabase
+export async function updateMenuCategory(input: { id: string; name: string; color?: string | null }) {
+  const updateWithMaybeColor = {
+    name: input.name,
+    ...(Object.prototype.hasOwnProperty.call(input, "color") ? { color: input.color ?? null } : {}),
+  };
+
+  const res = await supabase
     .from("menu_categories")
-    .update({ name: input.name })
+    .update(updateWithMaybeColor)
     .eq("id", input.id)
     .select("*")
     .maybeSingle<MenuCategory>();
+
+  if (res.error && Object.prototype.hasOwnProperty.call(input, "color") && res.error.message.toLowerCase().includes("color")) {
+    return supabase
+      .from("menu_categories")
+      .update({ name: input.name })
+      .eq("id", input.id)
+      .select("*")
+      .maybeSingle<MenuCategory>();
+  }
+
+  return res;
 }
 
 export async function deleteMenuCategory(categoryId: string) {

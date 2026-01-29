@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import MarketingLogo from "@/components/MarketingLogo";
 import { supabase } from "@/lib/supabaseClient";
 import { applyInventoryDelta } from "@/lib/inventory";
 import { loadInventory, type InventoryState } from "@/lib/inventory";
@@ -437,6 +438,24 @@ export default function PosPage() {
 
   function normalizeCode(value: string) {
     return value.trim().toLowerCase();
+  }
+
+  function parseHexColor(input: string) {
+    const hex = input.trim().replace(/^#/, "");
+    if (!/^[0-9a-fA-F]{6}$/.test(hex)) return null;
+    const r = Number.parseInt(hex.slice(0, 2), 16);
+    const g = Number.parseInt(hex.slice(2, 4), 16);
+    const b = Number.parseInt(hex.slice(4, 6), 16);
+    if (![r, g, b].every((n) => Number.isFinite(n))) return null;
+    return { r, g, b };
+  }
+
+  function chooseTextColor(bgHex: string) {
+    const rgb = parseHexColor(bgHex);
+    if (!rgb) return "#ffffff";
+    const { r, g, b } = rgb;
+    const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    return luminance > 0.62 ? "#0f172a" : "#ffffff";
   }
 
   async function addByCode(code: string) {
@@ -1222,7 +1241,9 @@ export default function PosPage() {
       <div className="mx-auto w-full max-w-6xl px-6 py-10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-semibold tracking-tight">POS</h1>
+            <div className="inline-flex items-center gap-3 text-3xl font-semibold tracking-tight">
+              <MarketingLogo className="shrink-0" size={44} variant="lockup" />
+            </div>
             <p className="text-sm text-[var(--mp-muted)]">Add items and place an order.</p>
           </div>
           <div className="flex gap-2">
@@ -1368,11 +1389,20 @@ export default function PosPage() {
                       key={c.id}
                       type="button"
                       onClick={() => setActiveCategoryId(c.id)}
-                      className={`inline-flex h-10 items-center justify-center rounded-full border px-4 text-sm font-semibold transition-colors ${
+                      style={
                         activeCategoryId === c.id
-                          ? "border-[var(--mp-primary)] bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]"
-                          : "border-[var(--mp-border)] bg-white text-[var(--mp-fg)] hover:bg-black/[0.03]"
-                      }`}
+                          ? {
+                              backgroundColor: c.color ?? "#00b3a4",
+                              borderColor: c.color ?? "#00b3a4",
+                              color: chooseTextColor(c.color ?? "#00b3a4"),
+                            }
+                          : {
+                              backgroundColor: "#ffffff",
+                              borderColor: c.color ?? "var(--mp-border)",
+                              color: c.color ?? "var(--mp-fg)",
+                            }
+                      }
+                      className={`inline-flex h-10 items-center justify-center rounded-full border px-4 text-sm font-semibold transition-colors hover:bg-black/[0.03]`}
                     >
                       {c.name}
                     </button>

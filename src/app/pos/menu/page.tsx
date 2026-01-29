@@ -33,6 +33,7 @@ export default function PosMenuManagerPage() {
   const [items, setItems] = useState<MenuItem[]>([]);
 
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryColor, setNewCategoryColor] = useState<string>("#00b3a4");
   const [newItemName, setNewItemName] = useState("");
   const [newItemDescription, setNewItemDescription] = useState("");
   const [newItemPrice, setNewItemPrice] = useState("0.00");
@@ -46,6 +47,7 @@ export default function PosMenuManagerPage() {
 
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState<string>("");
+  const [editingCategoryColor, setEditingCategoryColor] = useState<string>("#00b3a4");
 
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemName, setEditingItemName] = useState<string>("");
@@ -161,13 +163,14 @@ export default function PosMenuManagerPage() {
     const name = newCategoryName.trim();
     if (!name) return;
 
-    const res = await addMenuCategory({ restaurant_id: restaurantId, name });
+    const res = await addMenuCategory({ restaurant_id: restaurantId, name, color: newCategoryColor });
     if (res.error) {
       setError(res.error.message);
       return;
     }
 
     setNewCategoryName("");
+    setNewCategoryColor("#00b3a4");
     await refresh(restaurantId);
   }
 
@@ -179,7 +182,7 @@ export default function PosMenuManagerPage() {
     const name = editingCategoryName.trim();
     if (!name) return;
 
-    const res = await updateMenuCategory({ id: editingCategoryId, name });
+    const res = await updateMenuCategory({ id: editingCategoryId, name, color: editingCategoryColor });
     if (res.error) {
       setError(res.error.message);
       return;
@@ -187,6 +190,7 @@ export default function PosMenuManagerPage() {
 
     setEditingCategoryId(null);
     setEditingCategoryName("");
+    setEditingCategoryColor("#00b3a4");
     await refresh(restaurantId);
   }
 
@@ -408,6 +412,14 @@ export default function PosMenuManagerPage() {
                 onChange={(e) => setNewCategoryName(e.target.value)}
                 disabled={!canEdit}
               />
+              <input
+                className="h-11 w-14 rounded-xl border border-[var(--mp-border)] bg-white px-2"
+                type="color"
+                value={newCategoryColor}
+                onChange={(e) => setNewCategoryColor(e.target.value)}
+                disabled={!canEdit}
+                aria-label="Category color"
+              />
               <button
                 type="submit"
                 className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-4 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
@@ -426,6 +438,13 @@ export default function PosMenuManagerPage() {
                     value={editingCategoryName}
                     onChange={(e) => setEditingCategoryName(e.target.value)}
                   />
+                  <input
+                    className="h-11 w-14 rounded-xl border border-[var(--mp-border)] bg-white px-2"
+                    type="color"
+                    value={editingCategoryColor}
+                    onChange={(e) => setEditingCategoryColor(e.target.value)}
+                    aria-label="Category color"
+                  />
                   <button
                     type="button"
                     onClick={() => void onSaveCategory()}
@@ -439,6 +458,7 @@ export default function PosMenuManagerPage() {
                     onClick={() => {
                       setEditingCategoryId(null);
                       setEditingCategoryName("");
+                      setEditingCategoryColor("#00b3a4");
                     }}
                     className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white"
                   >
@@ -457,13 +477,20 @@ export default function PosMenuManagerPage() {
                     key={c.id}
                     className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3"
                   >
-                    <div className="text-sm font-semibold">{c.name}</div>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="h-3 w-3 rounded-full border border-[var(--mp-border)]"
+                        style={{ backgroundColor: c.color ?? "#00b3a4" }}
+                      />
+                      <div className="text-sm font-semibold">{c.name}</div>
+                    </div>
                     <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={() => {
                           setEditingCategoryId(c.id);
                           setEditingCategoryName(c.name);
+                          setEditingCategoryColor(c.color ?? "#00b3a4");
                         }}
                         disabled={!canEdit}
                         className="inline-flex h-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-3 text-xs font-semibold hover:bg-white disabled:opacity-60"
