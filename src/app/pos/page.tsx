@@ -53,7 +53,6 @@ type CartLine = {
 export default function PosPage() {
   const router = useRouter();
 
-  const openTicketsRef = useRef<HTMLDivElement | null>(null);
   const [showOpenTickets, setShowOpenTickets] = useState(false);
   const [tableQuery, setTableQuery] = useState<string | null>(null);
   const [offlineQuery, setOfflineQuery] = useState<string | null>(null);
@@ -1272,20 +1271,15 @@ export default function PosPage() {
             <button
               type="button"
               onClick={() => {
-                if (openNonTableTickets.length === 0) return;
-                setShowOpenTickets((prev) => !prev);
-                window.setTimeout(() => {
-                  openTicketsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }, 0);
+                setShowOpenTickets(true);
               }}
-              className={`inline-flex h-11 items-center justify-center rounded-xl border px-5 text-sm font-semibold transition-colors ${
-                openNonTableTickets.length > 0
-                  ? "border-red-700 bg-red-600 text-white hover:bg-red-700"
-                  : "border-[var(--mp-border)] bg-white/90 text-[var(--mp-fg)] hover:bg-white"
-              }`}
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white disabled:opacity-60"
+              disabled={openNonTableTickets.length === 0}
             >
-              <span>Manual Orders</span>
-              {openNonTableTickets.length > 0 ? <span className="ml-2 text-xs font-extrabold">{openNonTableTickets.length}</span> : null}
+              <span>Open tickets</span>
+              <span className="ml-2 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--mp-primary)] px-2 text-xs font-extrabold text-[var(--mp-primary-contrast)]">
+                {openNonTableTickets.length}
+              </span>
             </button>
             <button
               onClick={() => router.push("/admin")}
@@ -1468,38 +1462,6 @@ export default function PosPage() {
           </div>
 
           <div className="flex flex-col rounded-3xl border border-[var(--mp-border)] bg-white p-5 shadow-sm">
-            {showOpenTickets && openNonTableTickets.length > 0 ? (
-              <div ref={openTicketsRef} className="mb-4 rounded-2xl border border-[var(--mp-border)] bg-white p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm font-semibold">Open tickets</div>
-                  <div className="text-xs text-[var(--mp-muted)]">{openNonTableTickets.length}</div>
-                </div>
-                <div className="mt-3 grid gap-2">
-                  {openNonTableTickets.slice(0, 8).map((t) => {
-                    const label = (t.customer_name ?? "").trim() || (t.ticket_no != null ? `#${t.ticket_no}` : t.id.slice(0, 8));
-                    return (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => void openOrder(t.id)}
-                        className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left text-sm font-semibold transition-colors hover:bg-black/[0.03] ${
-                          activeOrderId === t.id ? "border-[var(--mp-primary)] bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]" : "border-[var(--mp-border)] bg-white"
-                        }`}
-                      >
-                        <span className="truncate">{label}</span>
-                        <span className={`shrink-0 text-xs ${activeOrderId === t.id ? "opacity-90" : "text-[var(--mp-muted)]"}`}>
-                          {(t.order_type ?? "counter").replace("_", " ")}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-                {openNonTableTickets.length > 8 ? (
-                  <div className="mt-2 text-xs text-[var(--mp-muted)]">Showing first 8 open tickets</div>
-                ) : null}
-              </div>
-            ) : null}
-
             <div className="min-h-0 flex-1 overflow-auto pr-1">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -1512,32 +1474,32 @@ export default function PosPage() {
               </div>
 
               <div className="mt-4 grid gap-3">
-              <div className="grid grid-cols-2 gap-2">
-                <select
-                  value={orderType}
-                  onChange={(e) => setOrderType(e.target.value as OrderType)}
-                  className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                >
-                  <option value="counter">Counter</option>
-                  <option value="pickup">Pickup</option>
-                  <option value="delivery">Delivery</option>
-                  <option value="dine_in">Dine-in</option>
-                </select>
-                <input
-                  value={scanCode}
-                  onChange={(e) => setScanCode(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key !== "Enter") return;
-                    e.preventDefault();
-                    setError(null);
-                    setSuccess(null);
-                    void addByCode(scanCode);
-                    setScanCode("");
-                  }}
-                  placeholder="Scan barcode / SKU"
-                  className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                />
-              </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    value={orderType}
+                    onChange={(e) => setOrderType(e.target.value as OrderType)}
+                    className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                  >
+                    <option value="counter">Counter</option>
+                    <option value="pickup">Pickup</option>
+                    <option value="delivery">Delivery</option>
+                    <option value="dine_in">Dine-in</option>
+                  </select>
+                  <input
+                    value={scanCode}
+                    onChange={(e) => setScanCode(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key !== "Enter") return;
+                      e.preventDefault();
+                      setError(null);
+                      setSuccess(null);
+                      void addByCode(scanCode);
+                      setScanCode("");
+                    }}
+                    placeholder="Scan barcode / SKU"
+                    className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                  />
+                </div>
 
               {orderType === "dine_in" ? (
                 <input
@@ -1736,6 +1698,65 @@ export default function PosPage() {
           </div>
         </div>
       </div>
+
+      {showOpenTickets ? (
+        <div className="fixed inset-0 z-50">
+          <button
+            type="button"
+            onClick={() => setShowOpenTickets(false)}
+            className="absolute inset-0 bg-black/30"
+            aria-label="Close"
+          />
+          <div className="absolute right-0 top-0 h-full w-full max-w-md border-l border-[var(--mp-border)] bg-white shadow-xl">
+            <div className="flex items-center justify-between gap-3 border-b border-[var(--mp-border)] px-5 py-4">
+              <div>
+                <div className="text-sm font-semibold text-[var(--mp-fg)]">Open tickets</div>
+                <div className="mt-1 text-xs text-[var(--mp-muted)]">{openNonTableTickets.length} open</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowOpenTickets(false)}
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-xs font-semibold hover:bg-white"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="p-5">
+              {openNonTableTickets.length === 0 ? (
+                <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3 text-sm text-[var(--mp-muted)]">
+                  No open tickets.
+                </div>
+              ) : (
+                <div className="grid gap-2">
+                  {openNonTableTickets.map((t) => {
+                    const label =
+                      (t.customer_name ?? "").trim() ||
+                      (t.ticket_no != null ? `#${t.ticket_no}` : t.id.slice(0, 8));
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => {
+                          void openOrder(t.id);
+                          setShowOpenTickets(false);
+                        }}
+                        className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3 text-left hover:bg-black/[0.03]"
+                      >
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold text-[var(--mp-fg)]">{label}</div>
+                          <div className="mt-1 text-xs text-[var(--mp-muted)]">{t.order_type ?? "counter"}</div>
+                        </div>
+                        <div className="text-xs font-semibold text-[var(--mp-primary)]">Open</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {showPaymentModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
