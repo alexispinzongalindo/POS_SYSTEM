@@ -247,6 +247,13 @@ export default function PosMenuManagerPage() {
       setError(verify.error.message);
       return;
     }
+    const updated = (verify.data ?? []).find((c) => c.id === categoryId);
+    const persistedColor = (updated as MenuCategory | undefined)?.color ?? null;
+    if (persistedColor !== color) {
+      setError(
+        "Category color could not be saved. Your deployed Supabase database likely does not have the menu_categories.color column (or the app is pointing to a different Supabase project). Run: alter table public.menu_categories add column if not exists color text;",
+      );
+    }
     setCategories(verify.data ?? []);
   }
 
