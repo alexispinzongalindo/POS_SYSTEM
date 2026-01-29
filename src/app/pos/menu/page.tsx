@@ -163,15 +163,32 @@ export default function PosMenuManagerPage() {
     const name = newCategoryName.trim();
     if (!name) return;
 
-    const res = await addMenuCategory({ restaurant_id: restaurantId, name, color: newCategoryColor });
+    const desiredColor = newCategoryColor;
+
+    const res = await addMenuCategory({ restaurant_id: restaurantId, name, color: desiredColor });
     if (res.error) {
       setError(res.error.message);
       return;
     }
 
+    const verify = await listMenuCategories(restaurantId);
+    if (verify.error) {
+      setError(verify.error.message);
+      return;
+    }
+
+    const createdId = res.data?.id ?? null;
+    const persisted = createdId ? (verify.data ?? []).find((c) => c.id === createdId) : null;
+    const persistedColor = (persisted as MenuCategory | null)?.color ?? null;
+    if (createdId && persisted && persistedColor !== desiredColor) {
+      setError(
+        "Category color could not be saved. Your deployed Supabase database likely does not have the menu_categories.color column (or the app is pointing to a different Supabase project). Run: alter table public.menu_categories add column if not exists color text;",
+      );
+    }
+
     setNewCategoryName("");
     setNewCategoryColor("#00b3a4");
-    await refresh(restaurantId);
+    setCategories(verify.data ?? []);
   }
 
   async function onSaveCategory() {
@@ -182,16 +199,32 @@ export default function PosMenuManagerPage() {
     const name = editingCategoryName.trim();
     if (!name) return;
 
-    const res = await updateMenuCategory({ id: editingCategoryId, name, color: editingCategoryColor });
+    const desiredColor = editingCategoryColor;
+
+    const res = await updateMenuCategory({ id: editingCategoryId, name, color: desiredColor });
     if (res.error) {
       setError(res.error.message);
       return;
     }
 
+    const verify = await listMenuCategories(restaurantId);
+    if (verify.error) {
+      setError(verify.error.message);
+      return;
+    }
+
+    const updated = (verify.data ?? []).find((c) => c.id === res.data?.id);
+    const persistedColor = (updated as MenuCategory | undefined)?.color ?? null;
+    if (res.data?.id && persistedColor !== desiredColor) {
+      setError(
+        "Category color could not be saved. Your deployed Supabase database likely does not have the menu_categories.color column (or the app is pointing to a different Supabase project). Run: alter table public.menu_categories add column if not exists color text;",
+      );
+    }
+
     setEditingCategoryId(null);
     setEditingCategoryName("");
     setEditingCategoryColor("#00b3a4");
-    await refresh(restaurantId);
+    setCategories(verify.data ?? []);
   }
 
   async function onDeleteCategory(categoryId: string) {

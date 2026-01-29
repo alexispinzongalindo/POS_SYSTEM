@@ -6,6 +6,10 @@ alter table if exists public.menu_items
   add column if not exists image_path text,
   add column if not exists sort_order int;
 
+-- 1b) Menu category metadata
+alter table if exists public.menu_categories
+  add column if not exists color text;
+
 -- 2) Modifier groups (e.g. "Choose a side")
 create table if not exists public.modifier_groups (
   id uuid primary key default gen_random_uuid(),

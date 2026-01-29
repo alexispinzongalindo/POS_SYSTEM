@@ -1372,7 +1372,7 @@ export default function PosPage() {
                     onClick={() => setActiveCategoryId("all")}
                     className={`inline-flex h-10 items-center justify-center rounded-full border px-4 text-sm font-semibold transition-colors ${
                       activeCategoryId === "all"
-                        ? "border-[var(--mp-primary)] bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]"
+                        ? "border-[var(--mp-primary)] bg-[var(--mp-primary)] text-black"
                         : "border-[var(--mp-border)] bg-white text-[var(--mp-fg)] hover:bg-black/[0.03]"
                     }`}
                   >
@@ -1388,7 +1388,7 @@ export default function PosPage() {
                           ? {
                               backgroundColor: c.color ?? "#00b3a4",
                               borderColor: c.color ?? "#00b3a4",
-                              color: chooseTextColor(c.color ?? "#00b3a4"),
+                              color: "#000000",
                             }
                           : {
                               backgroundColor: "#ffffff",
