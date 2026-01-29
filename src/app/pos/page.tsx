@@ -1276,7 +1276,7 @@ export default function PosPage() {
               className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white disabled:opacity-60"
               disabled={openNonTableTickets.length === 0}
             >
-              <span>Open tickets</span>
+              <span className="text-red-600">Open tickets</span>
               <span className="ml-2 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--mp-primary)] px-2 text-xs font-extrabold text-[var(--mp-primary-contrast)]">
                 {openNonTableTickets.length}
               </span>

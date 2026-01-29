@@ -56,13 +56,82 @@ export default function Home() {
           </div>
 
           <div className="mt-8">
-            <div className="mx-auto w-full max-w-4xl overflow-hidden rounded-3xl border border-[var(--mp-border)] bg-[var(--mp-surface)] shadow-[0_30px_80px_rgba(0,0,0,0.12)]">
-              <div className="relative grid place-items-center p-4 sm:p-6">
-                <img
-                  alt={lang === "es" ? "Vista del POS" : "POS preview"}
-                  src="/hero/PART2.png"
-                  className="w-full max-w-[920px] max-h-[70vh] rounded-2xl object-contain"
-                />
+            <div className="mx-auto w-full max-w-6xl overflow-hidden rounded-3xl border border-[var(--mp-border)] bg-[var(--mp-surface)] shadow-[0_30px_80px_rgba(0,0,0,0.12)]">
+              <div className="grid gap-6 p-4 sm:p-6 lg:grid-cols-12 lg:items-stretch">
+                <div className="relative grid place-items-center rounded-2xl border border-[var(--mp-border)] bg-white/60 p-3 lg:col-span-7">
+                  <img
+                    alt={lang === "es" ? "Vista del POS" : "POS preview"}
+                    src="/hero/PART2.png"
+                    className="w-full max-h-[70vh] rounded-2xl object-contain"
+                  />
+                </div>
+
+                <div className="grid gap-4 lg:col-span-5">
+                  <MarketingCard
+                    title={lang === "es" ? "Hecho para el flujo real" : "Built for real workflow"}
+                    description={
+                      lang === "es"
+                        ? "Toma órdenes, maneja mesas y continúa donde lo dejaste — sin complicar a tu equipo."
+                        : "Take orders, manage tables, and pick up where you left off — without slowing your team down."
+                    }
+                    className="p-5"
+                  >
+                    <div className="grid gap-2 text-sm text-[var(--mp-muted)]">
+                      <div className="flex items-start gap-2">
+                        <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--mp-primary)]" />
+                        <span>{lang === "es" ? "Mesas + tickets abiertos" : "Tables + open tickets"}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--mp-primary)]" />
+                        <span>{lang === "es" ? "Búsqueda de productos + categorías" : "Item search + categories"}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--mp-primary)]" />
+                        <span>{lang === "es" ? "Barcode / SKU" : "Barcode / SKU"}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--mp-primary)]" />
+                        <span>{lang === "es" ? "Setup IVU y negocio" : "IVU + business setup"}</span>
+                      </div>
+                    </div>
+                  </MarketingCard>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <MarketingCard
+                      title={lang === "es" ? "Nuevo" : "New"}
+                      description={
+                        lang === "es"
+                          ? "Tickets abiertos: regresa a una orden en segundos."
+                          : "Open tickets: resume any order in seconds."
+                      }
+                      className="p-5"
+                    />
+                    <MarketingCard
+                      title={lang === "es" ? "Soporte" : "Support"}
+                      description={
+                        lang === "es"
+                          ? "Ayuda real para arrancar (onboarding + entrenamiento)."
+                          : "Real help to go live (onboarding + training)."
+                      }
+                      className="p-5"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <a
+                      className="inline-flex h-11 flex-1 items-center justify-center rounded-lg bg-[var(--mp-primary)] px-6 text-sm font-medium text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
+                      href="/login?mode=signup"
+                    >
+                      {lang === "es" ? "Empieza la prueba" : "Start free trial"}
+                    </a>
+                    <a
+                      className="inline-flex h-11 flex-1 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-white px-6 text-sm font-medium text-[var(--mp-fg)] hover:bg-black/[0.03] focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
+                      href="/features"
+                    >
+                      {lang === "es" ? "Ver funciones" : "See features"}
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
