@@ -6,6 +6,23 @@ import { useRouter } from "next/navigation";
 import { getOrCreateAppConfig } from "@/lib/appConfig";
 import { supabase } from "@/lib/supabaseClient";
 
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  if (err && typeof err === "object") {
+    const maybeMsg = (err as { message?: unknown }).message;
+    if (typeof maybeMsg === "string" && maybeMsg.trim().length > 0) return maybeMsg;
+    const maybeDesc = (err as { error_description?: unknown }).error_description;
+    if (typeof maybeDesc === "string" && maybeDesc.trim().length > 0) return maybeDesc;
+    try {
+      return JSON.stringify(err);
+    } catch {
+      return "Auth callback failed";
+    }
+  }
+  return "Auth callback failed";
+}
+
 export default function AuthCallbackPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +37,8 @@ export default function AuthCallbackPage() {
         if (typeof window === "undefined") return;
 
         const url = new URL(window.location.href);
+        const errorParam = url.searchParams.get("error") ?? null;
+        const errorDescription = url.searchParams.get("error_description") ?? null;
         const code = url.searchParams.get("code");
 
         // Supabase invite + magic link flows often return tokens in the URL hash.
@@ -27,6 +46,12 @@ export default function AuthCallbackPage() {
         const hashParams = new URLSearchParams(hash);
         const access_token = hashParams.get("access_token");
         const refresh_token = hashParams.get("refresh_token");
+        const hashError = hashParams.get("error");
+        const hashErrorDescription = hashParams.get("error_description");
+
+        if (errorParam || errorDescription || hashError || hashErrorDescription) {
+          throw new Error(errorDescription ?? hashErrorDescription ?? errorParam ?? hashError ?? "Auth callback failed");
+        }
 
         if (code) {
           const { error: exErr } = await supabase.auth.exchangeCodeForSession(code);
@@ -34,6 +59,8 @@ export default function AuthCallbackPage() {
         } else if (access_token && refresh_token) {
           const { error: setErr } = await supabase.auth.setSession({ access_token, refresh_token });
           if (setErr) throw setErr;
+        } else {
+          throw new Error("Missing auth callback parameters (no code or session tokens returned)");
         }
 
         const { data, error: sessErr } = await supabase.auth.getSession();
@@ -61,7 +88,7 @@ export default function AuthCallbackPage() {
 
         router.replace("/admin");
       } catch (e) {
-        const msg = e instanceof Error ? e.message : "Auth callback failed";
+        const msg = getErrorMessage(e);
         if (!cancelled) setError(msg);
       }
     }

@@ -1,5 +1,20 @@
 import { supabase } from "@/lib/supabaseClient";
 
+function normalizeError(err: unknown): Error {
+  if (err instanceof Error) return err;
+  if (typeof err === "string") return new Error(err);
+  if (err && typeof err === "object") {
+    const maybeMsg = (err as { message?: unknown }).message;
+    if (typeof maybeMsg === "string" && maybeMsg.trim().length > 0) return new Error(maybeMsg);
+    try {
+      return new Error(JSON.stringify(err));
+    } catch {
+      return new Error("Unknown error");
+    }
+  }
+  return new Error("Unknown error");
+}
+
 export type AppConfig = {
   id: number;
   owner_user_id: string;
@@ -14,7 +29,7 @@ export async function getOrCreateAppConfig(userId: string) {
     .eq("owner_user_id", userId)
     .maybeSingle<AppConfig>();
 
-  if (existing.error) return { data: null as AppConfig | null, error: existing.error };
+  if (existing.error) return { data: null as AppConfig | null, error: normalizeError(existing.error) };
 
   if (existing.data) return { data: existing.data, error: null };
 
@@ -24,7 +39,7 @@ export async function getOrCreateAppConfig(userId: string) {
     .select("id, owner_user_id, restaurant_id, setup_complete")
     .maybeSingle<AppConfig>();
 
-  return { data: created.data ?? null, error: created.error };
+  return { data: created.data ?? null, error: created.error ? normalizeError(created.error) : null };
 }
 
 export async function setSetupComplete(value: boolean) {
@@ -44,7 +59,7 @@ export async function setSetupComplete(value: boolean) {
     .select("id, owner_user_id, restaurant_id, setup_complete")
     .maybeSingle<AppConfig>();
 
-  return { data: updated.data ?? null, error: updated.error };
+  return { data: updated.data ?? null, error: updated.error ? normalizeError(updated.error) : null };
 }
 
 export async function setRestaurantId(restaurantId: string) {
@@ -73,7 +88,7 @@ export async function setRestaurantId(restaurantId: string) {
       .eq("id", restaurantId)
       .maybeSingle<{ id: string; owner_user_id: string }>();
 
-    if (owned.error) return { data: null as AppConfig | null, error: owned.error };
+    if (owned.error) return { data: null as AppConfig | null, error: normalizeError(owned.error) };
     if (!owned.data) return { data: null as AppConfig | null, error: new Error("Restaurant not found") };
     if (owned.data.owner_user_id !== userId) {
       return { data: null as AppConfig | null, error: new Error("Forbidden: not restaurant owner") };
@@ -90,5 +105,5 @@ export async function setRestaurantId(restaurantId: string) {
     .select("id, owner_user_id, restaurant_id, setup_complete")
     .maybeSingle<AppConfig>();
 
-  return { data: updated.data ?? null, error: updated.error };
+  return { data: updated.data ?? null, error: updated.error ? normalizeError(updated.error) : null };
 }
