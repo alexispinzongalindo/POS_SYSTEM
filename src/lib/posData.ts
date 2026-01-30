@@ -106,6 +106,7 @@ export type OrderSummary = {
   status: string;
   total: number;
   created_at: string;
+  updated_at?: string;
   order_type?: OrderType | null;
   customer_name?: string | null;
   delivery_status?: string | null;
@@ -264,7 +265,7 @@ export async function listKitchenOrders(restaurantId: string) {
   return supabase
     .from("orders")
     .select(
-      "id, ticket_no, status, total, created_at, order_type, customer_name"
+      "id, ticket_no, status, total, created_at, updated_at, order_type, customer_name"
     )
     .eq("restaurant_id", restaurantId)
     .in("status", ["open", "preparing", "ready"])

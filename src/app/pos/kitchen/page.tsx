@@ -15,7 +15,7 @@ import {
 } from "@/lib/posData";
 
 const STATUS_COLORS: Record<string, string> = {
-  open: "border-blue-400 bg-blue-50",
+  open: "border-red-400 bg-red-50",
   preparing: "border-yellow-400 bg-yellow-50",
   ready: "border-green-400 bg-green-50",
 };
@@ -163,6 +163,10 @@ export default function KitchenDisplayPage() {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   }
 
+  function getStatusStartAt(order: KitchenOrder) {
+    return order.updated_at ?? order.created_at;
+  }
+
   // Update elapsed time every second
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -222,7 +226,7 @@ export default function KitchenDisplayPage() {
         {/* New Orders Column */}
         <div>
           <div className="mb-3 flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-blue-400" />
+            <div className="h-3 w-3 rounded-full bg-red-500" />
             <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
               New ({newOrders.length})
             </h2>
@@ -302,6 +306,9 @@ function OrderCard({
   onStatusChange: (orderId: string, status: OrderStatus) => void;
   getElapsedTime: (dateStr: string) => string;
 }) {
+  const statusStartAt = order.updated_at ?? order.created_at;
+  const statusElapsed = getElapsedTime(statusStartAt);
+
   return (
     <div
       className={`rounded-xl border-2 p-4 ${STATUS_COLORS[order.status] ?? "border-zinc-600 bg-zinc-800"}`}
@@ -350,9 +357,12 @@ function OrderCard({
         {order.status === "open" ? (
           <button
             onClick={() => onStatusChange(order.id, "preparing")}
-            className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white hover:bg-emerald-700 active:bg-emerald-800"
+            className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-semibold text-white hover:bg-red-700 active:bg-red-800"
           >
-            Start
+            <span className="flex items-center justify-center gap-2">
+              <span>Start</span>
+              <span className="tabular-nums">{statusElapsed}</span>
+            </span>
           </button>
         ) : null}
         {order.status === "preparing" ? (
@@ -360,7 +370,10 @@ function OrderCard({
             onClick={() => onStatusChange(order.id, "ready")}
             className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white hover:bg-emerald-700 active:bg-emerald-800"
           >
-            Ready
+            <span className="flex items-center justify-center gap-2">
+              <span>Ready</span>
+              <span className="tabular-nums">{statusElapsed}</span>
+            </span>
           </button>
         ) : null}
         {order.status === "ready" ? (
@@ -368,7 +381,10 @@ function OrderCard({
             onClick={() => onStatusChange(order.id, "paid")}
             className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white hover:bg-emerald-700 active:bg-emerald-800"
           >
-            Done
+            <span className="flex items-center justify-center gap-2">
+              <span>Done</span>
+              <span className="tabular-nums">{statusElapsed}</span>
+            </span>
           </button>
         ) : null}
       </div>
