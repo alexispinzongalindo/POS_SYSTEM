@@ -370,7 +370,7 @@ function OrderCard({
             {STATUS_LABELS[order.status] ?? order.status.toUpperCase()}
           </span>
         </div>
-        <span className="text-lg font-bold tabular-nums text-yellow-500 animate-pulse">{getElapsedTime(order.created_at)}</span>
+        <span className="text-lg font-bold tabular-nums text-red-600 animate-pulse">{getElapsedTime(order.created_at)}</span>
       </div>
 
       {/* Order Type & Customer */}
@@ -408,7 +408,7 @@ function OrderCard({
           >
             <span className="flex items-center justify-center gap-2">
               <span>Start</span>
-              <span className="tabular-nums">{statusElapsed}</span>
+              <span className="tabular-nums text-red-200">{statusElapsed}</span>
             </span>
           </button>
         ) : null}
@@ -419,7 +419,7 @@ function OrderCard({
           >
             <span className="flex items-center justify-center gap-2">
               <span>Ready</span>
-              <span className="tabular-nums">{statusElapsed}</span>
+              <span className="tabular-nums text-red-200">{statusElapsed}</span>
             </span>
           </button>
         ) : null}
@@ -430,7 +430,7 @@ function OrderCard({
           >
             <span className="flex items-center justify-center gap-2">
               <span>Done</span>
-              <span className="tabular-nums">{statusElapsed}</span>
+              <span className="tabular-nums text-red-200">{statusElapsed}</span>
             </span>
           </button>
         ) : null}
