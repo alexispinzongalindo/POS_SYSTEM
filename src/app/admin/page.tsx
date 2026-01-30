@@ -361,6 +361,35 @@ export default function AdminPage() {
             <div className="flex items-start gap-3">
               <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <path d="M7 7h.01" />
+                  <path d="M17 7h.01" />
+                  <path d="M7 17h.01" />
+                  <path d="M17 17h.01" />
+                  <path d="M7 12h10" />
+                  <path d="M12 7v10" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[var(--mp-fg)]">QR Code Menu</h2>
+                <p className="mt-1 text-sm text-[var(--mp-muted)]">Generate QR codes for customers to view your menu.</p>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <button
+                onClick={() => router.push("/admin/qr-menu")}
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+              >
+                Generate QR code
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M7 2h10" />
                   <path d="M12 2v20" />
                   <path d="M7 7h10" />
