@@ -415,7 +415,7 @@ function OrderCard({
         {order.status === "preparing" ? (
           <button
             onClick={() => onStatusChange(order.id, "ready")}
-            className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white hover:bg-emerald-700 active:bg-emerald-800"
+            className="flex-1 rounded-lg bg-yellow-500 py-2 text-sm font-semibold text-white hover:bg-yellow-600 active:bg-yellow-700"
           >
             <span className="flex items-center justify-center gap-2">
               <span>Ready</span>
