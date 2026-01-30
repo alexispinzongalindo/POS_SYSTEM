@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getOrCreateAppConfig } from "@/lib/appConfig";
 import {
-  deleteOrders,
   listAllOrders,
   getOrderItems,
   updateOrderStatus,
@@ -175,9 +174,25 @@ export default function AdminOrdersPage() {
     setDeleting(true);
     setError(null);
     try {
-      const res = await deleteOrders(ids);
-      if (res.error) {
-        setError(res.error.message);
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token ?? null;
+      if (!token) {
+        router.replace("/login");
+        return;
+      }
+
+      const r = await fetch("/api/admin/orders", {
+        method: "DELETE",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ orderIds: ids }),
+      });
+
+      const payload = (await r.json().catch(() => null)) as { error?: string } | null;
+      if (!r.ok) {
+        setError(payload?.error ?? "Failed to delete transactions");
         return;
       }
 
