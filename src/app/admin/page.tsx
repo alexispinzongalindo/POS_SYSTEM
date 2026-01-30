@@ -172,10 +172,10 @@ export default function AdminPage() {
                 View orders
               </button>
               <button
-                onClick={() => router.push("/pos/kitchen")}
+                onClick={() => router.push("/admin/kds")}
                 className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-zinc-50"
               >
-                Kitchen
+                KDS QR Codes
               </button>
             </div>
           </div>

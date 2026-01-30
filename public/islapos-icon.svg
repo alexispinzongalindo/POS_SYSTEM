@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="512" height="512" fill="none">
+  <defs>
+    <linearGradient id="islapos-core" x1="14" y1="12" x2="34" y2="36" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E11D48" />
+      <stop offset="0.5" stop-color="#6D28D9" />
+      <stop offset="1" stop-color="#1D4ED8" />
+    </linearGradient>
+  </defs>
+  <circle cx="24" cy="24" r="9" fill="url(#islapos-core)" />
+  <circle cx="24" cy="24" r="14" stroke="url(#islapos-core)" stroke-width="4" fill="none" />
+  <path d="M8 18H20" stroke="url(#islapos-core)" stroke-width="4" stroke-linecap="round" />
+  <path d="M8 30H20" stroke="url(#islapos-core)" stroke-width="4" stroke-linecap="round" />
+  <path d="M28 24H40" stroke="url(#islapos-core)" stroke-width="4" stroke-linecap="round" />
+</svg>

@@ -7,6 +7,7 @@ import { getOrCreateAppConfig } from "@/lib/appConfig";
 import { supabase } from "@/lib/supabaseClient";
 import { marketingCopy } from "@/lib/marketingCopy";
 import { useMarketingLang } from "@/lib/useMarketingLang";
+import MarketingLogo from "@/components/MarketingLogo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -98,10 +99,7 @@ export default function LoginPage() {
           <div className="relative flex h-full flex-col justify-center px-14">
             <div className="max-w-md">
               <div className="flex items-center gap-3">
-                <div className="grid h-10 w-10 place-items-center rounded-2xl bg-white/15 text-lg font-semibold">
-                  I
-                </div>
-                <div className="text-lg font-semibold tracking-tight">IslaPOS</div>
+                <MarketingLogo size={40} variant="lockup" />
               </div>
 
               <div className="mt-10">
@@ -123,7 +121,7 @@ export default function LoginPage() {
               >
                 {t.login.back}
               </a>
-              <div className="text-xs font-medium text-[var(--mp-muted)]">IslaPOS</div>
+              <MarketingLogo size={28} variant="lockup" />
             </div>
 
             <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-10 shadow-sm">
