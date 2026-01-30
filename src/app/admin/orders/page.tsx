@@ -31,6 +31,23 @@ const ORDER_TYPE_LABELS: Record<string, string> = {
   dine_in: "Dine In",
 };
 
+function toDateInputValue(d: Date) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function startOfLocalDayIso(dateInput: string) {
+  const d = new Date(`${dateInput}T00:00:00`);
+  return d.toISOString();
+}
+
+function endOfLocalDayIso(dateInput: string) {
+  const d = new Date(`${dateInput}T23:59:59.999`);
+  return d.toISOString();
+}
+
 export default function AdminOrdersPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -44,6 +61,8 @@ export default function AdminOrdersPage() {
   // Filters
   const [filterStatus, setFilterStatus] = useState<OrderStatus | "">("");
   const [filterType, setFilterType] = useState<OrderType | "">("");
+  const [filterFrom, setFilterFrom] = useState<string>(() => toDateInputValue(new Date()));
+  const [filterTo, setFilterTo] = useState<string>(() => toDateInputValue(new Date()));
 
   useEffect(() => {
     let cancelled = false;
@@ -108,10 +127,15 @@ export default function AdminOrdersPage() {
     const id = restId ?? restaurantId;
     if (!id) return;
 
+    const since = filterFrom ? startOfLocalDayIso(filterFrom) : undefined;
+    const until = filterTo ? endOfLocalDayIso(filterTo) : undefined;
+
     const res = await listAllOrders(id, {
       limit: 100,
       status: filterStatus || undefined,
       orderType: filterType || undefined,
+      since,
+      until,
     });
 
     if (res.error) {
@@ -150,7 +174,7 @@ export default function AdminOrdersPage() {
     if (restaurantId) {
       loadOrders();
     }
-  }, [filterStatus, filterType]);
+  }, [filterStatus, filterType, filterFrom, filterTo]);
 
   // Real-time subscription to orders table
   useEffect(() => {
@@ -245,6 +269,20 @@ export default function AdminOrdersPage() {
             <option value="delivery">Delivery</option>
             <option value="dine_in">Dine In</option>
           </select>
+
+          <input
+            type="date"
+            value={filterFrom}
+            onChange={(e) => setFilterFrom(e.target.value)}
+            className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm"
+          />
+
+          <input
+            type="date"
+            value={filterTo}
+            onChange={(e) => setFilterTo(e.target.value)}
+            className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm"
+          />
 
           <span className="flex items-center gap-2 text-xs text-[var(--mp-muted)]">
             <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
