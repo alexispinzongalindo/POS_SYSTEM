@@ -247,7 +247,9 @@ export async function findOrderByOfflineLocalId(restaurantId: string, offlineLoc
   return { data: res.data ?? null, error: res.error };
 }
 
-export async function updateOrderStatus(orderId: string, status: "paid" | "canceled") {
+export type OrderStatus = "open" | "preparing" | "ready" | "paid" | "canceled" | "refunded";
+
+export async function updateOrderStatus(orderId: string, status: OrderStatus) {
   const updated = await supabase
     .from("orders")
     .update({ status })
@@ -256,6 +258,44 @@ export async function updateOrderStatus(orderId: string, status: "paid" | "cance
     .maybeSingle<{ id: string; status: string }>();
 
   return { data: updated.data ?? null, error: updated.error };
+}
+
+export async function listKitchenOrders(restaurantId: string) {
+  return supabase
+    .from("orders")
+    .select(
+      "id, ticket_no, status, total, created_at, order_type, customer_name"
+    )
+    .eq("restaurant_id", restaurantId)
+    .in("status", ["open", "preparing", "ready"])
+    .order("created_at", { ascending: true })
+    .returns<OrderSummary[]>();
+}
+
+export async function listAllOrders(
+  restaurantId: string,
+  opts?: {
+    limit?: number;
+    status?: OrderStatus;
+    orderType?: OrderType;
+    since?: string;
+    until?: string;
+  }
+) {
+  const limit = opts?.limit ?? 50;
+  let q = supabase
+    .from("orders")
+    .select(
+      "id, ticket_no, status, total, created_at, order_type, customer_name, delivery_status, delivery_provider, delivery_tracking_url, payment_method, paid_at, amount_tendered, change_due, refunded_at, refunded_by_user_id, refund_reason"
+    )
+    .eq("restaurant_id", restaurantId);
+
+  if (opts?.status) q = q.eq("status", opts.status);
+  if (opts?.orderType) q = q.eq("order_type", opts.orderType);
+  if (opts?.since) q = q.gte("created_at", opts.since);
+  if (opts?.until) q = q.lte("created_at", opts.until);
+
+  return q.order("created_at", { ascending: false }).limit(limit).returns<OrderSummary[]>();
 }
 
 export async function markOrderPaid(
