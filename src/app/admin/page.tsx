@@ -98,11 +98,15 @@ export default function AdminPage() {
     });
 
     const json = (await res.json().catch(() => null)) as
-      | { invited?: boolean; error?: string }
+      | { invited?: boolean; error?: string; baseUrl?: string | null; redirectTo?: string | null }
       | null;
 
     if (!res.ok || json?.error) {
-      setError(json?.error ?? "Invite failed");
+      const details =
+        json && (json.baseUrl || json.redirectTo)
+          ? ` (baseUrl=${json.baseUrl ?? ""} redirectTo=${json.redirectTo ?? ""})`
+          : "";
+      setError(`${json?.error ?? `Invite failed (${res.status})`}${details}`);
       return;
     }
 
