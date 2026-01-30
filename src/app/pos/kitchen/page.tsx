@@ -35,6 +35,7 @@ export default function KitchenDisplayPage() {
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
   const [, setNow] = useState(Date.now());
+  const [statusStartedAt, setStatusStartedAt] = useState<Record<string, string>>({});
 
   const loadOrders = useCallback(async (restId: string) => {
     const res = await listKitchenOrders(restId);
@@ -163,9 +164,49 @@ export default function KitchenDisplayPage() {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   }
 
-  function getStatusStartAt(order: KitchenOrder) {
-    return order.updated_at ?? order.created_at;
+  function getStatusKey(orderId: string, status: string) {
+    return `${orderId}:${status}`;
   }
+
+  // Track per-order status start times locally (no DB changes required).
+  // This will be accurate from the moment the KDS screen starts observing the order.
+  useEffect(() => {
+    if (!restaurantId) return;
+
+    const storageKey = `islapos:kdsStatusStartedAt:${restaurantId}`;
+    let existing: Record<string, string> = {};
+
+    try {
+      const raw = typeof window !== "undefined" ? window.localStorage.getItem(storageKey) : null;
+      if (raw) existing = JSON.parse(raw) as Record<string, string>;
+    } catch {
+      existing = {};
+    }
+
+    const next = { ...existing };
+    const nowIso = new Date().toISOString();
+
+    for (const o of orders) {
+      const currentKey = getStatusKey(o.id, o.status);
+
+      // If this status hasn't been seen for this order, start timer.
+      if (!next[currentKey]) {
+        // For brand-new orders, anchor to created_at.
+        // For later statuses, we start from "now" since DB doesn't store status change time.
+        next[currentKey] = o.status === "open" ? o.created_at : nowIso;
+      }
+
+      // If the order changed status, ensure older status keys don't keep being used.
+      // We keep them in storage (harmless), but the UI always reads the current status key.
+    }
+
+    setStatusStartedAt(next);
+    try {
+      if (typeof window !== "undefined") window.localStorage.setItem(storageKey, JSON.stringify(next));
+    } catch {
+      // ignore storage errors
+    }
+  }, [orders, restaurantId]);
 
   // Update elapsed time every second
   useEffect(() => {
@@ -238,6 +279,7 @@ export default function KitchenDisplayPage() {
                 order={order}
                 onStatusChange={changeStatus}
                 getElapsedTime={getElapsedTime}
+                statusStartedAt={statusStartedAt}
               />
             ))}
           </div>
@@ -258,6 +300,7 @@ export default function KitchenDisplayPage() {
                 order={order}
                 onStatusChange={changeStatus}
                 getElapsedTime={getElapsedTime}
+                statusStartedAt={statusStartedAt}
               />
             ))}
           </div>
@@ -278,6 +321,7 @@ export default function KitchenDisplayPage() {
                 order={order}
                 onStatusChange={changeStatus}
                 getElapsedTime={getElapsedTime}
+                statusStartedAt={statusStartedAt}
               />
             ))}
           </div>
@@ -301,13 +345,16 @@ function OrderCard({
   order,
   onStatusChange,
   getElapsedTime,
+  statusStartedAt,
 }: {
   order: KitchenOrder;
   onStatusChange: (orderId: string, status: OrderStatus) => void;
   getElapsedTime: (dateStr: string) => string;
+  statusStartedAt: Record<string, string>;
 }) {
-  const statusStartAt = order.updated_at ?? order.created_at;
-  const statusElapsed = getElapsedTime(statusStartAt);
+  const statusKey = `${order.id}:${order.status}`;
+  const startedAt = statusStartedAt[statusKey] ?? order.created_at;
+  const statusElapsed = getElapsedTime(startedAt);
 
   return (
     <div
