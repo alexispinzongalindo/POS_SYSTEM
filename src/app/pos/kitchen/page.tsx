@@ -34,6 +34,7 @@ export default function KitchenDisplayPage() {
   const [error, setError] = useState<string | null>(null);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
+  const [, setNow] = useState(Date.now());
 
   const loadOrders = useCallback(async (restId: string) => {
     const res = await listKitchenOrders(restId);
@@ -154,13 +155,19 @@ export default function KitchenDisplayPage() {
     }
   }
 
-  function getTimeSince(dateStr: string) {
+  function getElapsedTime(dateStr: string) {
     const diff = Date.now() - new Date(dateStr).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "Just now";
-    if (mins === 1) return "1 min ago";
-    return `${mins} mins ago`;
+    const totalSeconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   }
+
+  // Update elapsed time every second
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading) {
     return (
@@ -226,7 +233,7 @@ export default function KitchenDisplayPage() {
                 key={order.id}
                 order={order}
                 onStatusChange={changeStatus}
-                getTimeSince={getTimeSince}
+                getElapsedTime={getElapsedTime}
               />
             ))}
           </div>
@@ -246,7 +253,7 @@ export default function KitchenDisplayPage() {
                 key={order.id}
                 order={order}
                 onStatusChange={changeStatus}
-                getTimeSince={getTimeSince}
+                getElapsedTime={getElapsedTime}
               />
             ))}
           </div>
@@ -266,7 +273,7 @@ export default function KitchenDisplayPage() {
                 key={order.id}
                 order={order}
                 onStatusChange={changeStatus}
-                getTimeSince={getTimeSince}
+                getElapsedTime={getElapsedTime}
               />
             ))}
           </div>
@@ -289,11 +296,11 @@ export default function KitchenDisplayPage() {
 function OrderCard({
   order,
   onStatusChange,
-  getTimeSince,
+  getElapsedTime,
 }: {
   order: KitchenOrder;
   onStatusChange: (orderId: string, status: OrderStatus) => void;
-  getTimeSince: (dateStr: string) => string;
+  getElapsedTime: (dateStr: string) => string;
 }) {
   return (
     <div
@@ -309,7 +316,7 @@ function OrderCard({
             {STATUS_LABELS[order.status] ?? order.status.toUpperCase()}
           </span>
         </div>
-        <span className="text-xs text-zinc-600">{getTimeSince(order.created_at)}</span>
+        <span className="text-lg font-bold tabular-nums text-yellow-500 animate-pulse">{getElapsedTime(order.created_at)}</span>
       </div>
 
       {/* Order Type & Customer */}
@@ -343,7 +350,7 @@ function OrderCard({
         {order.status === "open" ? (
           <button
             onClick={() => onStatusChange(order.id, "preparing")}
-            className="flex-1 rounded-lg bg-yellow-500 py-2 text-sm font-semibold text-white hover:bg-yellow-600"
+            className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white hover:bg-emerald-700 active:bg-emerald-800"
           >
             Start
           </button>
@@ -351,7 +358,7 @@ function OrderCard({
         {order.status === "preparing" ? (
           <button
             onClick={() => onStatusChange(order.id, "ready")}
-            className="flex-1 rounded-lg bg-green-500 py-2 text-sm font-semibold text-white hover:bg-green-600"
+            className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white hover:bg-emerald-700 active:bg-emerald-800"
           >
             Ready
           </button>
@@ -359,9 +366,9 @@ function OrderCard({
         {order.status === "ready" ? (
           <button
             onClick={() => onStatusChange(order.id, "paid")}
-            className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+            className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white hover:bg-emerald-700 active:bg-emerald-800"
           >
-            Complete
+            Done
           </button>
         ) : null}
       </div>

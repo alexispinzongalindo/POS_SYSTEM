@@ -45,6 +45,15 @@ function getElapsedMinutes(iso: string) {
   return Math.floor((now - created) / 60000);
 }
 
+function getElapsedTime(iso: string) {
+  const created = new Date(iso).getTime();
+  const now = Date.now();
+  const totalSeconds = Math.floor((now - created) / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
 export default function KDSPage() {
   const router = useRouter();
 
@@ -122,9 +131,9 @@ export default function KDSPage() {
     return () => clearInterval(interval);
   }, [restaurantId, loadOrders]);
 
-  // Update elapsed time every minute
+  // Update elapsed time every second for accurate timer
   useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 60000);
+    const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -258,9 +267,9 @@ export default function KDSPage() {
                     <div className="text-right">
                       <div className="text-xs text-zinc-600">{formatTime(order.created_at)}</div>
                       <div
-                        className={`text-sm font-bold ${isUrgent ? "text-red-600" : isWarning ? "text-amber-600" : "text-zinc-700"}`}
+                        className="text-lg font-bold tabular-nums text-yellow-500 animate-pulse"
                       >
-                        {elapsed}m
+                        {getElapsedTime(order.created_at)}
                       </div>
                     </div>
                   </div>
@@ -305,19 +314,13 @@ export default function KDSPage() {
                     )}
                     <button
                       onClick={() => handleBump(order.id, order.status)}
-                      className={`flex-1 rounded-xl py-3 text-sm font-bold text-white ${
-                        order.status === "open"
-                          ? "bg-blue-600 hover:bg-blue-700"
-                          : order.status === "preparing"
-                            ? "bg-emerald-600 hover:bg-emerald-700"
-                            : "bg-zinc-600 hover:bg-zinc-700"
-                      }`}
+                      className="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white hover:bg-emerald-700 active:bg-emerald-800"
                     >
                       {order.status === "open"
-                        ? "START"
+                        ? "Start"
                         : order.status === "preparing"
-                          ? "READY"
-                          : "DONE"}
+                          ? "Ready"
+                          : "Done"}
                     </button>
                   </div>
                 </div>
