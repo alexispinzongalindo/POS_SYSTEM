@@ -8,6 +8,7 @@ export async function POST(req: Request) {
   try {
     const ownerEmail = process.env.OWNER_EMAIL;
     if (!ownerEmail) {
+      console.error("[invite-user] Missing OWNER_EMAIL env var");
       return NextResponse.json(
         { error: "Missing OWNER_EMAIL env var" },
         { status: 500 },
@@ -29,6 +30,7 @@ export async function POST(req: Request) {
     );
 
     if (userError || !userData.user) {
+      console.error("[invite-user] Auth error:", userError?.message ?? "No user");
       return NextResponse.json({ error: userError?.message ?? "Unauthorized" }, { status: 401 });
     }
 
@@ -61,11 +63,13 @@ export async function POST(req: Request) {
         .maybeSingle<{ id: number; owner_user_id: string; restaurant_id: string | null; setup_complete: boolean }>();
 
       if (cfgRes.error) {
+        console.error("[invite-user] app_config error:", cfgRes.error.message);
         return NextResponse.json({ error: cfgRes.error.message }, { status: 400 });
       }
 
       restaurantId = cfgRes.data?.restaurant_id ?? null;
       if (!restaurantId) {
+        console.error("[invite-user] No active restaurant selected");
         return NextResponse.json({ error: "No active restaurant selected" }, { status: 400 });
       }
 
@@ -94,6 +98,7 @@ export async function POST(req: Request) {
         }
 
         if (!restaurantRes.data || restaurantRes.data.owner_user_id !== requester.id) {
+          console.error("[invite-user] Not restaurant owner. requester:", requester.id, "owner:", restaurantRes.data?.owner_user_id);
           return NextResponse.json({ error: "Only the restaurant owner or manager can invite staff" }, { status: 403 });
         }
       }
@@ -115,6 +120,7 @@ export async function POST(req: Request) {
     });
 
     if (error) {
+      console.error("[invite-user] Supabase invite error:", error.message, "redirectTo:", redirectTo);
       return NextResponse.json(
         { error: error.message, baseUrl: baseUrl || null, redirectTo: redirectTo || null },
         { status: 400 },
@@ -159,6 +165,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ invited: true, user: data.user, baseUrl: baseUrl || null, redirectTo: redirectTo || null });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Invite failed";
+    console.error("[invite-user] Unexpected error:", msg);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
