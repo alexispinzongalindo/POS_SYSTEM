@@ -15,6 +15,7 @@ import {
   listMenuItems,
   type MenuCategory,
   type MenuItem,
+  type TaxType,
 } from "@/lib/setupData";
 import { setSetupComplete } from "@/lib/appConfig";
 
@@ -39,6 +40,7 @@ export default function SetupMenuPage() {
   const [newItemDepartment, setNewItemDepartment] = useState("");
   const [newItemUnit, setNewItemUnit] = useState("");
   const [newItemIsWeighted, setNewItemIsWeighted] = useState(false);
+  const [newItemTaxType, setNewItemTaxType] = useState<TaxType>("state_tax");
 
   const categoryOptions = useMemo(() => {
     const opts: Array<{ id: string; name: string }> = [{ id: "", name: "(No category)" }];
@@ -156,6 +158,7 @@ export default function SetupMenuPage() {
       department: newItemDepartment,
       unit: newItemUnit,
       is_weighted: newItemIsWeighted,
+      tax_type: newItemTaxType,
     });
     if (res.error) {
       setError(res.error.message);
@@ -170,6 +173,7 @@ export default function SetupMenuPage() {
     setNewItemDepartment("");
     setNewItemUnit("");
     setNewItemIsWeighted(false);
+    setNewItemTaxType("state_tax");
     await refresh(restaurantId);
   }
 
@@ -374,6 +378,42 @@ export default function SetupMenuPage() {
                 <span className="text-sm">Weighted product (sold by weight)</span>
               </label>
 
+              <div>
+                <label className="text-sm font-medium">Tax Type</label>
+                <div className="mt-2 flex flex-wrap gap-3">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="taxType"
+                      value="state_tax"
+                      checked={newItemTaxType === "state_tax"}
+                      onChange={() => setNewItemTaxType("state_tax")}
+                    />
+                    <span className="text-sm">State Tax (7%)</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="taxType"
+                      value="municipal_tax"
+                      checked={newItemTaxType === "municipal_tax"}
+                      onChange={() => setNewItemTaxType("municipal_tax")}
+                    />
+                    <span className="text-sm">Municipal Tax (1%)</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="taxType"
+                      value="no_tax"
+                      checked={newItemTaxType === "no_tax"}
+                      onChange={() => setNewItemTaxType("no_tax")}
+                    />
+                    <span className="text-sm">No Tax</span>
+                  </label>
+                </div>
+              </div>
+
               <button
                 type="submit"
                 className="inline-flex h-11 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
@@ -391,7 +431,9 @@ export default function SetupMenuPage() {
                   <div key={it.id} className="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800">
                     <div>
                       <div className="text-sm font-medium">{it.name}</div>
-                      <div className="text-xs text-zinc-600 dark:text-zinc-400">${it.price.toFixed(2)}</div>
+                      <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                        ${it.price.toFixed(2)} • {it.tax_type === "no_tax" ? "No Tax" : it.tax_type === "municipal_tax" ? "1% Municipal" : "7% State"}
+                      </div>
                     </div>
                     <button
                       onClick={() => onDeleteItem(it.id)}

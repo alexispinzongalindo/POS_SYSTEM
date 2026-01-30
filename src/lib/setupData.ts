@@ -37,6 +37,8 @@ export type MenuCategory = {
   color?: string | null;
 };
 
+export type TaxType = "state_tax" | "municipal_tax" | "no_tax";
+
 export type MenuItem = {
   id: string;
   restaurant_id: string;
@@ -52,6 +54,7 @@ export type MenuItem = {
   is_weighted: boolean;
   is_active: boolean;
   sort_order?: number | null;
+  tax_type?: TaxType | null;
 };
 
 export type DeliveryProvider = "uber_direct" | "doordash_drive" | "aggregator";
@@ -291,6 +294,7 @@ export async function addMenuItem(input: {
   unit?: string;
   is_weighted?: boolean;
   sort_order?: number;
+  tax_type?: TaxType | null;
 }) {
   return supabase
     .from("menu_items")
@@ -308,6 +312,7 @@ export async function addMenuItem(input: {
       is_weighted: input.is_weighted ?? false,
       is_active: true,
       sort_order: typeof input.sort_order === "number" ? input.sort_order : null,
+      tax_type: input.tax_type ?? "state_tax",
     })
     .select("*")
     .maybeSingle<MenuItem>();
@@ -327,6 +332,7 @@ export async function updateMenuItem(input: {
   is_weighted?: boolean;
   is_active?: boolean;
   sort_order?: number;
+  tax_type?: TaxType | null;
 }) {
   return supabase
     .from("menu_items")
@@ -343,6 +349,7 @@ export async function updateMenuItem(input: {
       is_weighted: input.is_weighted ?? false,
       is_active: input.is_active ?? true,
       sort_order: typeof input.sort_order === "number" ? input.sort_order : null,
+      tax_type: input.tax_type ?? "state_tax",
     })
     .eq("id", input.id)
     .select("*")

@@ -43,11 +43,14 @@ import {
   type SalesSummaryRow,
 } from "@/lib/posData";
 
+type TaxType = "state_tax" | "municipal_tax" | "no_tax";
+
 type CartLine = {
   id: string;
   name: string;
   unitPrice: number;
   qty: number;
+  taxType: TaxType;
 };
 
 export default function PosPage() {
@@ -186,7 +189,7 @@ export default function PosPage() {
     [inventory],
   );
 
-  function tryAddItem(id: string, name: string, unitPrice: number, qtyToAdd = 1) {
+  function tryAddItem(id: string, name: string, unitPrice: number, taxType: TaxType = "state_tax", qtyToAdd = 1) {
     const stock = getTrackedStock(id);
     if (stock != null) {
       const current = cart[id]?.qty ?? 0;
@@ -199,7 +202,7 @@ export default function PosPage() {
     setCart((prev) => {
       const existing = prev[id];
       const qty = (existing?.qty ?? 0) + qtyToAdd;
-      return { ...prev, [id]: { id, name, unitPrice, qty } };
+      return { ...prev, [id]: { id, name, unitPrice, qty, taxType } };
     });
   }
 
@@ -412,18 +415,38 @@ export default function PosPage() {
   const cartLines = useMemo(() => Object.values(cart), [cart]);
 
   const totals = useMemo(() => {
-    const subtotal = cartLines.reduce((sum, it) => sum + it.unitPrice * it.qty, 0);
-    const ivuRate = data?.ivuRate ?? 0;
     const pricesIncludeTax = data?.pricesIncludeTax ?? false;
+    
+    // Tax rates
+    const STATE_TAX_RATE = 0.07; // 7%
+    const MUNICIPAL_TAX_RATE = 0.01; // 1%
 
-    if (pricesIncludeTax) {
-      const total = subtotal;
-      const tax = ivuRate > 0 ? total - total / (1 + ivuRate) : 0;
-      const net = total - tax;
-      return { subtotal: net, tax, total };
+    let subtotal = 0;
+    let tax = 0;
+
+    for (const line of cartLines) {
+      const lineTotal = line.unitPrice * line.qty;
+      let taxRate = 0;
+      
+      if (line.taxType === "state_tax") {
+        taxRate = STATE_TAX_RATE;
+      } else if (line.taxType === "municipal_tax") {
+        taxRate = MUNICIPAL_TAX_RATE;
+      }
+      // no_tax = 0
+
+      if (pricesIncludeTax) {
+        // Price includes tax, extract it
+        const lineTax = taxRate > 0 ? lineTotal - lineTotal / (1 + taxRate) : 0;
+        subtotal += lineTotal - lineTax;
+        tax += lineTax;
+      } else {
+        // Price excludes tax, add it
+        subtotal += lineTotal;
+        tax += lineTotal * taxRate;
+      }
     }
 
-    const tax = subtotal * ivuRate;
     const total = subtotal + tax;
     return { subtotal, tax, total };
   }, [cartLines, data]);
@@ -813,6 +836,7 @@ export default function PosPage() {
           name: row.name,
           unitPrice: Number(row.unit_price),
           qty: row.qty,
+          taxType: (row as { tax_type?: TaxType }).tax_type ?? "state_tax",
         };
       }
       setCart(next);
@@ -857,11 +881,14 @@ export default function PosPage() {
 
     const next: Record<string, CartLine> = {};
     for (const row of itemsRes.data ?? []) {
+      // Find the menu item to get its tax_type
+      const menuItem = data?.items.find((it) => it.id === row.menu_item_id);
       next[row.menu_item_id] = {
         id: row.menu_item_id,
         name: row.name,
         unitPrice: Number(row.unit_price),
         qty: row.qty,
+        taxType: (menuItem?.tax_type as TaxType) ?? "state_tax",
       };
     }
 
@@ -1431,7 +1458,7 @@ export default function PosPage() {
                       <button
                         key={it.id}
                         onClick={() => {
-                          tryAddItem(it.id, it.name, Number(it.price), qtyToAdd);
+                          tryAddItem(it.id, it.name, Number(it.price), (it.tax_type as TaxType) ?? "state_tax", qtyToAdd);
                           setQtyInput("");
                         }}
                         disabled={out}
