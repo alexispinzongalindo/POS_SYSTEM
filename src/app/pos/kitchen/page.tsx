@@ -107,15 +107,40 @@ export default function KitchenDisplayPage() {
     };
   }, [router, loadOrders]);
 
-  // Auto-refresh every 10 seconds
+  // Real-time subscription to orders table
   useEffect(() => {
     if (!restaurantId) return;
 
-    const interval = setInterval(() => {
-      loadOrders(restaurantId);
-    }, 10000);
+    const channel = supabase
+      .channel('kitchen-orders')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `restaurant_id=eq.${restaurantId}`,
+        },
+        () => {
+          loadOrders(restaurantId);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'order_items',
+        },
+        () => {
+          loadOrders(restaurantId);
+        }
+      )
+      .subscribe();
 
-    return () => clearInterval(interval);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [restaurantId, loadOrders]);
 
   async function changeStatus(orderId: string, newStatus: OrderStatus) {
@@ -160,12 +185,10 @@ export default function KitchenDisplayPage() {
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => restaurantId && loadOrders(restaurantId)}
-            className="rounded-lg bg-zinc-700 px-4 py-2 text-sm font-medium hover:bg-zinc-600"
-          >
-            Refresh
-          </button>
+          <span className="flex items-center gap-2 text-xs text-zinc-500">
+            <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+            Live
+          </span>
           <a
             href="/admin/orders"
             className="rounded-lg bg-zinc-700 px-4 py-2 text-sm font-medium hover:bg-zinc-600"

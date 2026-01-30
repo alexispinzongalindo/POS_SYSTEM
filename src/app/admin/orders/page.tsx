@@ -152,6 +152,31 @@ export default function AdminOrdersPage() {
     }
   }, [filterStatus, filterType]);
 
+  // Real-time subscription to orders table
+  useEffect(() => {
+    if (!restaurantId) return;
+
+    const channel = supabase
+      .channel('admin-orders')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `restaurant_id=eq.${restaurantId}`,
+        },
+        () => {
+          loadOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [restaurantId, filterStatus, filterType]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--mp-bg)] flex items-center justify-center">
@@ -221,12 +246,10 @@ export default function AdminOrdersPage() {
             <option value="dine_in">Dine In</option>
           </select>
 
-          <button
-            onClick={() => loadOrders()}
-            className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm font-medium hover:bg-zinc-50"
-          >
-            Refresh
-          </button>
+          <span className="flex items-center gap-2 text-xs text-[var(--mp-muted)]">
+            <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+            Live updates
+          </span>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
