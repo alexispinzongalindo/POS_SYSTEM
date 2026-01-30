@@ -570,3 +570,16 @@ export async function updateOrder(
 
   return { data: { orderId, ticketNo: updated.data?.ticket_no ?? null }, error: null };
 }
+
+export async function deleteOrders(orderIds: string[]) {
+  const ids = (orderIds ?? []).filter(Boolean);
+  if (ids.length === 0) return { data: { deleted: 0 }, error: null as Error | null };
+
+  const delItems = await supabase.from("order_items").delete().in("order_id", ids);
+  if (delItems.error) return { data: null as { deleted: number } | null, error: delItems.error };
+
+  const delOrders = await supabase.from("orders").delete().in("id", ids).select("id");
+  if (delOrders.error) return { data: null as { deleted: number } | null, error: delOrders.error };
+
+  return { data: { deleted: delOrders.data?.length ?? 0 }, error: null as Error | null };
+}

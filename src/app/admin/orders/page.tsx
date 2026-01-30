@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getOrCreateAppConfig } from "@/lib/appConfig";
 import {
+  deleteOrders,
   listAllOrders,
   getOrderItems,
   updateOrderStatus,
@@ -57,6 +58,8 @@ export default function AdminOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<OrderSummary | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItemRow[]>([]);
   const [loadingItems, setLoadingItems] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({});
+  const [deleting, setDeleting] = useState(false);
 
   // Filters
   const [filterStatus, setFilterStatus] = useState<OrderStatus | "">("");
@@ -156,6 +159,37 @@ export default function AdminOrdersPage() {
       return;
     }
     setOrderItems(res.data ?? []);
+  }
+
+  async function deleteSelected() {
+    if (deleting) return;
+    const ids = Object.entries(selectedIds)
+      .filter(([, v]) => v)
+      .map(([k]) => k);
+
+    if (ids.length === 0) return;
+
+    const ok = typeof window !== "undefined" ? window.confirm(`Delete ${ids.length} transaction(s)? This cannot be undone.`) : false;
+    if (!ok) return;
+
+    setDeleting(true);
+    setError(null);
+    try {
+      const res = await deleteOrders(ids);
+      if (res.error) {
+        setError(res.error.message);
+        return;
+      }
+
+      setSelectedIds({});
+      if (selectedOrder && ids.includes(selectedOrder.id)) {
+        setSelectedOrder(null);
+        setOrderItems([]);
+      }
+      await loadOrders();
+    } finally {
+      setDeleting(false);
+    }
   }
 
   async function changeStatus(orderId: string, newStatus: OrderStatus) {
@@ -270,19 +304,34 @@ export default function AdminOrdersPage() {
             <option value="dine_in">Dine In</option>
           </select>
 
-          <input
-            type="date"
-            value={filterFrom}
-            onChange={(e) => setFilterFrom(e.target.value)}
-            className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm"
-          />
+          <label className="flex items-center gap-2 text-sm text-[var(--mp-muted)]">
+            <span>From:</span>
+            <input
+              type="date"
+              value={filterFrom}
+              onChange={(e) => setFilterFrom(e.target.value)}
+              className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm text-[var(--mp-fg)]"
+            />
+          </label>
 
-          <input
-            type="date"
-            value={filterTo}
-            onChange={(e) => setFilterTo(e.target.value)}
-            className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm"
-          />
+          <label className="flex items-center gap-2 text-sm text-[var(--mp-muted)]">
+            <span>To:</span>
+            <input
+              type="date"
+              value={filterTo}
+              onChange={(e) => setFilterTo(e.target.value)}
+              className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm text-[var(--mp-fg)]"
+            />
+          </label>
+
+          <button
+            type="button"
+            onClick={deleteSelected}
+            disabled={deleting || Object.values(selectedIds).every((v) => !v)}
+            className="h-10 rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+          >
+            {deleting ? "Deleting..." : "Delete selected"}
+          </button>
 
           <span className="flex items-center gap-2 text-xs text-[var(--mp-muted)]">
             <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
@@ -305,40 +354,51 @@ export default function AdminOrdersPage() {
               ) : (
                 <div className="divide-y divide-[var(--mp-border)]">
                   {orders.map((order) => (
-                    <button
+                    <div
                       key={order.id}
-                      onClick={() => selectOrder(order)}
-                      className={`w-full px-4 py-3 text-left hover:bg-zinc-50 ${
+                      className={`flex items-stretch gap-3 px-4 py-3 hover:bg-zinc-50 ${
                         selectedOrder?.id === order.id ? "bg-emerald-50" : ""
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-semibold">
-                            #{order.ticket_no ?? "—"}
-                          </span>
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                              STATUS_COLORS[order.status] ?? "bg-zinc-100"
-                            }`}
-                          >
-                            {order.status}
-                          </span>
-                          <span className="text-xs text-[var(--mp-muted)]">
-                            {ORDER_TYPE_LABELS[order.order_type ?? "counter"] ?? order.order_type}
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(selectedIds[order.id])}
+                          onChange={(e) => setSelectedIds((prev) => ({ ...prev, [order.id]: e.target.checked }))}
+                          className="h-4 w-4"
+                        />
+                      </div>
+
+                      <button
+                        onClick={() => selectOrder(order)}
+                        className="flex-1 text-left"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-semibold">
+                              #{order.ticket_no ?? "—"}
+                            </span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                                STATUS_COLORS[order.status] ?? "bg-zinc-100"
+                              }`}
+                            >
+                              {order.status}
+                            </span>
+                            <span className="text-xs text-[var(--mp-muted)]">
+                              {ORDER_TYPE_LABELS[order.order_type ?? "counter"] ?? order.order_type}
+                            </span>
+                          </div>
+                          <span className="text-sm font-medium tabular-nums">
+                            ${order.total.toFixed(2)}
                           </span>
                         </div>
-                        <span className="text-sm font-medium tabular-nums">
-                          ${order.total.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="mt-1 flex items-center justify-between text-xs text-[var(--mp-muted)]">
-                        <span>{order.customer_name || "Walk-in"}</span>
-                        <span>
-                          {new Date(order.created_at).toLocaleString()}
-                        </span>
-                      </div>
-                    </button>
+                        <div className="mt-1 flex items-center justify-between text-xs text-[var(--mp-muted)]">
+                          <span>{order.customer_name || "Walk-in"}</span>
+                          <span>{new Date(order.created_at).toLocaleString()}</span>
+                        </div>
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
