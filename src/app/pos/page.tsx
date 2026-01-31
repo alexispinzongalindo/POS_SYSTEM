@@ -143,14 +143,42 @@ export default function PosPage() {
   }, [openNonTableTickets.length]);
 
   useEffect(() => {
+    const TIMEOUT_MS = 2000;
     let cancelled = false;
+    let timedOut = false;
 
     async function load() {
       setError(null);
       setSuccess(null);
 
+      // Fast offline check: if no network, try to load cached menu
+      const isOffline = typeof navigator !== "undefined" ? !navigator.onLine : false;
+      if (isOffline) {
+        const cached = localStorage.getItem("islapos_cached_menu");
+        if (cached) {
+          try {
+            const menuData = JSON.parse(cached);
+            setData(menuData);
+            setInventory(loadInventory(menuData.restaurantId));
+            setOrders([]);
+            setOfflineQueueCount(0);
+            setLoading(false);
+            return;
+          } catch {
+            // ignore cache parse error
+          }
+        }
+      }
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          timedOut = true;
+          reject(new Error("Supabase timeout"));
+        }, TIMEOUT_MS);
+      });
+
       try {
-        const res = await loadPosMenuData();
+        const res = await Promise.race([loadPosMenuData(), timeoutPromise]);
         if (cancelled) return;
 
         if (res.error) {
@@ -170,6 +198,9 @@ export default function PosPage() {
         setData(res.data);
         setInventory(loadInventory(res.data.restaurantId));
 
+        // Cache the menu locally for offline use
+        localStorage.setItem("islapos_cached_menu", JSON.stringify(res.data));
+
         setIsOffline(typeof navigator !== "undefined" ? !navigator.onLine : false);
         setOfflineQueueCount(listOfflineOrderSummaries(res.data.restaurantId).length);
 
@@ -183,6 +214,21 @@ export default function PosPage() {
         setOrders(history.data ?? []);
       } catch (e) {
         if (!cancelled) {
+          // Fallback to cached menu if available
+          const cached = localStorage.getItem("islapos_cached_menu");
+          if (cached) {
+            try {
+              const menuData = JSON.parse(cached);
+              setData(menuData);
+              setInventory(loadInventory(menuData.restaurantId));
+              setOrders([]);
+              setOfflineQueueCount(0);
+              setLoading(false);
+              return;
+            } catch {
+              // ignore cache parse error
+            }
+          }
           const msg = e instanceof Error ? e.message : "Failed to load POS data";
           setError(msg);
         }
