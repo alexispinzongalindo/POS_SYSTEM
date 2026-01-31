@@ -196,10 +196,23 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-2 top-1/2 inline-flex h-9 -translate-y-1/2 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold text-[var(--mp-muted)] hover:text-[var(--mp-fg)]"
+                      className="absolute right-2 top-1/2 inline-flex h-9 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-[var(--mp-muted)] hover:bg-black/[0.04] hover:text-[var(--mp-fg)] focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
-                      {showPassword ? "Hide" : "Show"}
+                      {showPassword ? (
+                        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.82 21.82 0 0 1 5.06-6.94" />
+                          <path d="M1 1l22 22" />
+                          <path d="M9.9 9.9a3 3 0 0 0 4.24 4.24" />
+                          <path d="M14.12 14.12 9.88 9.88" />
+                          <path d="M7.11 7.11A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.85 21.85 0 0 1-3.17 4.42" />
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12Z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      )}
                     </button>
                   </div>
                   <span className="text-xs text-[var(--mp-muted)]">{t.login.minChars}</span>
