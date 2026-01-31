@@ -144,13 +144,25 @@ export default function PosPage() {
   }, [openNonTableTickets.length]);
 
   useEffect(() => {
-    const TIMEOUT_MS = 3000;
+    const TIMEOUT_MS = 2000;
     let cancelled = false;
     let timedOut = false;
 
     async function load() {
       setError(null);
       setSuccess(null);
+
+      // Fast offline check: if no network, go straight to demo
+      const isOffline = typeof navigator !== "undefined" ? !navigator.onLine : false;
+      if (isOffline) {
+        const demo = getDemoPosMenuData();
+        setData(demo);
+        setInventory(loadInventory(demo.restaurantId));
+        setOrders([]);
+        setOfflineQueueCount(0);
+        setLoading(false);
+        return;
+      }
 
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
