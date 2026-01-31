@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
-  <rect width="192" height="192" fill="#FEFEFE"/>
+  <rect width="192" height="192" fill="#FFFFFF"/>
   <g transform="translate(96,96)">
     <circle cx="0" cy="0" r="36" fill="url(#islapos-core)" />
     <circle cx="0" cy="0" r="56" stroke="url(#islapos-core)" stroke-width="16" fill="none" />
