@@ -45,6 +45,7 @@ import {
   type PosMenuData,
   type SalesSummaryRow,
 } from "@/lib/posData";
+import { getDemoPosMenuData } from "@/lib/demoMenu";
 
 type TaxType = "state_tax" | "municipal_tax" | "no_tax";
 
@@ -143,56 +144,71 @@ export default function PosPage() {
   }, [openNonTableTickets.length]);
 
   useEffect(() => {
+    const TIMEOUT_MS = 3000;
     let cancelled = false;
+    let timedOut = false;
 
     async function load() {
       setError(null);
       setSuccess(null);
 
-      const res = await loadPosMenuData();
-      if (cancelled) return;
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          timedOut = true;
+          reject(new Error("Supabase timeout"));
+        }, TIMEOUT_MS);
+      });
 
-      if (res.error) {
-        if (res.error.message.toLowerCase().includes("signed")) {
-          router.replace("/login");
+      try {
+        const res = await Promise.race([loadPosMenuData(), timeoutPromise]);
+        if (cancelled) return;
+
+        if (res.error) {
+          if (res.error.message.toLowerCase().includes("signed")) {
+            router.replace("/login");
+            return;
+          }
+          if (res.error.message.toLowerCase().includes("setup")) {
+            router.replace("/setup");
+            return;
+          }
+          setError(res.error.message);
+          setLoading(false);
           return;
         }
-        if (res.error.message.toLowerCase().includes("setup")) {
-          router.replace("/setup");
+
+        setData(res.data);
+        setInventory(loadInventory(res.data.restaurantId));
+
+        setIsOffline(typeof navigator !== "undefined" ? !navigator.onLine : false);
+        setOfflineQueueCount(listOfflineOrderSummaries(res.data.restaurantId).length);
+
+        const history = await listRecentOrders(res.data.restaurantId, 20);
+        if (cancelled) return;
+        if (history.error) {
+          setError(history.error.message);
+          setLoading(false);
           return;
         }
-        setError(res.error.message);
+        setOrders(history.data ?? []);
+      } catch (e) {
+        if (!cancelled) {
+          // Fallback to demo mode
+          const demo = getDemoPosMenuData();
+          setData(demo);
+          setInventory(loadInventory(demo.restaurantId));
+          setOrders([]);
+          setOfflineQueueCount(0);
+        }
+      } finally {
         setLoading(false);
-        return;
       }
-
-      setData(res.data);
-      setInventory(loadInventory(res.data.restaurantId));
-
-      setIsOffline(typeof navigator !== "undefined" ? !navigator.onLine : false);
-      setOfflineQueueCount(listOfflineOrderSummaries(res.data.restaurantId).length);
-
-      const history = await listRecentOrders(res.data.restaurantId, 20);
-      if (cancelled) return;
-      if (history.error) {
-        setError(history.error.message);
-        setLoading(false);
-        return;
-      }
-      setOrders(history.data ?? []);
-
-      setLoading(false);
     }
 
-    void load();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) router.replace("/login");
-    });
+    load();
 
     return () => {
       cancelled = true;
-      authListener.subscription.unsubscribe();
     };
   }, [router]);
 

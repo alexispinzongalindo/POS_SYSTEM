@@ -22,7 +22,8 @@ export const metadata: Metadata = {
       { url: '/islapos-icon-32.png', sizes: '32x32', type: 'image/png' },
       { url: '/islapos-icon-192.png', sizes: '192x192', type: 'image/png' },
     ],
-    apple: '/islapos-icon-192.png',
+    apple: [{ url: '/islapos-icon-192.png', sizes: '192x192', type: 'image/png' }],
+    shortcut: [{ url: '/islapos-icon-32.png', sizes: '32x32', type: 'image/png' }],
   },
 };
 
