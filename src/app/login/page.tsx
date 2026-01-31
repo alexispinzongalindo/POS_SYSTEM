@@ -15,6 +15,7 @@ export default function LoginPage() {
   const t = marketingCopy(lang);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -182,15 +183,25 @@ export default function LoginPage() {
 
                 <label className="flex flex-col gap-2">
                   <span className="text-sm font-medium">{t.login.password}</span>
-                  <input
-                    className="h-12 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                    required
-                    minLength={8}
-                  />
+                  <div className="relative">
+                    <input
+                      className="h-12 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 pr-14 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                      required
+                      minLength={8}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-2 top-1/2 inline-flex h-9 -translate-y-1/2 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold text-[var(--mp-muted)] hover:text-[var(--mp-fg)]"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
                   <span className="text-xs text-[var(--mp-muted)]">{t.login.minChars}</span>
                 </label>
 
