@@ -13,7 +13,7 @@ export default function GlobalLangToggle() {
   }, [lang]);
 
   return (
-    <div className="fixed right-4 top-4 z-[60]">
+    <div className="fixed right-4 bottom-4 z-[60]">
       <div className="inline-flex items-center gap-2 rounded-full border border-[var(--mp-border)] bg-white/90 p-1 shadow-sm backdrop-blur">
         <button
           type="button"
