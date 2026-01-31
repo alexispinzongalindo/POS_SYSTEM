@@ -149,9 +149,18 @@ export default function PosPage() {
       setError(null);
       setSuccess(null);
 
+      let storageOk = true;
+      try {
+        const k = "islapos.__storage_test__";
+        window.localStorage.setItem(k, "1");
+        window.localStorage.removeItem(k);
+      } catch {
+        storageOk = false;
+      }
+
       // Always try to load cached menu first for instant display
-      const cached = localStorage.getItem("islapos_cached_menu");
-      if (cached) {
+      const cached = storageOk ? localStorage.getItem("islapos_cached_menu") : null;
+      if (cached && storageOk) {
         try {
           const menuData = JSON.parse(cached);
           setData(menuData);
@@ -168,7 +177,7 @@ export default function PosPage() {
       const isOffline = typeof navigator !== "undefined" ? !navigator.onLine : false;
       if (isOffline) {
         if (!cached) {
-          setError("No internet and no cached menu available");
+          setError(storageOk ? "No internet and no cached menu available" : "Offline mode is not available in Safari Private browsing");
           setLoading(false);
         } else {
           setLoading(false);
@@ -206,7 +215,13 @@ export default function PosPage() {
         // Fresh data loaded - update cache and state
         setData(res.data);
         setInventory(loadInventory(res.data.restaurantId));
-        localStorage.setItem("islapos_cached_menu", JSON.stringify(res.data));
+        if (storageOk) {
+          try {
+            localStorage.setItem("islapos_cached_menu", JSON.stringify(res.data));
+          } catch {
+            setError("Offline mode is not available in Safari Private browsing");
+          }
+        }
 
         setIsOffline(typeof navigator !== "undefined" ? !navigator.onLine : false);
         setOfflineQueueCount(listOfflineOrderSummaries(res.data.restaurantId).length);
@@ -1441,7 +1456,7 @@ export default function PosPage() {
   if (!data) {
     return (
       <div className="islapos-marketing flex min-h-screen items-center justify-center bg-[var(--mp-bg)] text-[var(--mp-fg)]">
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">No data.</div>
+        <div className="text-sm text-zinc-600 dark:text-zinc-400">{error ?? "No data."}</div>
       </div>
     );
   }

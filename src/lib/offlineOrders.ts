@@ -44,7 +44,11 @@ export function loadOfflineOrders(restaurantId: string): OfflineOrder[] {
 
 export function saveOfflineOrders(restaurantId: string, orders: OfflineOrder[]) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(storageKey(restaurantId), JSON.stringify(orders));
+  try {
+    window.localStorage.setItem(storageKey(restaurantId), JSON.stringify(orders));
+  } catch {
+    // ignore storage failures (Safari Private / quota)
+  }
 }
 
 export function loadOfflineSyncedMap(restaurantId: string): Record<string, string> {
@@ -64,7 +68,11 @@ export function markOfflineOrderSynced(restaurantId: string, localId: string, or
   if (typeof window === "undefined") return;
   const prev = loadOfflineSyncedMap(restaurantId);
   const next = { ...prev, [localId]: orderId };
-  window.localStorage.setItem(syncKey(restaurantId), JSON.stringify(next));
+  try {
+    window.localStorage.setItem(syncKey(restaurantId), JSON.stringify(next));
+  } catch {
+    // ignore storage failures (Safari Private / quota)
+  }
   return next;
 }
 
