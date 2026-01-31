@@ -8,6 +8,8 @@ export type Restaurant = {
   name: string;
   phone: string | null;
   email: string | null;
+  subdomain?: string | null;
+  logo_path?: string | null;
 };
 
 export type Location = {
@@ -69,10 +71,21 @@ export type DeliveryIntegration = {
 };
 
 export async function requireSession() {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) return { session: null, error };
-  if (!data.session) return { session: null, error: new Error("Not signed in") };
-  return { session: data.session, error: null };
+  const TIMEOUT_MS = 4000;
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error("Supabase auth timeout")), TIMEOUT_MS);
+  });
+
+  try {
+    const { data, error } = await Promise.race([supabase.auth.getSession(), timeoutPromise]);
+    if (error) return { session: null, error };
+    if (!data.session) return { session: null, error: new Error("Not signed in") };
+    return { session: data.session, error: null };
+  } catch (e) {
+    const err = e instanceof Error ? e : new Error("Supabase auth timeout");
+    return { session: null, error: err };
+  }
 }
 
 export type SetupContext =
@@ -111,8 +124,20 @@ export async function upsertRestaurant(input: {
   name: string;
   phone?: string;
   email?: string;
+  subdomain?: string;
+  logo_path?: string;
 }) {
-  const payload = {
+  const payloadWithBranding = {
+    id: input.id,
+    owner_user_id: input.owner_user_id,
+    name: input.name,
+    phone: input.phone?.trim() || null,
+    email: input.email?.trim() || null,
+    subdomain: input.subdomain?.trim() || null,
+    logo_path: input.logo_path?.trim() || null,
+  };
+
+  const payloadWithoutBranding = {
     id: input.id,
     owner_user_id: input.owner_user_id,
     name: input.name,
@@ -122,9 +147,28 @@ export async function upsertRestaurant(input: {
 
   const res = await supabase
     .from("restaurants")
-    .upsert(payload, { onConflict: "id" })
+    .upsert(payloadWithBranding, { onConflict: "id" })
     .select("*")
     .maybeSingle<Restaurant>();
+
+  if (
+    res.error &&
+    (res.error.message.toLowerCase().includes("subdomain") ||
+      res.error.message.toLowerCase().includes("logo") ||
+      res.error.message.toLowerCase().includes("logo_path"))
+  ) {
+    const fallback = await supabase
+      .from("restaurants")
+      .upsert(payloadWithoutBranding, { onConflict: "id" })
+      .select("*")
+      .maybeSingle<Restaurant>();
+
+    if (fallback.data?.id) {
+      await setRestaurantId(fallback.data.id);
+    }
+
+    return fallback;
+  }
 
   if (res.data?.id) {
     await setRestaurantId(res.data.id);

@@ -35,6 +35,9 @@ import {
   refundOrder,
   updateOrderStatus,
   updateOrder,
+  loadMenuItemModifiers,
+  type MenuItemModifiers,
+  type SelectedModifier,
   type CreateOrderInput,
   type OrderType,
   type OrderSummary,
@@ -51,6 +54,7 @@ type CartLine = {
   unitPrice: number;
   qty: number;
   taxType: TaxType;
+  modifiers: SelectedModifier[];
 };
 
 export default function PosPage() {
@@ -103,6 +107,19 @@ export default function PosPage() {
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   const [activeOrderStatus, setActiveOrderStatus] = useState<string | null>(null);
+
+  const [discountAmount, setDiscountAmount] = useState<string>("0");
+  const [discountReason, setDiscountReason] = useState<string>("");
+
+  const [showModifiersModal, setShowModifiersModal] = useState(false);
+  const [modifiersLoading, setModifiersLoading] = useState(false);
+  const [modifiersError, setModifiersError] = useState<string | null>(null);
+  const [modifiersItemId, setModifiersItemId] = useState<string | null>(null);
+  const [modifiersItemName, setModifiersItemName] = useState<string>("");
+  const [modifiersItemPrice, setModifiersItemPrice] = useState<number>(0);
+  const [modifiersItemTaxType, setModifiersItemTaxType] = useState<TaxType>("state_tax");
+  const [modifiersData, setModifiersData] = useState<MenuItemModifiers>([]);
+  const [selectedModifiersByGroup, setSelectedModifiersByGroup] = useState<Record<string, SelectedModifier>>({});
 
   const [orderType, setOrderType] = useState<OrderType>("counter");
   const [customerName, setCustomerName] = useState<string>("");
@@ -189,7 +206,24 @@ export default function PosPage() {
     [inventory],
   );
 
-  function tryAddItem(id: string, name: string, unitPrice: number, taxType: TaxType = "state_tax", qtyToAdd = 1) {
+  function normalizeMoneyInput(v: string) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(0, n);
+  }
+
+  function sumModifierDelta(mods: SelectedModifier[]) {
+    return (mods ?? []).reduce((sum, m) => sum + Number(m.price_delta || 0) * Number(m.qty || 1), 0);
+  }
+
+  function tryAddItem(
+    id: string,
+    name: string,
+    baseUnitPrice: number,
+    taxType: TaxType = "state_tax",
+    qtyToAdd = 1,
+    modifiers: SelectedModifier[] = [],
+  ) {
     const stock = getTrackedStock(id);
     if (stock != null) {
       const current = cart[id]?.qty ?? 0;
@@ -199,11 +233,55 @@ export default function PosPage() {
       }
     }
 
+    const existing = cart[id];
+    if (existing && JSON.stringify(existing.modifiers ?? []) !== JSON.stringify(modifiers ?? [])) {
+      setError("This item is already in the cart with different modifiers. Clear cart or remove the item first.");
+      return;
+    }
+
+    const unitPrice = Number(baseUnitPrice) + sumModifierDelta(modifiers);
+
     setCart((prev) => {
-      const existing = prev[id];
-      const qty = (existing?.qty ?? 0) + qtyToAdd;
-      return { ...prev, [id]: { id, name, unitPrice, qty, taxType } };
+      const ex = prev[id];
+      const qty = (ex?.qty ?? 0) + qtyToAdd;
+      return { ...prev, [id]: { id, name, unitPrice, qty, taxType, modifiers } };
     });
+  }
+
+  async function addItemWithOptionalModifiers(params: {
+    id: string;
+    name: string;
+    baseUnitPrice: number;
+    taxType: TaxType;
+    qtyToAdd: number;
+  }) {
+    if (!data) return;
+    setModifiersError(null);
+    setModifiersLoading(true);
+    try {
+      const res = await loadMenuItemModifiers(data.restaurantId, params.id);
+      if (res.error) throw res.error;
+      const groups = res.data ?? [];
+
+      if (groups.length === 0) {
+        tryAddItem(params.id, params.name, params.baseUnitPrice, params.taxType, params.qtyToAdd, []);
+        return;
+      }
+
+      setModifiersItemId(params.id);
+      setModifiersItemName(params.name);
+      setModifiersItemPrice(params.baseUnitPrice);
+      setModifiersItemTaxType(params.taxType);
+      setModifiersData(groups);
+      setSelectedModifiersByGroup({});
+      setShowModifiersModal(true);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to load modifiers";
+      setModifiersError(msg);
+      setError(msg);
+    } finally {
+      setModifiersLoading(false);
+    }
   }
 
   function isLikelyOfflineError(e: unknown) {
@@ -421,13 +499,13 @@ export default function PosPage() {
     const STATE_TAX_RATE = 0.07; // 7%
     const MUNICIPAL_TAX_RATE = 0.01; // 1%
 
-    let subtotal = 0;
-    let tax = 0;
+    type LineCalc = { base: number; tax: number; rate: number };
+    const lines: LineCalc[] = [];
 
     for (const line of cartLines) {
       const lineTotal = line.unitPrice * line.qty;
       let taxRate = 0;
-      
+
       if (line.taxType === "state_tax") {
         taxRate = STATE_TAX_RATE;
       } else if (line.taxType === "municipal_tax") {
@@ -436,20 +514,42 @@ export default function PosPage() {
       // no_tax = 0
 
       if (pricesIncludeTax) {
-        // Price includes tax, extract it
         const lineTax = taxRate > 0 ? lineTotal - lineTotal / (1 + taxRate) : 0;
-        subtotal += lineTotal - lineTax;
-        tax += lineTax;
+        const base = lineTotal - lineTax;
+        lines.push({ base, tax: lineTax, rate: taxRate });
       } else {
-        // Price excludes tax, add it
-        subtotal += lineTotal;
-        tax += lineTotal * taxRate;
+        const base = lineTotal;
+        const lineTax = base * taxRate;
+        lines.push({ base, tax: lineTax, rate: taxRate });
       }
     }
 
-    const total = subtotal + tax;
-    return { subtotal, tax, total };
-  }, [cartLines, data]);
+    const baseSubtotal = lines.reduce((sum, l) => sum + l.base, 0);
+    const rawDiscount = normalizeMoneyInput(discountAmount);
+    const discount = Math.min(baseSubtotal, rawDiscount);
+
+    // Apply discount proportionally to line bases, then recompute tax from discounted bases.
+    let discountedSubtotal = 0;
+    let tax = 0;
+    for (const l of lines) {
+      const share = baseSubtotal > 0 ? l.base / baseSubtotal : 0;
+      const lineDiscount = discount * share;
+      const discountedBase = Math.max(0, l.base - lineDiscount);
+      discountedSubtotal += discountedBase;
+
+      if (pricesIncludeTax) {
+        // We extracted tax before discount, so approximate discounted tax proportionally.
+        const originalBase = l.base;
+        const scale = originalBase > 0 ? discountedBase / originalBase : 0;
+        tax += l.tax * scale;
+      } else {
+        tax += discountedBase * l.rate;
+      }
+    }
+
+    const total = discountedSubtotal + tax;
+    return { subtotal: discountedSubtotal, tax, total, discount };
+  }, [cartLines, data, discountAmount]);
 
   const tenderedNumber = Number(amountTendered);
   const isCashPayment = paymentMethod === "cash";
@@ -545,6 +645,8 @@ export default function PosPage() {
     setDeliveryState("PR");
     setDeliveryPostalCode("");
     setDeliveryInstructions("");
+    setDiscountAmount("0");
+    setDiscountReason("");
   }
 
   async function confirmOpenTicket() {
@@ -837,9 +939,12 @@ export default function PosPage() {
           unitPrice: Number(row.unit_price),
           qty: row.qty,
           taxType: (row as { tax_type?: TaxType }).tax_type ?? "state_tax",
+          modifiers: (row as { modifiers?: SelectedModifier[] }).modifiers ?? [],
         };
       }
       setCart(next);
+      setDiscountAmount(String((offline.payload.discount_amount ?? 0) as number));
+      setDiscountReason(String(offline.payload.discount_reason ?? ""));
       setActiveOrderId(orderId);
       setActiveOrderStatus(offline.status);
       return;
@@ -855,19 +960,30 @@ export default function PosPage() {
       return;
     }
 
-    const itemsRes = await getOrderItems(orderId);
+    const [itemsRes, metaRes, receiptRes] = await Promise.all([
+      getOrderItems(orderId),
+      getOrderDeliveryMeta(orderId),
+      getOrderReceipt(orderId),
+    ]);
+
     if (itemsRes.error) {
       setError(itemsRes.error.message);
       return;
     }
 
-    const metaRes = await getOrderDeliveryMeta(orderId);
     if (metaRes.error) {
       setError(metaRes.error.message);
       return;
     }
 
+    if (receiptRes.error) {
+      setError(receiptRes.error.message);
+      return;
+    }
+
     const meta = metaRes.data;
+    const receiptData = receiptRes.data;
+
     setOrderType(meta?.order_type ?? "counter");
     setCustomerName(meta?.customer_name ?? "");
     setCustomerPhone(meta?.customer_phone ?? "");
@@ -879,9 +995,11 @@ export default function PosPage() {
     setDeliveryPostalCode(meta?.delivery_postal_code ?? "");
     setDeliveryInstructions(meta?.delivery_instructions ?? "");
 
+    setDiscountAmount(String(Number(receiptData?.order.discount_amount ?? 0)));
+    setDiscountReason(String(receiptData?.order.discount_reason ?? ""));
+
     const next: Record<string, CartLine> = {};
-    for (const row of itemsRes.data ?? []) {
-      // Find the menu item to get its tax_type
+    for (const row of receiptData?.items ?? itemsRes.data ?? []) {
       const menuItem = data?.items.find((it) => it.id === row.menu_item_id);
       next[row.menu_item_id] = {
         id: row.menu_item_id,
@@ -889,6 +1007,7 @@ export default function PosPage() {
         unitPrice: Number(row.unit_price),
         qty: row.qty,
         taxType: (menuItem?.tax_type as TaxType) ?? "state_tax",
+        modifiers: (row as { modifiers?: SelectedModifier[] }).modifiers ?? [],
       };
     }
 
@@ -1133,6 +1252,7 @@ export default function PosPage() {
         unit_price: it.unitPrice,
         qty: it.qty,
         line_total: it.unitPrice * it.qty,
+        modifiers: it.modifiers,
       }));
 
       if (orderType === "delivery") {
@@ -1164,6 +1284,8 @@ export default function PosPage() {
       payload = {
         restaurant_id: data.restaurantId,
         created_by_user_id: userId,
+        discount_amount: Number(totals.discount.toFixed(2)),
+        discount_reason: discountReason.trim() ? discountReason.trim() : null,
         subtotal: Number(totals.subtotal.toFixed(2)),
         tax: Number(totals.tax.toFixed(2)),
         total: Number(totals.total.toFixed(2)),
@@ -1374,6 +1496,25 @@ export default function PosPage() {
                 </button>
               </div>
             </div>
+
+            <div className="rounded-2xl border border-[var(--mp-border)] bg-white p-3">
+              <div className="text-xs font-semibold">Discount</div>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <input
+                  value={discountAmount}
+                  onChange={(e) => setDiscountAmount(e.target.value)}
+                  inputMode="decimal"
+                  placeholder="0"
+                  className="h-10 w-full rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                />
+                <input
+                  value={discountReason}
+                  onChange={(e) => setDiscountReason(e.target.value)}
+                  placeholder="Reason"
+                  className="h-10 w-full rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                />
+              </div>
+            </div>
           </div>
         ) : null}
 
@@ -1458,7 +1599,13 @@ export default function PosPage() {
                       <button
                         key={it.id}
                         onClick={() => {
-                          tryAddItem(it.id, it.name, Number(it.price), (it.tax_type as TaxType) ?? "state_tax", qtyToAdd);
+                          void addItemWithOptionalModifiers({
+                            id: it.id,
+                            name: it.name,
+                            baseUnitPrice: Number(it.price),
+                            taxType: (it.tax_type as TaxType) ?? "state_tax",
+                            qtyToAdd,
+                          });
                           setQtyInput("");
                         }}
                         disabled={out}
@@ -1609,6 +1756,10 @@ export default function PosPage() {
                   <div className="flex items-center justify-between">
                     <div className="text-xs text-[var(--mp-muted)]">Subtotal</div>
                     <div className="text-sm font-semibold tabular-nums">${totals.subtotal.toFixed(2)}</div>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <div className="text-xs text-[var(--mp-muted)]">Discount</div>
+                    <div className="text-sm font-semibold tabular-nums">-${totals.discount.toFixed(2)}</div>
                   </div>
                   <div className="mt-2 flex items-center justify-between">
                     <div className="text-xs text-[var(--mp-muted)]">Tax</div>
@@ -1960,6 +2111,14 @@ export default function PosPage() {
                       <div key={it.id} className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="truncate">{it.name}</div>
+                          {(it.modifiers ?? []).length > 0 ? (
+                            <div className="mt-1 text-[11px] text-zinc-500">
+                              {(it.modifiers ?? [])
+                                .map((m) => (m.option_name ? `${m.option_name}${m.price_delta ? ` (+$${Number(m.price_delta).toFixed(2)})` : ""}` : ""))
+                                .filter(Boolean)
+                                .join(", ")}
+                            </div>
+                          ) : null}
                           <div className="text-xs text-zinc-600 dark:text-zinc-400">
                             ${Number(it.unit_price).toFixed(2)} x {it.qty}
                           </div>
@@ -1974,6 +2133,12 @@ export default function PosPage() {
                       <div className="text-zinc-600 dark:text-zinc-400">Subtotal</div>
                       <div>${Number(receipt.order.subtotal).toFixed(2)}</div>
                     </div>
+                    {Number(receipt.order.discount_amount ?? 0) > 0 ? (
+                      <div className="mt-2 flex items-center justify-between text-sm">
+                        <div className="text-zinc-600 dark:text-zinc-400">Discount</div>
+                        <div>-${Number(receipt.order.discount_amount ?? 0).toFixed(2)}</div>
+                      </div>
+                    ) : null}
                     <div className="mt-2 flex items-center justify-between text-sm">
                       <div className="text-zinc-600 dark:text-zinc-400">Tax</div>
                       <div>${Number(receipt.order.tax).toFixed(2)}</div>
@@ -2086,6 +2251,104 @@ export default function PosPage() {
                 className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
               >
                 {placing ? "Saving..." : "Open"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showModifiersModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-200 bg-[#fffdf7] p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-base font-semibold">Modifiers</div>
+                <div className="mt-1 text-sm text-[var(--mp-muted)]">{modifiersItemName}</div>
+              </div>
+              <button
+                onClick={() => setShowModifiersModal(false)}
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-white"
+              >
+                Close
+              </button>
+            </div>
+
+            {modifiersError ? (
+              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {modifiersError}
+              </div>
+            ) : null}
+
+            <div className="mt-4 grid gap-4">
+              {modifiersData.map((g) => {
+                const selected = selectedModifiersByGroup[g.group.id];
+                return (
+                  <div key={g.link.id} className="rounded-2xl border border-[var(--mp-border)] bg-white p-4">
+                    <div className="text-sm font-semibold">{g.group.name}</div>
+                    {g.group.description ? (
+                      <div className="mt-1 text-xs text-[var(--mp-muted)]">{g.group.description}</div>
+                    ) : null}
+                    <div className="mt-3 grid gap-2">
+                      {g.options.map((o) => {
+                        const isSelected = selected?.option_id === o.id;
+                        return (
+                          <button
+                            key={o.id}
+                            type="button"
+                            onClick={() =>
+                              setSelectedModifiersByGroup((prev) => ({
+                                ...prev,
+                                [g.group.id]: {
+                                  group_id: g.group.id,
+                                  option_id: o.id,
+                                  option_name: o.name,
+                                  qty: 1,
+                                  price_delta: Number(o.price_delta),
+                                },
+                              }))
+                            }
+                            className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left text-sm font-medium ${
+                              isSelected
+                                ? "border-[var(--mp-primary)] bg-[var(--mp-primary)] text-black"
+                                : "border-[var(--mp-border)] bg-white text-[var(--mp-fg)] hover:bg-black/[0.03]"
+                            }`}
+                          >
+                            <span>{o.name}</span>
+                            <span className="text-xs opacity-80">{Number(o.price_delta) ? `+$${Number(o.price_delta).toFixed(2)}` : "$0.00"}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                onClick={() => setShowModifiersModal(false)}
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (!modifiersItemId) return;
+                  const mods = Object.values(selectedModifiersByGroup);
+                  tryAddItem(
+                    modifiersItemId,
+                    modifiersItemName,
+                    modifiersItemPrice,
+                    modifiersItemTaxType,
+                    qtyToAdd,
+                    mods,
+                  );
+                  setShowModifiersModal(false);
+                }}
+                disabled={modifiersLoading}
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
+              >
+                Add
               </button>
             </div>
           </div>
