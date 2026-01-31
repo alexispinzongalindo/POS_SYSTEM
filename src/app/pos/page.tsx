@@ -45,7 +45,6 @@ import {
   type PosMenuData,
   type SalesSummaryRow,
 } from "@/lib/posData";
-import { getDemoPosMenuData } from "@/lib/demoMenu";
 
 type TaxType = "state_tax" | "municipal_tax" | "no_tax";
 
@@ -144,35 +143,14 @@ export default function PosPage() {
   }, [openNonTableTickets.length]);
 
   useEffect(() => {
-    const TIMEOUT_MS = 2000;
     let cancelled = false;
-    let timedOut = false;
 
     async function load() {
       setError(null);
       setSuccess(null);
 
-      // Fast offline check: if no network, go straight to demo
-      const isOffline = typeof navigator !== "undefined" ? !navigator.onLine : false;
-      if (isOffline) {
-        const demo = getDemoPosMenuData();
-        setData(demo);
-        setInventory(loadInventory(demo.restaurantId));
-        setOrders([]);
-        setOfflineQueueCount(0);
-        setLoading(false);
-        return;
-      }
-
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          timedOut = true;
-          reject(new Error("Supabase timeout"));
-        }, TIMEOUT_MS);
-      });
-
       try {
-        const res = await Promise.race([loadPosMenuData(), timeoutPromise]);
+        const res = await loadPosMenuData();
         if (cancelled) return;
 
         if (res.error) {
@@ -205,12 +183,8 @@ export default function PosPage() {
         setOrders(history.data ?? []);
       } catch (e) {
         if (!cancelled) {
-          // Fallback to demo mode
-          const demo = getDemoPosMenuData();
-          setData(demo);
-          setInventory(loadInventory(demo.restaurantId));
-          setOrders([]);
-          setOfflineQueueCount(0);
+          const msg = e instanceof Error ? e.message : "Failed to load POS data";
+          setError(msg);
         }
       } finally {
         setLoading(false);
