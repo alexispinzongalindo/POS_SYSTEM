@@ -236,10 +236,12 @@ export default function PosPage() {
       } catch (e) {
         if (!cancelled) {
           // On timeout/network error, keep using cached menu if available
+          // Don't show error if we already have cached data displayed
           if (!cached) {
             const msg = e instanceof Error ? e.message : "Failed to load POS data";
             setError(msg);
           }
+          // If we have cached data, silently ignore network errors
         }
       } finally {
         setLoading(false);
