@@ -61,7 +61,59 @@ export default function KDSPage() {
   const [error, setError] = useState<string | null>(null);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [orders, setOrders] = useState<KDSOrder[]>([]);
+  const [statusStartedAt, setStatusStartedAt] = useState<Record<string, string>>({});
   const [now, setNow] = useState(Date.now());
+
+  const statusStorageKey = restaurantId ? `kdsStatusStartedAt:restaurant:${restaurantId}` : null;
+
+  function getStatusKey(orderId: string, status: string) {
+    return `${orderId}:${status}`;
+  }
+
+  function syncStatusStartedAt(nextOrders: KDSOrder[]) {
+    if (!statusStorageKey) return;
+    try {
+      const raw = localStorage.getItem(statusStorageKey);
+      const prev = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+
+      const next = { ...prev };
+      for (const o of nextOrders) {
+        const key = getStatusKey(o.id, o.status);
+
+        for (const s of ["open", "preparing", "ready"]) {
+          const k = getStatusKey(o.id, s);
+          if (k !== key) delete next[k];
+        }
+
+        if (!next[key]) next[key] = o.created_at;
+      }
+
+      localStorage.setItem(statusStorageKey, JSON.stringify(next));
+      setStatusStartedAt(next);
+    } catch {
+      // ignore
+    }
+  }
+
+  function setStatusStart(orderId: string, status: string, iso: string) {
+    if (!statusStorageKey) return;
+    try {
+      const raw = localStorage.getItem(statusStorageKey);
+      const prev = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+      const next = { ...prev };
+
+      for (const s of ["open", "preparing", "ready"]) {
+        const k = getStatusKey(orderId, s);
+        if (s !== status) delete next[k];
+      }
+
+      next[getStatusKey(orderId, status)] = iso;
+      localStorage.setItem(statusStorageKey, JSON.stringify(next));
+      setStatusStartedAt(next);
+    } catch {
+      // ignore
+    }
+  }
 
   const loadOrders = useCallback(async (rid: string) => {
     const res = await listKitchenOrders(rid);
@@ -81,6 +133,7 @@ export default function KDSPage() {
     );
 
     setOrders(withItems);
+    syncStatusStartedAt(withItems);
   }, []);
 
   useEffect(() => {
@@ -157,6 +210,9 @@ export default function KDSPage() {
       return;
     }
 
+    const nowIso = new Date().toISOString();
+    if (nextStatus !== "paid") setStatusStart(orderId, nextStatus, nowIso);
+
     await loadOrders(restaurantId);
   }
 
@@ -178,6 +234,9 @@ export default function KDSPage() {
       setError(res.error.message);
       return;
     }
+
+    const nowIso = new Date().toISOString();
+    setStatusStart(orderId, prevStatus, nowIso);
 
     await loadOrders(restaurantId);
   }
@@ -246,6 +305,8 @@ export default function KDSPage() {
               const elapsed = getElapsedMinutes(order.created_at);
               const isUrgent = elapsed >= 15 && order.status !== "ready";
               const isWarning = elapsed >= 10 && elapsed < 15 && order.status !== "ready";
+              const startedAt = statusStartedAt[getStatusKey(order.id, order.status)] ?? order.created_at;
+              const statusElapsed = getElapsedTime(startedAt);
 
               return (
                 <div
@@ -319,7 +380,7 @@ export default function KDSPage() {
                       >
                         <span className="flex items-center justify-center gap-2">
                           <span>Start</span>
-                          <span className="tabular-nums text-red-200">{getElapsedTime(order.created_at)}</span>
+                          <span className="tabular-nums text-red-200">{statusElapsed}</span>
                         </span>
                       </button>
                     ) : null}
@@ -330,7 +391,7 @@ export default function KDSPage() {
                       >
                         <span className="flex items-center justify-center gap-2">
                           <span>Ready</span>
-                          <span className="tabular-nums text-red-200">{getElapsedTime(order.created_at)}</span>
+                          <span className="tabular-nums text-red-200">{statusElapsed}</span>
                         </span>
                       </button>
                     ) : null}
@@ -341,7 +402,7 @@ export default function KDSPage() {
                       >
                         <span className="flex items-center justify-center gap-2">
                           <span>Done</span>
-                          <span className="tabular-nums text-red-200">{getElapsedTime(order.created_at)}</span>
+                          <span className="tabular-nums text-red-200">{statusElapsed}</span>
                         </span>
                       </button>
                     ) : null}

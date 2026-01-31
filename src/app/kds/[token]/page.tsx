@@ -67,7 +67,58 @@ export default function PublicKDSPage() {
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [restaurantName, setRestaurantName] = useState<string | null>(null);
   const [orders, setOrders] = useState<KDSOrder[]>([]);
+  const [statusStartedAt, setStatusStartedAt] = useState<Record<string, string>>({});
   const [, setNow] = useState(Date.now());
+
+  const statusStorageKey = `kdsStatusStartedAt:token:${token}`;
+
+  function getStatusKey(orderId: string, status: string) {
+    return `${orderId}:${status}`;
+  }
+
+  function syncStatusStartedAt(nextOrders: KDSOrder[]) {
+    try {
+      const raw = localStorage.getItem(statusStorageKey);
+      const prev = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+
+      const next = { ...prev };
+      for (const o of nextOrders) {
+        const key = getStatusKey(o.id, o.status);
+
+        // Clear other statuses for this order (status changed)
+        for (const s of ["open", "preparing", "ready"]) {
+          const k = getStatusKey(o.id, s);
+          if (k !== key) delete next[k];
+        }
+
+        if (!next[key]) next[key] = o.created_at;
+      }
+
+      localStorage.setItem(statusStorageKey, JSON.stringify(next));
+      setStatusStartedAt(next);
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  function setStatusStart(orderId: string, status: string, iso: string) {
+    try {
+      const raw = localStorage.getItem(statusStorageKey);
+      const prev = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+      const next = { ...prev };
+
+      for (const s of ["open", "preparing", "ready"]) {
+        const k = getStatusKey(orderId, s);
+        if (s !== status) delete next[k];
+      }
+
+      next[getStatusKey(orderId, status)] = iso;
+      localStorage.setItem(statusStorageKey, JSON.stringify(next));
+      setStatusStartedAt(next);
+    } catch {
+      // ignore
+    }
+  }
 
   const loadOrders = useCallback(async () => {
     const r = await fetch(`/api/kds/${encodeURIComponent(token)}`, {
@@ -90,7 +141,9 @@ export default function PublicKDSPage() {
     setError(null);
     setRestaurantId(payload?.restaurantId ?? null);
     setRestaurantName(payload?.restaurantName ?? null);
-    setOrders(payload?.orders ?? []);
+    const nextOrders = payload?.orders ?? [];
+    setOrders(nextOrders);
+    syncStatusStartedAt(nextOrders);
   }, [token]);
 
   useEffect(() => {
@@ -146,7 +199,18 @@ export default function PublicKDSPage() {
       return;
     }
 
-    setOrders(payload?.orders ?? []);
+    const nowIso = new Date().toISOString();
+    const nextStatus =
+      currentStatus === "open"
+        ? "preparing"
+        : currentStatus === "preparing"
+          ? "ready"
+          : "paid";
+    if (nextStatus !== "paid") setStatusStart(orderId, nextStatus, nowIso);
+
+    const nextOrders = payload?.orders ?? [];
+    setOrders(nextOrders);
+    syncStatusStartedAt(nextOrders);
   }
 
   async function handleRecall(orderId: string, currentStatus: string) {
@@ -166,7 +230,13 @@ export default function PublicKDSPage() {
       return;
     }
 
-    setOrders(payload?.orders ?? []);
+    const nowIso = new Date().toISOString();
+    const prevStatus = currentStatus === "ready" ? "preparing" : currentStatus === "preparing" ? "open" : null;
+    if (prevStatus) setStatusStart(orderId, prevStatus, nowIso);
+
+    const nextOrders = payload?.orders ?? [];
+    setOrders(nextOrders);
+    syncStatusStartedAt(nextOrders);
   }
 
   if (loading) {
@@ -253,6 +323,8 @@ export default function PublicKDSPage() {
               const elapsed = getElapsedMinutes(order.created_at);
               const isUrgent = elapsed >= 15 && order.status !== "ready";
               const isWarning = elapsed >= 10 && elapsed < 15 && order.status !== "ready";
+              const startedAt = statusStartedAt[getStatusKey(order.id, order.status)] ?? order.created_at;
+              const statusElapsed = getElapsedTime(startedAt);
 
               return (
                 <div
@@ -326,7 +398,7 @@ export default function PublicKDSPage() {
                       >
                         <span className="flex items-center justify-center gap-2">
                           <span>Start</span>
-                          <span className="tabular-nums text-red-200">{getElapsedTime(order.created_at)}</span>
+                          <span className="tabular-nums text-red-200">{statusElapsed}</span>
                         </span>
                       </button>
                     ) : null}
@@ -337,7 +409,7 @@ export default function PublicKDSPage() {
                       >
                         <span className="flex items-center justify-center gap-2">
                           <span>Ready</span>
-                          <span className="tabular-nums text-red-200">{getElapsedTime(order.created_at)}</span>
+                          <span className="tabular-nums text-red-200">{statusElapsed}</span>
                         </span>
                       </button>
                     ) : null}
@@ -348,7 +420,7 @@ export default function PublicKDSPage() {
                       >
                         <span className="flex items-center justify-center gap-2">
                           <span>Done</span>
-                          <span className="tabular-nums text-red-200">{getElapsedTime(order.created_at)}</span>
+                          <span className="tabular-nums text-red-200">{statusElapsed}</span>
                         </span>
                       </button>
                     ) : null}
