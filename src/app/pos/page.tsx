@@ -450,6 +450,26 @@ export default function PosPage() {
     setCustomerName(label);
 
     void (async () => {
+      const offlineNow = typeof navigator !== "undefined" ? !navigator.onLine : false;
+      if (offlineNow) {
+        const offline = loadOfflineOrders(data.restaurantId);
+        const match = offline.find(
+          (o) =>
+            o.status === "open" &&
+            (o.payload.order_type ?? "counter") === "dine_in" &&
+            (o.payload.customer_name ?? "") === label,
+        );
+
+        if (match?.local_id) {
+          await openOrder(match.local_id);
+        } else {
+          setActiveOrderId(null);
+          setActiveOrderStatus(null);
+          setCart({});
+        }
+        return;
+      }
+
       const existing = await findOpenDineInOrderByTable(data.restaurantId, label);
       if (existing.error) {
         setError(existing.error.message);
