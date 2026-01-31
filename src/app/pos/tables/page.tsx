@@ -62,6 +62,33 @@ export default function PosTablesPage() {
         const parsed = stored ? Number(stored) : NaN;
         if (Number.isFinite(parsed) && parsed > 0 && parsed <= 200) setTableCount(parsed);
 
+        // Check if offline
+        const isOffline = typeof navigator !== "undefined" ? !navigator.onLine : false;
+
+        // Try to get cached menu first
+        const cachedMenu = typeof window !== "undefined" ? window.localStorage.getItem("islapos_cached_menu") : null;
+        let menuData = null;
+
+        if (isOffline && cachedMenu) {
+          try {
+            menuData = JSON.parse(cachedMenu);
+            setRestaurantId(menuData.restaurantId);
+            // Skip Supabase calls when offline - just show tables with no open orders
+            setOrders([]);
+            setAreas([]);
+            setLoading(false);
+            return;
+          } catch {
+            // ignore parse error
+          }
+        }
+
+        if (isOffline && !cachedMenu) {
+          setError("No internet and no cached data available");
+          setLoading(false);
+          return;
+        }
+
         const res = await loadPosMenuData();
         if (cancelled) return;
 
