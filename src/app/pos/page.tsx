@@ -143,15 +143,13 @@ export default function PosPage() {
   }, [openNonTableTickets.length]);
 
   useEffect(() => {
-    const TIMEOUT_MS = 2000;
     let cancelled = false;
-    let timedOut = false;
 
     async function load() {
       setError(null);
       setSuccess(null);
 
-      // Fast offline check: if no network, try to load cached menu
+      // Fast offline check: if no network, load cached menu immediately
       const isOffline = typeof navigator !== "undefined" ? !navigator.onLine : false;
       if (isOffline) {
         const cached = localStorage.getItem("islapos_cached_menu");
@@ -168,17 +166,13 @@ export default function PosPage() {
             // ignore cache parse error
           }
         }
+        setError("No internet and no cached menu available");
+        setLoading(false);
+        return;
       }
 
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          timedOut = true;
-          reject(new Error("Supabase timeout"));
-        }, TIMEOUT_MS);
-      });
-
       try {
-        const res = await Promise.race([loadPosMenuData(), timeoutPromise]);
+        const res = await loadPosMenuData();
         if (cancelled) return;
 
         if (res.error) {
