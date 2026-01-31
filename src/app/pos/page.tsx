@@ -149,29 +149,34 @@ export default function PosPage() {
       setError(null);
       setSuccess(null);
 
-      // Fast offline check: if no network, load cached menu immediately
+      // Always try to load cached menu first for instant display
+      const cached = localStorage.getItem("islapos_cached_menu");
+      if (cached) {
+        try {
+          const menuData = JSON.parse(cached);
+          setData(menuData);
+          setInventory(loadInventory(menuData.restaurantId));
+          setOrders([]);
+          setOfflineQueueCount(0);
+          // Don't return yet - still try to fetch fresh data in background
+        } catch {
+          // ignore cache parse error
+        }
+      }
+
+      // Fast offline check: if no network, stop here with cached menu or error
       const isOffline = typeof navigator !== "undefined" ? !navigator.onLine : false;
       if (isOffline) {
-        const cached = localStorage.getItem("islapos_cached_menu");
-        if (cached) {
-          try {
-            const menuData = JSON.parse(cached);
-            setData(menuData);
-            setInventory(loadInventory(menuData.restaurantId));
-            setOrders([]);
-            setOfflineQueueCount(0);
-            setLoading(false);
-            return;
-          } catch {
-            // ignore cache parse error
-          }
+        if (!cached) {
+          setError("No internet and no cached menu available");
+          setLoading(false);
+        } else {
+          setLoading(false);
         }
-        setError("No internet and no cached menu available");
-        setLoading(false);
         return;
       }
 
-      // When online, try Supabase but with a short timeout
+      // When online, try to fetch fresh data in background with timeout
       const TIMEOUT_MS = 3000;
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error("Network timeout")), TIMEOUT_MS);
@@ -190,30 +195,17 @@ export default function PosPage() {
             router.replace("/setup");
             return;
           }
-          // On error, try to fallback to cached menu
-          const cached = localStorage.getItem("islapos_cached_menu");
-          if (cached) {
-            try {
-              const menuData = JSON.parse(cached);
-              setData(menuData);
-              setInventory(loadInventory(menuData.restaurantId));
-              setOrders([]);
-              setOfflineQueueCount(0);
-              setLoading(false);
-              return;
-            } catch {
-              // ignore cache parse error
-            }
+          // On error, keep using cached menu if available
+          if (!cached) {
+            setError(res.error.message);
           }
-          setError(res.error.message);
           setLoading(false);
           return;
         }
 
+        // Fresh data loaded - update cache and state
         setData(res.data);
         setInventory(loadInventory(res.data.restaurantId));
-
-        // Cache the menu locally for offline use
         localStorage.setItem("islapos_cached_menu", JSON.stringify(res.data));
 
         setIsOffline(typeof navigator !== "undefined" ? !navigator.onLine : false);
@@ -228,23 +220,11 @@ export default function PosPage() {
         setOrders(history.data ?? []);
       } catch (e) {
         if (!cancelled) {
-          // On timeout/network error, try to fallback to cached menu
-          const cached = localStorage.getItem("islapos_cached_menu");
-          if (cached) {
-            try {
-              const menuData = JSON.parse(cached);
-              setData(menuData);
-              setInventory(loadInventory(menuData.restaurantId));
-              setOrders([]);
-              setOfflineQueueCount(0);
-              setLoading(false);
-              return;
-            } catch {
-              // ignore cache parse error
-            }
+          // On timeout/network error, keep using cached menu if available
+          if (!cached) {
+            const msg = e instanceof Error ? e.message : "Failed to load POS data";
+            setError(msg);
           }
-          const msg = e instanceof Error ? e.message : "Failed to load POS data";
-          setError(msg);
         }
       } finally {
         setLoading(false);
