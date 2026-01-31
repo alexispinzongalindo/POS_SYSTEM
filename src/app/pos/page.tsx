@@ -171,8 +171,14 @@ export default function PosPage() {
         return;
       }
 
+      // When online, try Supabase but with a short timeout
+      const TIMEOUT_MS = 3000;
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error("Network timeout")), TIMEOUT_MS);
+      });
+
       try {
-        const res = await loadPosMenuData();
+        const res = await Promise.race([loadPosMenuData(), timeoutPromise]);
         if (cancelled) return;
 
         if (res.error) {
@@ -183,6 +189,21 @@ export default function PosPage() {
           if (res.error.message.toLowerCase().includes("setup")) {
             router.replace("/setup");
             return;
+          }
+          // On error, try to fallback to cached menu
+          const cached = localStorage.getItem("islapos_cached_menu");
+          if (cached) {
+            try {
+              const menuData = JSON.parse(cached);
+              setData(menuData);
+              setInventory(loadInventory(menuData.restaurantId));
+              setOrders([]);
+              setOfflineQueueCount(0);
+              setLoading(false);
+              return;
+            } catch {
+              // ignore cache parse error
+            }
           }
           setError(res.error.message);
           setLoading(false);
@@ -201,14 +222,13 @@ export default function PosPage() {
         const history = await listRecentOrders(res.data.restaurantId, 20);
         if (cancelled) return;
         if (history.error) {
-          setError(history.error.message);
-          setLoading(false);
-          return;
+          // Don't fail whole load if orders fail
+          console.error("Failed to load orders:", history.error);
         }
         setOrders(history.data ?? []);
       } catch (e) {
         if (!cancelled) {
-          // Fallback to cached menu if available
+          // On timeout/network error, try to fallback to cached menu
           const cached = localStorage.getItem("islapos_cached_menu");
           if (cached) {
             try {
