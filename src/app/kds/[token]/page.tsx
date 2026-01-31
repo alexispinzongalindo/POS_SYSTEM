@@ -346,7 +346,7 @@ export default function PublicKDSPage() {
                     <div className="text-right">
                       <div className="text-xs text-zinc-600">{formatTime(order.created_at)}</div>
                       <div
-                        className="text-lg font-bold tabular-nums text-red-600 animate-pulse"
+                        className="text-lg font-bold tabular-nums text-black animate-pulse"
                       >
                         {getElapsedTime(order.created_at)}
                       </div>
@@ -394,33 +394,33 @@ export default function PublicKDSPage() {
                     {order.status === "open" ? (
                       <button
                         onClick={() => handleBump(order.id, order.status)}
-                        className="flex-1 rounded-xl bg-red-600 py-4 text-sm font-bold text-white hover:bg-red-700 active:bg-red-800"
+                        className="flex-1 rounded-xl bg-red-600 py-4 text-sm font-bold text-black hover:bg-red-700 active:bg-red-800"
                       >
                         <span className="flex items-center justify-center gap-2">
                           <span>Start</span>
-                          <span className="tabular-nums text-red-200">{statusElapsed}</span>
+                          <span className="tabular-nums text-black">{statusElapsed}</span>
                         </span>
                       </button>
                     ) : null}
                     {order.status === "preparing" ? (
                       <button
                         onClick={() => handleBump(order.id, order.status)}
-                        className="flex-1 rounded-xl bg-yellow-500 py-4 text-sm font-bold text-white hover:bg-yellow-600 active:bg-yellow-700"
+                        className="flex-1 rounded-xl bg-yellow-500 py-4 text-sm font-bold text-black hover:bg-yellow-600 active:bg-yellow-700"
                       >
                         <span className="flex items-center justify-center gap-2">
                           <span>Ready</span>
-                          <span className="tabular-nums text-red-200">{statusElapsed}</span>
+                          <span className="tabular-nums text-black">{statusElapsed}</span>
                         </span>
                       </button>
                     ) : null}
                     {order.status === "ready" ? (
                       <button
                         onClick={() => handleBump(order.id, order.status)}
-                        className="flex-1 rounded-xl bg-emerald-600 py-4 text-sm font-bold text-white hover:bg-emerald-700 active:bg-emerald-800"
+                        className="flex-1 rounded-xl bg-emerald-600 py-4 text-sm font-bold text-black hover:bg-emerald-700 active:bg-emerald-800"
                       >
                         <span className="flex items-center justify-center gap-2">
                           <span>Done</span>
-                          <span className="tabular-nums text-red-200">{statusElapsed}</span>
+                          <span className="tabular-nums text-black">{statusElapsed}</span>
                         </span>
                       </button>
                     ) : null}
