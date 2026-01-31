@@ -517,12 +517,17 @@ export default function PosPage() {
 
     const t = window.setTimeout(() => {
       void (async () => {
+        // Skip if offline
+        if (typeof navigator !== "undefined" && !navigator.onLine) return;
+        
         setSummaryLoading(true);
         try {
           const res = await listPaidOrdersForSummary(data.restaurantId, { since });
           if (res.error) throw res.error;
           setSummaryRows(res.data ?? []);
         } catch (e) {
+          // Don't show error if offline
+          if (typeof navigator !== "undefined" && !navigator.onLine) return;
           const msg = e instanceof Error ? e.message : "Failed to load sales summary";
           setError(msg);
         } finally {
