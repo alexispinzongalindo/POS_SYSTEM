@@ -3,8 +3,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 
-import { supabase } from "@/lib/supabaseClient";
-
 type OrderItem = {
   id: string;
   name: string;
@@ -71,75 +69,37 @@ export default function PublicKDSPage() {
   const [orders, setOrders] = useState<KDSOrder[]>([]);
   const [, setNow] = useState(Date.now());
 
-  const loadOrders = useCallback(async (rid: string) => {
-    // Get orders with status open, preparing, or ready
-    const { data: ordersData, error: ordersError } = await supabase
-      .from("orders")
-      .select("id, ticket_no, status, total, created_at, order_type, customer_name")
-      .eq("restaurant_id", rid)
-      .in("status", ["open", "preparing", "ready"])
-      .order("created_at", { ascending: true });
+  const loadOrders = useCallback(async () => {
+    const r = await fetch(`/api/kds/${encodeURIComponent(token)}`, {
+      method: "GET",
+      headers: {
+        "content-type": "application/json",
+      },
+      cache: "no-store",
+    });
 
-    if (ordersError) {
-      setError(ordersError.message);
+    const payload = (await r.json().catch(() => null)) as
+      | { error?: string; restaurantId?: string; restaurantName?: string | null; orders?: KDSOrder[] }
+      | null;
+
+    if (!r.ok) {
+      setError(payload?.error ?? "Failed to load orders");
       return;
     }
 
-    // Load items for each order
-    const withItems: KDSOrder[] = await Promise.all(
-      (ordersData ?? []).map(async (o) => {
-        const { data: items } = await supabase
-          .from("order_items")
-          .select("id, name, qty")
-          .eq("order_id", o.id);
-        return { ...o, items: items ?? [] };
-      })
-    );
-
-    setOrders(withItems);
-  }, []);
+    setError(null);
+    setRestaurantId(payload?.restaurantId ?? null);
+    setRestaurantName(payload?.restaurantName ?? null);
+    setOrders(payload?.orders ?? []);
+  }, [token]);
 
   useEffect(() => {
     let cancelled = false;
 
     async function init() {
       setError(null);
-
-      // Validate token and get restaurant
-      const { data: kdsToken, error: tokenError } = await supabase
-        .from("kds_tokens")
-        .select("restaurant_id, is_active")
-        .eq("token", token)
-        .maybeSingle();
-
-      if (cancelled) return;
-
-      if (tokenError || !kdsToken) {
-        setError("Invalid or expired KDS link");
-        setLoading(false);
-        return;
-      }
-
-      if (!kdsToken.is_active) {
-        setError("This KDS link has been deactivated");
-        setLoading(false);
-        return;
-      }
-
-      const rid = kdsToken.restaurant_id;
-      setRestaurantId(rid);
-
-      // Get restaurant name
-      const { data: restaurant } = await supabase
-        .from("restaurants")
-        .select("name")
-        .eq("id", rid)
-        .maybeSingle();
-
-      if (restaurant) setRestaurantName(restaurant.name);
-
       try {
-        await loadOrders(rid);
+        await loadOrders();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load orders");
       } finally {
@@ -155,15 +115,13 @@ export default function PublicKDSPage() {
 
   // Auto-refresh every 10 seconds
   useEffect(() => {
-    if (!restaurantId) return;
-
     const interval = setInterval(() => {
-      void loadOrders(restaurantId);
+      void loadOrders();
       setNow(Date.now());
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [restaurantId, loadOrders]);
+  }, [loadOrders]);
 
   // Update elapsed time every second for accurate timer
   useEffect(() => {
@@ -172,55 +130,43 @@ export default function PublicKDSPage() {
   }, []);
 
   async function handleBump(orderId: string, currentStatus: string) {
-    if (!restaurantId) return;
-
-    let nextStatus: string;
-    if (currentStatus === "open") {
-      nextStatus = "preparing";
-    } else if (currentStatus === "preparing") {
-      nextStatus = "ready";
-    } else {
-      nextStatus = "paid";
-    }
-
     setError(null);
-    const { error: updateError } = await supabase
-      .from("orders")
-      .update({ status: nextStatus })
-      .eq("id", orderId);
 
-    if (updateError) {
-      setError(updateError.message);
+    const r = await fetch(`/api/kds/${encodeURIComponent(token)}`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ orderId, action: "bump" }),
+    });
+
+    const payload = (await r.json().catch(() => null)) as { error?: string; orders?: KDSOrder[] } | null;
+    if (!r.ok) {
+      setError(payload?.error ?? "Failed to update order");
       return;
     }
 
-    await loadOrders(restaurantId);
+    setOrders(payload?.orders ?? []);
   }
 
   async function handleRecall(orderId: string, currentStatus: string) {
-    if (!restaurantId) return;
-
-    let prevStatus: string;
-    if (currentStatus === "ready") {
-      prevStatus = "preparing";
-    } else if (currentStatus === "preparing") {
-      prevStatus = "open";
-    } else {
-      return;
-    }
-
     setError(null);
-    const { error: updateError } = await supabase
-      .from("orders")
-      .update({ status: prevStatus })
-      .eq("id", orderId);
 
-    if (updateError) {
-      setError(updateError.message);
+    const r = await fetch(`/api/kds/${encodeURIComponent(token)}`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ orderId, action: "recall" }),
+    });
+
+    const payload = (await r.json().catch(() => null)) as { error?: string; orders?: KDSOrder[] } | null;
+    if (!r.ok) {
+      setError(payload?.error ?? "Failed to update order");
       return;
     }
 
-    await loadOrders(restaurantId);
+    setOrders(payload?.orders ?? []);
   }
 
   if (loading) {
@@ -277,7 +223,7 @@ export default function PublicKDSPage() {
             <span>Ready: {readyOrders.length}</span>
           </div>
           <button
-            onClick={() => restaurantId && loadOrders(restaurantId)}
+            onClick={() => void loadOrders()}
             className="rounded-lg bg-zinc-700 px-3 py-1.5 text-sm font-medium hover:bg-zinc-600"
           >
             Refresh
