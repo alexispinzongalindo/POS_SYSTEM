@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <rect width="192" height="192" fill="#FEFEFE"/>
+  <g transform="translate(96,96)">
+    <circle cx="0" cy="0" r="36" fill="url(#islapos-core)" />
+    <circle cx="0" cy="0" r="56" stroke="url(#islapos-core)" stroke-width="16" fill="none" />
+    <path d="M-32 18H0" stroke="url(#islapos-core)" stroke-width="16" stroke-linecap="round" />
+    <path d="M-32 54H0" stroke="url(#islapos-core)" stroke-width="16" stroke-linecap="round" />
+    <path d="M32 0H64" stroke="url(#islapos-core)" stroke-width="16" stroke-linecap="round" />
+  </g>
+  <defs>
+    <linearGradient id="islapos-core" x1="56" y1="48" x2="136" y2="144" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E11D48" />
+      <stop offset="0.5" stop-color="#6D28D9" />
+      <stop offset="1" stop-color="#1D4ED8" />
+    </linearGradient>
+  </defs>
+</svg>
