@@ -834,6 +834,15 @@ export default function PosPage() {
 
   const refreshOrders = useCallback(
     async (restaurantId: string) => {
+    // Skip Supabase calls when offline - just show local orders
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setIsOffline(true);
+      const offline = listOfflineOrderSummaries(restaurantId);
+      setOrders(offline);
+      refreshOfflineQueueCount(restaurantId);
+      return;
+    }
+
     const now = new Date();
     const since =
       orderDateFilter === "today"
