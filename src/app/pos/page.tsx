@@ -62,7 +62,9 @@ type TimeClockAction = "clock_in" | "break_out" | "break_in" | "clock_out";
 type TimeClockEntry = {
   id: string;
   restaurantId: string;
-  userId: string;
+  staffId: string;
+  staffLabel?: string;
+  staffType: "pin";
   action: TimeClockAction;
   at: string;
 };
@@ -105,7 +107,7 @@ export default function PosPage() {
   const [timeClockSaving, setTimeClockSaving] = useState(false);
   const [timeClockError, setTimeClockError] = useState<string | null>(null);
   const [timeClockEntries, setTimeClockEntries] = useState<TimeClockEntry[]>([]);
-  const [timeClockUserId, setTimeClockUserId] = useState<string | null>(null);
+  const [timeClockPin, setTimeClockPin] = useState<string>("");
 
   const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "open" | "paid" | "canceled" | "refunded">(
     "all",
@@ -253,22 +255,49 @@ export default function PosPage() {
         // Load time clock entries for this restaurant (local only for now)
         if (storageOk) {
           try {
-            const raw = localStorage.getItem("islapos_timeclock_v1");
-            const parsed = raw ? (JSON.parse(raw) as TimeClockEntry[]) : [];
-            const filtered = Array.isArray(parsed)
-              ? parsed.filter((e) => e && typeof e === "object" && (e as TimeClockEntry).restaurantId === res.data.restaurantId)
+            const rawV1 = localStorage.getItem("islapos_timeclock_v1");
+            const rawV2 = localStorage.getItem("islapos_timeclock_v2");
+
+            const parsedV1 = rawV1 ? (JSON.parse(rawV1) as any[]) : [];
+            const parsedV2 = rawV2 ? (JSON.parse(rawV2) as any[]) : [];
+
+            const migratedFromV1: TimeClockEntry[] = Array.isArray(parsedV1)
+              ? parsedV1
+                  .filter((e) => e && typeof e === "object" && e.restaurantId === res.data.restaurantId)
+                  .map((e) => {
+                    const staffId = typeof e.userId === "string" ? e.userId : "";
+                    const at = typeof e.at === "string" ? e.at : new Date().toISOString();
+                    const action = (e.action as TimeClockAction) ?? "clock_in";
+                    return {
+                      id: typeof e.id === "string" ? e.id : `tc_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+                      restaurantId: res.data.restaurantId,
+                      staffId,
+                      staffType: "pin",
+                      staffLabel: "Imported",
+                      action,
+                      at,
+                    };
+                  })
               : [];
-            setTimeClockEntries(filtered);
+
+            const parsedCleanV2: TimeClockEntry[] = Array.isArray(parsedV2)
+              ? parsedV2
+                  .filter((e) => e && typeof e === "object" && e.restaurantId === res.data.restaurantId)
+                  .map((e) => ({
+                    id: typeof e.id === "string" ? e.id : `tc_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+                    restaurantId: res.data.restaurantId,
+                    staffId: typeof e.staffId === "string" ? e.staffId : "",
+                    staffType: "pin",
+                    staffLabel: typeof e.staffLabel === "string" ? e.staffLabel : undefined,
+                    action: (e.action as TimeClockAction) ?? "clock_in",
+                    at: typeof e.at === "string" ? e.at : new Date().toISOString(),
+                  }))
+              : [];
+
+            setTimeClockEntries([...migratedFromV1, ...parsedCleanV2].filter((e) => e.staffId));
           } catch {
             setTimeClockEntries([]);
           }
-        }
-
-        try {
-          const { data: sessionData } = await supabase.auth.getSession();
-          setTimeClockUserId(sessionData.session?.user.id ?? null);
-        } catch {
-          setTimeClockUserId(null);
         }
       } catch (e) {
         if (!cancelled) {
@@ -294,8 +323,8 @@ export default function PosPage() {
 
   const timeClockStatus = useMemo(() => {
     const restaurantId = data?.restaurantId;
-    const userId = timeClockUserId;
-    if (!restaurantId || !userId) {
+    const pin = timeClockPin.trim();
+    if (!restaurantId || pin.length !== 4) {
       return {
         clockedIn: false,
         onBreak: false,
@@ -303,7 +332,7 @@ export default function PosPage() {
       };
     }
 
-    const mine = timeClockEntries.filter((e) => e.restaurantId === restaurantId && e.userId === userId);
+    const mine = timeClockEntries.filter((e) => e.restaurantId === restaurantId && e.staffId === pin);
     const last = mine.length ? mine[mine.length - 1] : null;
     if (!last) return { clockedIn: false, onBreak: false, last: null };
 
@@ -311,35 +340,33 @@ export default function PosPage() {
     if (last.action === "break_out") return { clockedIn: true, onBreak: true, last };
     if (last.action === "break_in") return { clockedIn: true, onBreak: false, last };
     return { clockedIn: false, onBreak: false, last };
-  }, [data?.restaurantId, timeClockEntries, timeClockUserId]);
+  }, [data?.restaurantId, timeClockEntries, timeClockPin]);
 
   const saveTimeClockEntry = useCallback(
     async (action: TimeClockAction) => {
       if (!data?.restaurantId) return;
+      const pin = timeClockPin.trim();
       setTimeClockError(null);
       setTimeClockSaving(true);
       try {
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-        const userId = sessionData.session?.user.id;
-        if (!userId) {
-          router.replace("/login");
-          return;
+        if (pin.length !== 4) {
+          throw new Error("Enter a 4-digit PIN");
         }
-        setTimeClockUserId(userId);
 
         const entry: TimeClockEntry = {
           id: `tc_${Date.now()}_${Math.random().toString(16).slice(2)}`,
           restaurantId: data.restaurantId,
-          userId,
+          staffId: pin,
+          staffType: "pin",
+          staffLabel: `PIN ${pin}`,
           action,
           at: new Date().toISOString(),
         };
 
-        const raw = localStorage.getItem("islapos_timeclock_v1");
+        const raw = localStorage.getItem("islapos_timeclock_v2");
         const parsed = raw ? (JSON.parse(raw) as TimeClockEntry[]) : [];
         const nextAll = Array.isArray(parsed) ? [...parsed, entry] : [entry];
-        localStorage.setItem("islapos_timeclock_v1", JSON.stringify(nextAll));
+        localStorage.setItem("islapos_timeclock_v2", JSON.stringify(nextAll));
 
         setTimeClockEntries(nextAll.filter((e) => e.restaurantId === data.restaurantId));
         setSuccess(
@@ -358,7 +385,7 @@ export default function PosPage() {
         setTimeClockSaving(false);
       }
     },
-    [data?.restaurantId, router],
+    [data?.restaurantId, timeClockPin],
   );
 
   const getTrackedStock = useCallback(
@@ -1678,6 +1705,7 @@ export default function PosPage() {
               type="button"
               onClick={() => {
                 setTimeClockError(null);
+                setTimeClockPin("");
                 setShowTimeClockModal(true);
               }}
               className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
@@ -1803,7 +1831,7 @@ export default function PosPage() {
               <div>
                 <div className="text-base font-semibold">Time Clock</div>
                 <div className="mt-1 text-sm text-[var(--mp-muted)]">
-                  {timeClockUserId ? "Tap your action." : "Sign in to use the time clock."}
+                  Enter a 4-digit PIN and tap your action.
                 </div>
               </div>
               <button
@@ -1812,6 +1840,51 @@ export default function PosPage() {
               >
                 Close
               </button>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-[var(--mp-border)] bg-white p-4">
+              <div className="text-sm font-semibold">PIN</div>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <div className="flex h-12 flex-1 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white px-4 text-lg font-extrabold tracking-[0.35em]">
+                  {(timeClockPin || "").padEnd(4, "•").slice(0, 4)}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTimeClockPin((p) => p.slice(0, -1))}
+                  className="inline-flex h-12 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white px-4 text-sm font-semibold hover:bg-white"
+                >
+                  Del
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTimeClockPin("")}
+                  className="inline-flex h-12 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white px-4 text-sm font-semibold hover:bg-white"
+                >
+                  Clear
+                </button>
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setTimeClockPin((p) => (p.length >= 4 ? p : p + d))}
+                    className="inline-flex h-12 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white text-lg font-extrabold hover:bg-white"
+                  >
+                    {d}
+                  </button>
+                ))}
+                <div />
+                <button
+                  type="button"
+                  onClick={() => setTimeClockPin((p) => (p.length >= 4 ? p : p + "0"))}
+                  className="inline-flex h-12 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white text-lg font-extrabold hover:bg-white"
+                >
+                  0
+                </button>
+                <div />
+              </div>
             </div>
 
             <div className="mt-4 rounded-2xl border border-[var(--mp-border)] bg-white p-4">
@@ -1835,7 +1908,7 @@ export default function PosPage() {
               <button
                 type="button"
                 onClick={() => void saveTimeClockEntry("clock_in")}
-                disabled={timeClockSaving || !timeClockUserId || timeClockStatus.clockedIn}
+                disabled={timeClockSaving || timeClockPin.trim().length !== 4 || timeClockStatus.clockedIn}
                 className="inline-flex h-12 items-center justify-center rounded-2xl bg-[var(--mp-primary)] px-4 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
               >
                 Clock In
@@ -1844,7 +1917,7 @@ export default function PosPage() {
               <button
                 type="button"
                 onClick={() => void saveTimeClockEntry("clock_out")}
-                disabled={timeClockSaving || !timeClockUserId || !timeClockStatus.clockedIn}
+                disabled={timeClockSaving || timeClockPin.trim().length !== 4 || !timeClockStatus.clockedIn}
                 className="inline-flex h-12 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
               >
                 Clock Out
@@ -1853,7 +1926,7 @@ export default function PosPage() {
               <button
                 type="button"
                 onClick={() => void saveTimeClockEntry("break_out")}
-                disabled={timeClockSaving || !timeClockUserId || !timeClockStatus.clockedIn || timeClockStatus.onBreak}
+                disabled={timeClockSaving || timeClockPin.trim().length !== 4 || !timeClockStatus.clockedIn || timeClockStatus.onBreak}
                 className="inline-flex h-12 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
               >
                 Break Out
@@ -1862,7 +1935,7 @@ export default function PosPage() {
               <button
                 type="button"
                 onClick={() => void saveTimeClockEntry("break_in")}
-                disabled={timeClockSaving || !timeClockUserId || !timeClockStatus.clockedIn || !timeClockStatus.onBreak}
+                disabled={timeClockSaving || timeClockPin.trim().length !== 4 || !timeClockStatus.clockedIn || !timeClockStatus.onBreak}
                 className="inline-flex h-12 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
               >
                 Break In
