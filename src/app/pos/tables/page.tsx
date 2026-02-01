@@ -125,13 +125,19 @@ export default function PosTablesPage() {
 
     void load();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) router.replace("/login");
-    });
+    // Skip auth listener when offline
+    const isOfflineNow = typeof navigator !== "undefined" ? !navigator.onLine : false;
+    let authListener: { subscription: { unsubscribe: () => void } } | null = null;
+    if (!isOfflineNow) {
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (!session) router.replace("/login");
+      });
+      authListener = data;
+    }
 
     return () => {
       cancelled = true;
-      authListener.subscription.unsubscribe();
+      authListener?.subscription.unsubscribe();
     };
   }, [router]);
 
@@ -142,6 +148,10 @@ export default function PosTablesPage() {
       return;
     }
 
+    // Skip floor plan loading when offline
+    const isOfflineNow = typeof navigator !== "undefined" ? !navigator.onLine : false;
+    if (isOfflineNow) return;
+
     const areaId = activeAreaId;
     let cancelled = false;
 
@@ -151,6 +161,8 @@ export default function PosTablesPage() {
         await reloadActiveArea(areaId);
       } catch (e) {
         if (cancelled) return;
+        // Don't show error if we went offline
+        if (typeof navigator !== "undefined" && !navigator.onLine) return;
         const msg = e instanceof Error ? e.message : "Failed to load floor plan";
         setError(msg);
       }
@@ -165,10 +177,16 @@ export default function PosTablesPage() {
   useEffect(() => {
     if (!restaurantId) return;
 
+    // Skip polling when offline
+    const isOfflineNow = typeof navigator !== "undefined" ? !navigator.onLine : false;
+    if (isOfflineNow) return;
+
     let cancelled = false;
     const id = window.setInterval(() => {
       void (async () => {
         try {
+          // Skip if offline
+          if (typeof navigator !== "undefined" && !navigator.onLine) return;
           if (cancelled) return;
           await reloadOpenOrders(restaurantId);
           if (cancelled) return;
