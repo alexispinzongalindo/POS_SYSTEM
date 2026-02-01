@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import MarketingDemoSlideshow from "@/components/MarketingDemoSlideshow";
 import MarketingHeader from "@/components/MarketingHeader";
 import MarketingCard from "@/components/MarketingCard";
 import MarketingFooter from "@/components/MarketingFooter";
@@ -166,16 +167,7 @@ export default function Home() {
                 <div className="lg:col-span-8">
                   <div className="overflow-hidden rounded-3xl border border-[var(--mp-border)] bg-[var(--mp-surface)] shadow-sm">
                     {videoError ? (
-                      <div className="p-6">
-                        <div className="text-sm font-semibold">
-                          {lang === "es" ? "Video no disponible todavía" : "Video not available yet"}
-                        </div>
-                        <div className="mt-2 text-sm text-[var(--mp-muted)]">
-                          {lang === "es"
-                            ? "Sube el archivo aquí: public/videos/islapos-es.mp4 (y/o islapos-en.mp4)."
-                            : "Upload the file here: public/videos/islapos-en.mp4 (and/or islapos-es.mp4)."}
-                        </div>
-                      </div>
+                      <MarketingDemoSlideshow lang={lang === "es" ? "es" : "en"} />
                     ) : (
                       <video
                         key={videoSrc}
