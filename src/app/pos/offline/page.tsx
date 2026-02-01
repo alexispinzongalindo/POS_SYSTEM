@@ -13,6 +13,7 @@ import {
   type OfflineOrder,
 } from "@/lib/offlineOrders";
 import { createOrder, findOrderByOfflineLocalId, loadPosMenuData, markOrderPaid } from "@/lib/posData";
+import { supabase } from "@/lib/supabaseClient";
 
 function isLikelyOfflineError(e: unknown) {
   const msg = e instanceof Error ? e.message : String(e);
@@ -151,6 +152,11 @@ export default function OfflineQueuePage() {
     async (o: OfflineOrder) => {
       if (!restaurantId) return;
 
+      // Get current user ID for syncing
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentUserId = sessionData.session?.user.id ?? null;
+      if (!currentUserId) throw new Error("Not logged in - please log in to sync");
+
       let orderId = getSyncedCloudOrderId(restaurantId, o.local_id);
 
       if (!orderId) {
@@ -160,7 +166,13 @@ export default function OfflineQueuePage() {
         orderId = existing.data?.id ?? "";
 
         if (!orderId) {
-          const created = await createOrder({ ...o.payload, offline_local_id: o.local_id });
+          // Replace offline-user with real user ID
+          const payload = {
+            ...o.payload,
+            created_by_user_id: currentUserId,
+            offline_local_id: o.local_id,
+          };
+          const created = await createOrder(payload);
           if (created.error) throw created.error;
 
           orderId = created.data?.orderId ?? "";
