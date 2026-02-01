@@ -128,9 +128,22 @@ export default function PosTablesPage() {
         const nextAreas = areasRes.data ?? [];
         setAreas(nextAreas);
         
-        // Cache floor plan areas for offline use
+        // Cache ALL floor plan data for offline use (areas + all tables)
         try {
+          // Cache areas
           window.localStorage.setItem("islapos_cached_floor_plan", JSON.stringify({ areas: nextAreas }));
+          
+          // Cache tables for ALL areas (not just the active one)
+          for (const area of nextAreas) {
+            const [tRes, oRes] = await Promise.all([listFloorTables(area.id), listFloorObjects(area.id)]);
+            if (cancelled) return;
+            if (!tRes.error && !oRes.error) {
+              window.localStorage.setItem(`islapos_cached_floor_tables_${area.id}`, JSON.stringify({
+                tables: tRes.data ?? [],
+                objects: oRes.data ?? [],
+              }));
+            }
+          }
         } catch {
           // ignore storage errors
         }
