@@ -197,15 +197,27 @@ export default function Home() {
                     <div className="grid gap-2 text-sm text-[var(--mp-muted)]">
                       <div className="flex items-start gap-2">
                         <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--mp-primary)]" />
+                        <span>{lang === "es" ? "Login (inicio de turno)" : "Login (start your shift)"}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--mp-primary)]" />
+                        <span>{lang === "es" ? "POS: agregar productos y crear ticket" : "POS: add items and create a ticket"}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--mp-primary)]" />
                         <span>{lang === "es" ? "Mesas + tickets abiertos" : "Tables + open tickets"}</span>
                       </div>
                       <div className="flex items-start gap-2">
                         <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--mp-primary)]" />
-                        <span>{lang === "es" ? "Cobro y recibos" : "Checkout and receipts"}</span>
+                        <span>{lang === "es" ? "Modo Huracán (offline) + sync" : "Hurricane Mode (offline) + sync"}</span>
                       </div>
                       <div className="flex items-start gap-2">
                         <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--mp-primary)]" />
-                        <span>{lang === "es" ? "Modo Huracán (offline)" : "Hurricane Mode (offline)"}</span>
+                        <span>{lang === "es" ? "Reportes e historial" : "Reports and history"}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--mp-primary)]" />
+                        <span>{lang === "es" ? "Vista previa: flujo rápido" : "Preview: fast workflow"}</span>
                       </div>
                     </div>
                   </MarketingCard>
