@@ -69,6 +69,12 @@ type TimeClockEntry = {
   at: string;
 };
 
+type StaffPinDirectoryRow = {
+  id: string;
+  name: string | null;
+  pin: string | null;
+};
+
 export default function PosPage() {
   const router = useRouter();
 
@@ -108,6 +114,7 @@ export default function PosPage() {
   const [timeClockError, setTimeClockError] = useState<string | null>(null);
   const [timeClockEntries, setTimeClockEntries] = useState<TimeClockEntry[]>([]);
   const [timeClockPin, setTimeClockPin] = useState<string>("");
+  const [staffPinDirectory, setStaffPinDirectory] = useState<StaffPinDirectoryRow[]>([]);
 
   const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "open" | "paid" | "canceled" | "refunded">(
     "all",
@@ -252,6 +259,18 @@ export default function PosPage() {
         }
         setOrders(history.data ?? []);
 
+        // Load cached staff PIN directory (for offline)
+        if (storageOk) {
+          try {
+            const key = `islapos_staff_pins_${res.data.restaurantId}`;
+            const raw = localStorage.getItem(key);
+            const parsed = raw ? (JSON.parse(raw) as StaffPinDirectoryRow[]) : [];
+            setStaffPinDirectory(Array.isArray(parsed) ? parsed : []);
+          } catch {
+            setStaffPinDirectory([]);
+          }
+        }
+
         // Load time clock entries for this restaurant (local only for now)
         if (storageOk) {
           try {
@@ -321,6 +340,64 @@ export default function PosPage() {
     };
   }, [router]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadStaffPins() {
+      if (!data?.restaurantId) return;
+      if (typeof navigator !== "undefined" && !navigator.onLine) return;
+
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (!token) return;
+
+        const res = await fetch("/api/pos/staff-pins", {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+        });
+        const json = (await res.json().catch(() => null)) as
+          | { restaurantId?: string; staff?: StaffPinDirectoryRow[]; error?: string }
+          | null;
+
+        if (!res.ok || json?.error) return;
+        if (cancelled) return;
+        const list = Array.isArray(json?.staff) ? (json?.staff as StaffPinDirectoryRow[]) : [];
+
+        const normalized = list
+          .filter((r) => r && typeof r === "object")
+          .map((r) => ({
+            id: String(r.id),
+            name: r.name ?? null,
+            pin: typeof r.pin === "string" ? r.pin : null,
+          }))
+          .filter((r) => r.pin && /^\d{4}$/.test(r.pin));
+
+        setStaffPinDirectory(normalized);
+        try {
+          const key = `islapos_staff_pins_${data.restaurantId}`;
+          localStorage.setItem(key, JSON.stringify(normalized));
+        } catch {
+          // ignore
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    void loadStaffPins();
+    return () => {
+      cancelled = true;
+    };
+  }, [data?.restaurantId]);
+
+  const activeStaff = useMemo(() => {
+    const pin = timeClockPin.trim();
+    if (pin.length !== 4) return null;
+    return staffPinDirectory.find((r) => r.pin === pin) ?? null;
+  }, [staffPinDirectory, timeClockPin]);
+
   const timeClockStatus = useMemo(() => {
     const restaurantId = data?.restaurantId;
     const pin = timeClockPin.trim();
@@ -353,12 +430,17 @@ export default function PosPage() {
           throw new Error("Enter a 4-digit PIN");
         }
 
+        const staff = staffPinDirectory.find((r) => r.pin === pin) ?? null;
+        if (!staff) {
+          throw new Error("PIN not found. Ask manager to set your PIN in Admin > Staff.");
+        }
+
         const entry: TimeClockEntry = {
           id: `tc_${Date.now()}_${Math.random().toString(16).slice(2)}`,
           restaurantId: data.restaurantId,
           staffId: pin,
           staffType: "pin",
-          staffLabel: `PIN ${pin}`,
+          staffLabel: staff.name?.trim() ? staff.name : `PIN ${pin}`,
           action,
           at: new Date().toISOString(),
         };
@@ -385,7 +467,7 @@ export default function PosPage() {
         setTimeClockSaving(false);
       }
     },
-    [data?.restaurantId, timeClockPin],
+    [data?.restaurantId, staffPinDirectory, timeClockPin],
   );
 
   const getTrackedStock = useCallback(
@@ -1890,6 +1972,11 @@ export default function PosPage() {
             <div className="mt-4 rounded-2xl border border-[var(--mp-border)] bg-white p-4">
               <div className="text-sm font-semibold">Status</div>
               <div className="mt-1 text-sm text-[var(--mp-muted)]">
+                {timeClockPin.trim().length === 4 && !activeStaff ? "PIN not found" : null}
+                {timeClockPin.trim().length === 4 && activeStaff ? (
+                  <span className="font-semibold text-[var(--mp-fg)]">{activeStaff.name?.trim() ? activeStaff.name : "Employee"}</span>
+                ) : null}
+                {timeClockPin.trim().length === 4 ? " · " : null}
                 {timeClockStatus.clockedIn
                   ? timeClockStatus.onBreak
                     ? "On break"
@@ -1908,7 +1995,7 @@ export default function PosPage() {
               <button
                 type="button"
                 onClick={() => void saveTimeClockEntry("clock_in")}
-                disabled={timeClockSaving || timeClockPin.trim().length !== 4 || timeClockStatus.clockedIn}
+                disabled={timeClockSaving || timeClockPin.trim().length !== 4 || !activeStaff || timeClockStatus.clockedIn}
                 className="inline-flex h-12 items-center justify-center rounded-2xl bg-[var(--mp-primary)] px-4 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
               >
                 Clock In
@@ -1917,7 +2004,7 @@ export default function PosPage() {
               <button
                 type="button"
                 onClick={() => void saveTimeClockEntry("clock_out")}
-                disabled={timeClockSaving || timeClockPin.trim().length !== 4 || !timeClockStatus.clockedIn}
+                disabled={timeClockSaving || timeClockPin.trim().length !== 4 || !activeStaff || !timeClockStatus.clockedIn}
                 className="inline-flex h-12 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
               >
                 Clock Out
@@ -1926,7 +2013,13 @@ export default function PosPage() {
               <button
                 type="button"
                 onClick={() => void saveTimeClockEntry("break_out")}
-                disabled={timeClockSaving || timeClockPin.trim().length !== 4 || !timeClockStatus.clockedIn || timeClockStatus.onBreak}
+                disabled={
+                  timeClockSaving ||
+                  timeClockPin.trim().length !== 4 ||
+                  !activeStaff ||
+                  !timeClockStatus.clockedIn ||
+                  timeClockStatus.onBreak
+                }
                 className="inline-flex h-12 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
               >
                 Break Out
@@ -1935,7 +2028,13 @@ export default function PosPage() {
               <button
                 type="button"
                 onClick={() => void saveTimeClockEntry("break_in")}
-                disabled={timeClockSaving || timeClockPin.trim().length !== 4 || !timeClockStatus.clockedIn || !timeClockStatus.onBreak}
+                disabled={
+                  timeClockSaving ||
+                  timeClockPin.trim().length !== 4 ||
+                  !activeStaff ||
+                  !timeClockStatus.clockedIn ||
+                  !timeClockStatus.onBreak
+                }
                 className="inline-flex h-12 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
               >
                 Break In

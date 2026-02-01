@@ -11,6 +11,8 @@ type StaffRow = {
   id: string;
   email: string | null;
   role: StaffRole;
+  name: string | null;
+  pin: string | null;
 };
 
 export default function AdminStaffPage() {
@@ -26,7 +28,12 @@ export default function AdminStaffPage() {
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
-    return rows.filter((r) => (r.email ?? "").toLowerCase().includes(q));
+    return rows.filter((r) => {
+      const email = (r.email ?? "").toLowerCase();
+      const name = (r.name ?? "").toLowerCase();
+      const pin = (r.pin ?? "").toLowerCase();
+      return email.includes(q) || name.includes(q) || pin.includes(q);
+    });
   }, [rows, search]);
 
   async function authedFetch(path: string, init?: RequestInit) {
@@ -134,6 +141,29 @@ export default function AdminStaffPage() {
     setSuccess("Role updated.");
   }
 
+  async function updateStaff(userId: string, patch: { name?: string | null; pin?: string | null }) {
+    setError(null);
+    setSuccess(null);
+
+    const res = await authedFetch("/api/admin/staff", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ userId, ...patch }),
+    });
+
+    const json = (await res.json().catch(() => null)) as
+      | { ok?: boolean; error?: string }
+      | null;
+
+    if (!res.ok || json?.error) {
+      setError(json?.error ?? "Failed to update staff");
+      return;
+    }
+
+    await loadStaff();
+    setSuccess("Updated.");
+  }
+
   async function removeAccess(userId: string) {
     setError(null);
     setSuccess(null);
@@ -230,11 +260,35 @@ export default function AdminStaffPage() {
                   className="flex flex-col gap-2 rounded-lg border border-zinc-200 px-3 py-2 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800"
                 >
                   <div>
-                    <div className="text-sm font-medium">{r.email ?? "(no email)"}</div>
+                    <div className="text-sm font-medium">{r.name?.trim() ? r.name : r.email ?? "(no email)"}</div>
+                    <div className="text-xs text-zinc-600 dark:text-zinc-400">{r.email ?? "(no email)"}</div>
                     <div className="text-xs text-zinc-600 dark:text-zinc-400">{r.id}</div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      className="h-9 w-44 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
+                      placeholder="Name"
+                      value={r.name ?? ""}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, name: v } : x)));
+                      }}
+                      onBlur={() => void updateStaff(r.id, { name: (r.name ?? "").trim() ? (r.name ?? "").trim() : null })}
+                    />
+
+                    <input
+                      className="h-9 w-24 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
+                      placeholder="PIN"
+                      inputMode="numeric"
+                      value={r.pin ?? ""}
+                      onChange={(e) => {
+                        const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 4);
+                        setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, pin: digitsOnly } : x)));
+                      }}
+                      onBlur={() => void updateStaff(r.id, { pin: (r.pin ?? "").trim() ? (r.pin ?? "").trim() : null })}
+                    />
+
                     <select
                       className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
                       value={r.role}
