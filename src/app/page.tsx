@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import MarketingHeader from "@/components/MarketingHeader";
 import MarketingCard from "@/components/MarketingCard";
 import MarketingFooter from "@/components/MarketingFooter";
@@ -10,6 +11,15 @@ import { useMarketingLang } from "@/lib/useMarketingLang";
 export default function Home() {
   const { lang } = useMarketingLang();
   const t = marketingCopy(lang);
+  const [videoError, setVideoError] = useState(false);
+  const videoSrc = useMemo(
+    () => (lang === "es" ? "/videos/islapos-es.mp4" : "/videos/islapos-en.mp4"),
+    [lang],
+  );
+
+  useEffect(() => {
+    setVideoError(false);
+  }, [videoSrc]);
 
   return (
     <div className="islapos-marketing min-h-screen bg-[var(--mp-bg)] text-[var(--mp-fg)]">
@@ -140,6 +150,91 @@ export default function Home() {
             <MarketingCard title={t.home.cards.prReadyTitle} description={t.home.cards.prReadyBody} className="p-4 rounded-xl" />
             <MarketingCard title={t.home.cards.goLiveTitle} description={t.home.cards.goLiveBody} className="p-4 rounded-xl" />
             <MarketingCard title={t.home.cards.supportTitle} description={t.home.cards.supportBody} className="p-4 rounded-xl" />
+          </div>
+
+          <div className="mt-16">
+            <MarketingSection
+              eyebrow={lang === "es" ? "Demo" : "Demo"}
+              title={lang === "es" ? "Mira IslaPOS en acción" : "See IslaPOS in action"}
+              subtitle={
+                lang === "es"
+                  ? "Video corto mostrando mesas, tickets, cobro y modo offline."
+                  : "Short video showing tables, tickets, checkout, and offline mode."
+              }
+            >
+              <div className="grid gap-4 lg:grid-cols-12">
+                <div className="lg:col-span-8">
+                  <div className="overflow-hidden rounded-3xl border border-[var(--mp-border)] bg-[var(--mp-surface)] shadow-sm">
+                    {videoError ? (
+                      <div className="p-6">
+                        <div className="text-sm font-semibold">
+                          {lang === "es" ? "Video no disponible todavía" : "Video not available yet"}
+                        </div>
+                        <div className="mt-2 text-sm text-[var(--mp-muted)]">
+                          {lang === "es"
+                            ? "Sube el archivo aquí: public/videos/islapos-es.mp4 (y/o islapos-en.mp4)."
+                            : "Upload the file here: public/videos/islapos-en.mp4 (and/or islapos-es.mp4)."}
+                        </div>
+                      </div>
+                    ) : (
+                      <video
+                        key={videoSrc}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        poster="/hero/PART2.png"
+                        className="w-full bg-black"
+                        onError={() => setVideoError(true)}
+                      >
+                        <source src={videoSrc} type="video/mp4" />
+                      </video>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid gap-4 lg:col-span-4">
+                  <MarketingCard
+                    title={lang === "es" ? "Incluye" : "Includes"}
+                    description={
+                      lang === "es"
+                        ? "Un recorrido rápido de las funciones principales para dueños y empleados."
+                        : "A quick walkthrough of the main features for owners and staff."
+                    }
+                    className="p-5"
+                  >
+                    <div className="grid gap-2 text-sm text-[var(--mp-muted)]">
+                      <div className="flex items-start gap-2">
+                        <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--mp-primary)]" />
+                        <span>{lang === "es" ? "Mesas + tickets abiertos" : "Tables + open tickets"}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--mp-primary)]" />
+                        <span>{lang === "es" ? "Cobro y recibos" : "Checkout and receipts"}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--mp-primary)]" />
+                        <span>{lang === "es" ? "Modo Huracán (offline)" : "Hurricane Mode (offline)"}</span>
+                      </div>
+                    </div>
+                  </MarketingCard>
+
+                  <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+                    <a
+                      className="inline-flex h-11 flex-1 items-center justify-center rounded-lg bg-[var(--mp-primary)] px-6 text-sm font-medium text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
+                      href="/login?mode=signup"
+                    >
+                      {lang === "es" ? "Empieza la prueba" : "Start free trial"}
+                    </a>
+                    <a
+                      className="inline-flex h-11 flex-1 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-white px-6 text-sm font-medium text-[var(--mp-fg)] hover:bg-black/[0.03] focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
+                      href="/training"
+                    >
+                      {lang === "es" ? "Ver entrenamiento" : "View training"}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </MarketingSection>
           </div>
 
           <div className="mt-16">
