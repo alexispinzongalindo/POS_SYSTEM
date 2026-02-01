@@ -974,6 +974,9 @@ export default function PosPage() {
     if (!data) return;
     if (loading) return;
 
+    // Skip refreshing orders when offline
+    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+
     const t = window.setTimeout(() => {
       void refreshOrders(data.restaurantId);
     }, 250);
