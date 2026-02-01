@@ -67,7 +67,8 @@ export default function MarketingDemoSlideshow({ lang }: { lang: "en" | "es" }) 
   }, []);
 
   const [index, setIndex] = useState(0);
-  const [playing, setPlaying] = useState(true);
+  const [started, setStarted] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [voiceReady, setVoiceReady] = useState(false);
 
@@ -89,7 +90,8 @@ export default function MarketingDemoSlideshow({ lang }: { lang: "en" | "es" }) 
     return () => synth.removeEventListener?.("voiceschanged", onVoices);
   }, []);
 
-  function speak() {
+  function speak(force = false) {
+    if (!started && !force) return;
     if (!voiceEnabled) return;
     if (!voiceReady) return;
     try {
@@ -108,9 +110,9 @@ export default function MarketingDemoSlideshow({ lang }: { lang: "en" | "es" }) 
   }
 
   useEffect(() => {
-    speak();
+    speak(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, lang, voiceEnabled, voiceReady]);
+  }, [index, lang, voiceEnabled, voiceReady, started]);
 
   return (
     <div className="p-4 sm:p-6">
@@ -125,15 +127,34 @@ export default function MarketingDemoSlideshow({ lang }: { lang: "en" | "es" }) 
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => setPlaying((p) => !p)}
+            onClick={() => {
+              if (!started) {
+                setStarted(true);
+                setPlaying(true);
+                speak(true);
+                return;
+              }
+              setPlaying((p) => !p);
+            }}
             className="inline-flex h-9 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-black/[0.03]"
           >
-            {playing ? (lang === "es" ? "Pausar" : "Pause") : lang === "es" ? "Reproducir" : "Play"}
+            {!started
+              ? lang === "es"
+                ? "Iniciar"
+                : "Start"
+              : playing
+                ? lang === "es"
+                  ? "Pausar"
+                  : "Pause"
+                : lang === "es"
+                  ? "Reproducir"
+                  : "Play"}
           </button>
 
           <button
             type="button"
             onClick={() => {
+              setStarted(true);
               setPlaying(false);
               setIndex((i) => (i - 1 + slides.length) % slides.length);
             }}
@@ -145,6 +166,7 @@ export default function MarketingDemoSlideshow({ lang }: { lang: "en" | "es" }) 
           <button
             type="button"
             onClick={() => {
+              setStarted(true);
               setPlaying(false);
               setIndex((i) => (i + 1) % slides.length);
             }}
@@ -160,7 +182,7 @@ export default function MarketingDemoSlideshow({ lang }: { lang: "en" | "es" }) 
 
           <button
             type="button"
-            onClick={speak}
+            onClick={() => speak(true)}
             className="inline-flex h-9 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-black/[0.03]"
           >
             {lang === "es" ? "Hablar" : "Speak"}
@@ -191,6 +213,7 @@ export default function MarketingDemoSlideshow({ lang }: { lang: "en" | "es" }) 
         max={slides.length - 1}
         value={index}
         onChange={(e) => {
+          setStarted(true);
           setPlaying(false);
           setIndex(Number(e.target.value));
         }}
