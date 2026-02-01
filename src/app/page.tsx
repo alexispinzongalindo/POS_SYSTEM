@@ -220,6 +220,119 @@ export default function Home() {
             </MarketingSection>
           </div>
 
+          {/* Hurricane Mode / Offline Feature Highlight */}
+          <div className="mt-16">
+            <MarketingSection
+              eyebrow={lang === "es" ? "Modo Huracán" : "Hurricane Mode"}
+              title={lang === "es" ? "Funciona sin internet" : "Works without internet"}
+              subtitle={
+                lang === "es"
+                  ? "Cuando se va la luz o el internet, tu POS sigue funcionando. Los tickets se guardan localmente y se sincronizan cuando vuelve la conexión."
+                  : "When power or internet goes out, your POS keeps working. Tickets are saved locally and sync when connection returns."
+              }
+            >
+              <div className="grid gap-4 sm:grid-cols-3">
+                <MarketingCard
+                  title={lang === "es" ? "📴 Sin conexión" : "📴 Offline"}
+                  description={
+                    lang === "es"
+                      ? "Toma órdenes, abre mesas y cobra — todo sin internet."
+                      : "Take orders, open tables, and checkout — all without internet."
+                  }
+                />
+                <MarketingCard
+                  title={lang === "es" ? "💾 Guardado local" : "💾 Local storage"}
+                  description={
+                    lang === "es"
+                      ? "Los tickets se guardan en el dispositivo hasta que vuelva la conexión."
+                      : "Tickets are saved on device until connection returns."
+                  }
+                />
+                <MarketingCard
+                  title={lang === "es" ? "🔄 Sincronización" : "🔄 Auto-sync"}
+                  description={
+                    lang === "es"
+                      ? "Cuando vuelve el internet, todo se sincroniza automáticamente."
+                      : "When internet returns, everything syncs automatically."
+                  }
+                />
+              </div>
+            </MarketingSection>
+          </div>
+
+          {/* Pricing Section */}
+          <div className="mt-16">
+            <MarketingSection
+              eyebrow={lang === "es" ? "Precios" : "Pricing"}
+              title={lang === "es" ? "Simple y transparente" : "Simple and transparent"}
+              subtitle={
+                lang === "es"
+                  ? "Un precio por local. Sin sorpresas. Empieza gratis."
+                  : "One price per location. No surprises. Start free."
+              }
+            >
+              <div className="grid gap-6 lg:grid-cols-3">
+                <div className="rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6 shadow-sm">
+                  <div className="text-sm font-medium text-[var(--mp-muted)]">{lang === "es" ? "Prueba" : "Trial"}</div>
+                  <div className="mt-2 text-3xl font-bold">{lang === "es" ? "Gratis" : "Free"}</div>
+                  <div className="mt-1 text-sm text-[var(--mp-muted)]">{lang === "es" ? "14 días" : "14 days"}</div>
+                  <ul className="mt-4 space-y-2 text-sm">
+                    <li className="flex items-center gap-2"><span className="text-[var(--mp-primary)]">✓</span> {lang === "es" ? "POS completo" : "Full POS"}</li>
+                    <li className="flex items-center gap-2"><span className="text-[var(--mp-primary)]">✓</span> {lang === "es" ? "Menú ilimitado" : "Unlimited menu"}</li>
+                    <li className="flex items-center gap-2"><span className="text-[var(--mp-primary)]">✓</span> {lang === "es" ? "Modo offline" : "Offline mode"}</li>
+                    <li className="flex items-center gap-2"><span className="text-[var(--mp-primary)]">✓</span> {lang === "es" ? "Soporte por email" : "Email support"}</li>
+                  </ul>
+                  <a
+                    href="/login?mode=signup"
+                    className="mt-6 inline-flex h-10 w-full items-center justify-center rounded-lg border border-[var(--mp-border)] bg-white text-sm font-medium hover:bg-black/[0.03]"
+                  >
+                    {lang === "es" ? "Empezar gratis" : "Start free"}
+                  </a>
+                </div>
+
+                <div className="relative rounded-2xl border-2 border-[var(--mp-primary)] bg-[var(--mp-surface)] p-6 shadow-lg">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[var(--mp-primary)] px-3 py-1 text-xs font-medium text-white">
+                    {lang === "es" ? "Popular" : "Popular"}
+                  </div>
+                  <div className="text-sm font-medium text-[var(--mp-muted)]">{lang === "es" ? "Profesional" : "Professional"}</div>
+                  <div className="mt-2 text-3xl font-bold">$49<span className="text-lg font-normal text-[var(--mp-muted)]">/mo</span></div>
+                  <div className="mt-1 text-sm text-[var(--mp-muted)]">{lang === "es" ? "por local" : "per location"}</div>
+                  <ul className="mt-4 space-y-2 text-sm">
+                    <li className="flex items-center gap-2"><span className="text-[var(--mp-primary)]">✓</span> {lang === "es" ? "Todo en Prueba" : "Everything in Trial"}</li>
+                    <li className="flex items-center gap-2"><span className="text-[var(--mp-primary)]">✓</span> {lang === "es" ? "Usuarios ilimitados" : "Unlimited users"}</li>
+                    <li className="flex items-center gap-2"><span className="text-[var(--mp-primary)]">✓</span> {lang === "es" ? "Reportes avanzados" : "Advanced reports"}</li>
+                    <li className="flex items-center gap-2"><span className="text-[var(--mp-primary)]">✓</span> {lang === "es" ? "Soporte prioritario" : "Priority support"}</li>
+                    <li className="flex items-center gap-2"><span className="text-[var(--mp-primary)]">✓</span> {lang === "es" ? "Onboarding guiado" : "Guided onboarding"}</li>
+                  </ul>
+                  <a
+                    href="/login?mode=signup"
+                    className="mt-6 inline-flex h-10 w-full items-center justify-center rounded-lg bg-[var(--mp-primary)] text-sm font-medium text-white hover:bg-[var(--mp-primary-hover)]"
+                  >
+                    {lang === "es" ? "Empezar ahora" : "Get started"}
+                  </a>
+                </div>
+
+                <div className="rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6 shadow-sm">
+                  <div className="text-sm font-medium text-[var(--mp-muted)]">{lang === "es" ? "Empresa" : "Enterprise"}</div>
+                  <div className="mt-2 text-3xl font-bold">{lang === "es" ? "Contacto" : "Contact"}</div>
+                  <div className="mt-1 text-sm text-[var(--mp-muted)]">{lang === "es" ? "precio personalizado" : "custom pricing"}</div>
+                  <ul className="mt-4 space-y-2 text-sm">
+                    <li className="flex items-center gap-2"><span className="text-[var(--mp-primary)]">✓</span> {lang === "es" ? "Todo en Profesional" : "Everything in Pro"}</li>
+                    <li className="flex items-center gap-2"><span className="text-[var(--mp-primary)]">✓</span> {lang === "es" ? "Multi-local" : "Multi-location"}</li>
+                    <li className="flex items-center gap-2"><span className="text-[var(--mp-primary)]">✓</span> {lang === "es" ? "API access" : "API access"}</li>
+                    <li className="flex items-center gap-2"><span className="text-[var(--mp-primary)]">✓</span> {lang === "es" ? "Soporte dedicado" : "Dedicated support"}</li>
+                  </ul>
+                  <a
+                    href="/contact"
+                    className="mt-6 inline-flex h-10 w-full items-center justify-center rounded-lg border border-[var(--mp-border)] bg-white text-sm font-medium hover:bg-black/[0.03]"
+                  >
+                    {lang === "es" ? "Contactar" : "Contact us"}
+                  </a>
+                </div>
+              </div>
+            </MarketingSection>
+          </div>
+
           <div className="mt-16">
             <MarketingSection
               eyebrow={lang === "es" ? "Confianza" : "Trust"}
@@ -313,6 +426,32 @@ export default function Home() {
                 </div>
               </div>
             </MarketingSection>
+          </div>
+
+          {/* Final CTA */}
+          <div className="mt-16 rounded-3xl bg-gradient-to-br from-[var(--mp-primary)] to-[#008577] p-8 text-center text-white sm:p-12">
+            <h2 className="text-2xl font-bold sm:text-3xl">
+              {lang === "es" ? "¿Listo para empezar?" : "Ready to get started?"}
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm opacity-90">
+              {lang === "es"
+                ? "Crea tu cuenta gratis y configura tu restaurante en minutos. Sin tarjeta de crédito."
+                : "Create your free account and set up your restaurant in minutes. No credit card required."}
+            </p>
+            <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <a
+                href="/login?mode=signup"
+                className="inline-flex h-11 items-center justify-center rounded-lg bg-white px-6 text-sm font-medium text-[var(--mp-primary)] hover:bg-white/90"
+              >
+                {lang === "es" ? "Crear cuenta gratis" : "Create free account"}
+              </a>
+              <a
+                href="/contact"
+                className="inline-flex h-11 items-center justify-center rounded-lg border border-white/30 px-6 text-sm font-medium text-white hover:bg-white/10"
+              >
+                {lang === "es" ? "Hablar con ventas" : "Talk to sales"}
+              </a>
+            </div>
           </div>
         </main>
 
