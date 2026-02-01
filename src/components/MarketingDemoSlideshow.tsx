@@ -77,7 +77,7 @@ export default function MarketingDemoSlideshow({ lang }: { lang: "en" | "es" }) 
     if (!playing) return;
     const t = window.setInterval(() => {
       setIndex((i) => (i + 1) % slides.length);
-    }, 6000);
+    }, 10000);
     return () => window.clearInterval(t);
   }, [playing, slides.length]);
 
