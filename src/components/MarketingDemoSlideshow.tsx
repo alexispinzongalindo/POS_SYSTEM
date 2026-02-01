@@ -25,32 +25,30 @@ function pickPreferredVoice(lang: "en" | "es") {
 
 export default function MarketingDemoSlideshow({ lang }: { lang: "en" | "es" }) {
   const slides: Slide[] = useMemo(() => {
-    const padded = (n: number) => String(n).padStart(3, "0");
-
-    const captions: Array<{ n: number; en: string; es: string }> = [
-      { n: 1, en: "Welcome to IslaPOS.", es: "Bienvenido a IslaPOS." },
-      { n: 5, en: "Dashboard overview.", es: "Resumen del panel." },
-      { n: 10, en: "Menu & products.", es: "Menú y productos." },
-      { n: 16, en: "Tables and floor plan.", es: "Mesas y plano de piso." },
-      { n: 22, en: "Taking orders in POS.", es: "Tomando órdenes en el POS." },
-      { n: 28, en: "Open tickets and quick resume.", es: "Tickets abiertos y regresar rápido." },
-      { n: 34, en: "Payments and receipts.", es: "Cobro y recibos." },
-      { n: 40, en: "Offline (Hurricane Mode) and sync.", es: "Modo offline (Huracán) y sincronización." },
+    // IMPORTANT: Use only IslaPOS-owned assets. Do NOT use 3rd-party screenshots.
+    return [
+      {
+        src: "/hero/hero.jpg",
+        caption: {
+          en: "IslaPOS — built for Puerto Rico restaurants.",
+          es: "IslaPOS — hecho para restaurantes en Puerto Rico.",
+        },
+      },
+      {
+        src: "/hero/PART2.png",
+        caption: {
+          en: "Fast POS workflow: tables, tickets, and checkout.",
+          es: "Flujo rápido: mesas, tickets y cobro.",
+        },
+      },
+      {
+        src: "/hero/PARTY1.jpg",
+        caption: {
+          en: "Simple setup and onboarding — go live quickly.",
+          es: "Configuración simple y onboarding — listo rápido.",
+        },
+      },
     ];
-
-    const captionMap = new Map<number, { en: string; es: string }>(captions.map((c) => [c.n, { en: c.en, es: c.es }]));
-
-    const frames = Array.from({ length: 44 }, (_, i) => i + 1);
-    return frames.map((n) => {
-      const cap = captionMap.get(n) ?? {
-        en: "Feature walkthrough.",
-        es: "Recorrido de funciones.",
-      };
-      return {
-        src: `/tutorial-frames/frame-${padded(n)}.jpg`,
-        caption: cap,
-      };
-    });
   }, []);
 
   const [index, setIndex] = useState(0);
