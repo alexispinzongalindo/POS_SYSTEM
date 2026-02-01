@@ -57,6 +57,16 @@ type CartLine = {
   modifiers: SelectedModifier[];
 };
 
+type TimeClockAction = "clock_in" | "break_out" | "break_in" | "clock_out";
+
+type TimeClockEntry = {
+  id: string;
+  restaurantId: string;
+  userId: string;
+  action: TimeClockAction;
+  at: string;
+};
+
 export default function PosPage() {
   const router = useRouter();
 
@@ -90,6 +100,12 @@ export default function PosPage() {
 
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundReason, setRefundReason] = useState<string>("");
+
+  const [showTimeClockModal, setShowTimeClockModal] = useState(false);
+  const [timeClockSaving, setTimeClockSaving] = useState(false);
+  const [timeClockError, setTimeClockError] = useState<string | null>(null);
+  const [timeClockEntries, setTimeClockEntries] = useState<TimeClockEntry[]>([]);
+  const [timeClockUserId, setTimeClockUserId] = useState<string | null>(null);
 
   const [orderStatusFilter, setOrderStatusFilter] = useState<"all" | "open" | "paid" | "canceled" | "refunded">(
     "all",
@@ -233,6 +249,27 @@ export default function PosPage() {
           console.error("Failed to load orders:", history.error);
         }
         setOrders(history.data ?? []);
+
+        // Load time clock entries for this restaurant (local only for now)
+        if (storageOk) {
+          try {
+            const raw = localStorage.getItem("islapos_timeclock_v1");
+            const parsed = raw ? (JSON.parse(raw) as TimeClockEntry[]) : [];
+            const filtered = Array.isArray(parsed)
+              ? parsed.filter((e) => e && typeof e === "object" && (e as TimeClockEntry).restaurantId === res.data.restaurantId)
+              : [];
+            setTimeClockEntries(filtered);
+          } catch {
+            setTimeClockEntries([]);
+          }
+        }
+
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          setTimeClockUserId(sessionData.session?.user.id ?? null);
+        } catch {
+          setTimeClockUserId(null);
+        }
       } catch (e) {
         if (!cancelled) {
           // On timeout/network error, keep using cached menu if available
@@ -254,6 +291,75 @@ export default function PosPage() {
       cancelled = true;
     };
   }, [router]);
+
+  const timeClockStatus = useMemo(() => {
+    const restaurantId = data?.restaurantId;
+    const userId = timeClockUserId;
+    if (!restaurantId || !userId) {
+      return {
+        clockedIn: false,
+        onBreak: false,
+        last: null as TimeClockEntry | null,
+      };
+    }
+
+    const mine = timeClockEntries.filter((e) => e.restaurantId === restaurantId && e.userId === userId);
+    const last = mine.length ? mine[mine.length - 1] : null;
+    if (!last) return { clockedIn: false, onBreak: false, last: null };
+
+    if (last.action === "clock_in") return { clockedIn: true, onBreak: false, last };
+    if (last.action === "break_out") return { clockedIn: true, onBreak: true, last };
+    if (last.action === "break_in") return { clockedIn: true, onBreak: false, last };
+    return { clockedIn: false, onBreak: false, last };
+  }, [data?.restaurantId, timeClockEntries, timeClockUserId]);
+
+  const saveTimeClockEntry = useCallback(
+    async (action: TimeClockAction) => {
+      if (!data?.restaurantId) return;
+      setTimeClockError(null);
+      setTimeClockSaving(true);
+      try {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        const userId = sessionData.session?.user.id;
+        if (!userId) {
+          router.replace("/login");
+          return;
+        }
+        setTimeClockUserId(userId);
+
+        const entry: TimeClockEntry = {
+          id: `tc_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+          restaurantId: data.restaurantId,
+          userId,
+          action,
+          at: new Date().toISOString(),
+        };
+
+        const raw = localStorage.getItem("islapos_timeclock_v1");
+        const parsed = raw ? (JSON.parse(raw) as TimeClockEntry[]) : [];
+        const nextAll = Array.isArray(parsed) ? [...parsed, entry] : [entry];
+        localStorage.setItem("islapos_timeclock_v1", JSON.stringify(nextAll));
+
+        setTimeClockEntries(nextAll.filter((e) => e.restaurantId === data.restaurantId));
+        setSuccess(
+          action === "clock_in"
+            ? "Clocked in"
+            : action === "break_out"
+              ? "Break started"
+              : action === "break_in"
+                ? "Break ended"
+                : "Clocked out",
+        );
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Failed to save time clock";
+        setTimeClockError(msg);
+      } finally {
+        setTimeClockSaving(false);
+      }
+    },
+    [data?.restaurantId, router],
+  );
 
   const getTrackedStock = useCallback(
     (menuItemId: string) => {
@@ -1569,6 +1675,16 @@ export default function PosPage() {
               />
             </div>
             <button
+              type="button"
+              onClick={() => {
+                setTimeClockError(null);
+                setShowTimeClockModal(true);
+              }}
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
+            >
+              Time Clock
+            </button>
+            <button
               data-tour="pos.tables"
               onClick={() => router.push("/pos/tables")}
               className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
@@ -1679,6 +1795,91 @@ export default function PosPage() {
             </div>
           </div>
         ) : null}
+
+      {showTimeClockModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-200 bg-[#fffdf7] p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-base font-semibold">Time Clock</div>
+                <div className="mt-1 text-sm text-[var(--mp-muted)]">
+                  {timeClockUserId ? "Tap your action." : "Sign in to use the time clock."}
+                </div>
+              </div>
+              <button
+                onClick={() => setShowTimeClockModal(false)}
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 text-xs font-semibold hover:bg-zinc-50"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-[var(--mp-border)] bg-white p-4">
+              <div className="text-sm font-semibold">Status</div>
+              <div className="mt-1 text-sm text-[var(--mp-muted)]">
+                {timeClockStatus.clockedIn
+                  ? timeClockStatus.onBreak
+                    ? "On break"
+                    : "Clocked in"
+                  : "Not clocked in"}
+              </div>
+              {timeClockStatus.last ? (
+                <div className="mt-2 text-xs text-[var(--mp-muted)]">
+                  Last: {timeClockStatus.last.action.replace("_", " ")} @ {new Date(timeClockStatus.last.at).toLocaleString()}
+                </div>
+              ) : null}
+              {timeClockError ? <div className="mt-2 text-sm text-red-700">{timeClockError}</div> : null}
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => void saveTimeClockEntry("clock_in")}
+                disabled={timeClockSaving || !timeClockUserId || timeClockStatus.clockedIn}
+                className="inline-flex h-12 items-center justify-center rounded-2xl bg-[var(--mp-primary)] px-4 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
+              >
+                Clock In
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void saveTimeClockEntry("clock_out")}
+                disabled={timeClockSaving || !timeClockUserId || !timeClockStatus.clockedIn}
+                className="inline-flex h-12 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
+              >
+                Clock Out
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void saveTimeClockEntry("break_out")}
+                disabled={timeClockSaving || !timeClockUserId || !timeClockStatus.clockedIn || timeClockStatus.onBreak}
+                className="inline-flex h-12 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
+              >
+                Break Out
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void saveTimeClockEntry("break_in")}
+                disabled={timeClockSaving || !timeClockUserId || !timeClockStatus.clockedIn || !timeClockStatus.onBreak}
+                className="inline-flex h-12 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
+              >
+                Break In
+              </button>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => setShowTimeClockModal(false)}
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-white"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
         {success ? (
           <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
