@@ -73,9 +73,25 @@ export default function PosTablesPage() {
           try {
             menuData = JSON.parse(cachedMenu);
             setRestaurantId(menuData.restaurantId);
-            // Skip Supabase calls when offline - just show tables with no open orders
+            // Load cached floor plan data when offline
+            const cachedFloorPlan = window.localStorage.getItem("islapos_cached_floor_plan");
+            if (cachedFloorPlan) {
+              const floorData = JSON.parse(cachedFloorPlan);
+              setAreas(floorData.areas ?? []);
+              if (floorData.areas?.length > 0) {
+                setActiveAreaId(floorData.areas[0].id);
+                // Load cached tables for first area
+                const cachedTables = window.localStorage.getItem(`islapos_cached_floor_tables_${floorData.areas[0].id}`);
+                if (cachedTables) {
+                  const tablesData = JSON.parse(cachedTables);
+                  setFloorTables(tablesData.tables ?? []);
+                  setFloorObjects(tablesData.objects ?? []);
+                }
+              }
+            } else {
+              setAreas([]);
+            }
             setOrders([]);
-            setAreas([]);
             setLoading(false);
             return;
           } catch {
@@ -111,6 +127,14 @@ export default function PosTablesPage() {
         if (areasRes.error) throw areasRes.error;
         const nextAreas = areasRes.data ?? [];
         setAreas(nextAreas);
+        
+        // Cache floor plan areas for offline use
+        try {
+          window.localStorage.setItem("islapos_cached_floor_plan", JSON.stringify({ areas: nextAreas }));
+        } catch {
+          // ignore storage errors
+        }
+        
         if (nextAreas.length > 0) setActiveAreaId((prev) => prev ?? nextAreas[0].id);
 
         await reloadOpenOrders(res.data.restaurantId);
@@ -148,9 +172,21 @@ export default function PosTablesPage() {
       return;
     }
 
-    // Skip floor plan loading when offline
+    // When offline, load cached tables for this area
     const isOfflineNow = typeof navigator !== "undefined" ? !navigator.onLine : false;
-    if (isOfflineNow) return;
+    if (isOfflineNow) {
+      try {
+        const cachedTables = window.localStorage.getItem(`islapos_cached_floor_tables_${activeAreaId}`);
+        if (cachedTables) {
+          const tablesData = JSON.parse(cachedTables);
+          setFloorTables(tablesData.tables ?? []);
+          setFloorObjects(tablesData.objects ?? []);
+        }
+      } catch {
+        // ignore parse error
+      }
+      return;
+    }
 
     const areaId = activeAreaId;
     let cancelled = false;
@@ -158,7 +194,21 @@ export default function PosTablesPage() {
     async function loadArea() {
       setError(null);
       try {
-        await reloadActiveArea(areaId);
+        const [tRes, oRes] = await Promise.all([listFloorTables(areaId), listFloorObjects(areaId)]);
+        if (tRes.error) throw tRes.error;
+        if (oRes.error) throw oRes.error;
+        setFloorTables(tRes.data ?? []);
+        setFloorObjects(oRes.data ?? []);
+        
+        // Cache tables for offline use
+        try {
+          window.localStorage.setItem(`islapos_cached_floor_tables_${areaId}`, JSON.stringify({
+            tables: tRes.data ?? [],
+            objects: oRes.data ?? [],
+          }));
+        } catch {
+          // ignore storage errors
+        }
       } catch (e) {
         if (cancelled) return;
         // Don't show error if we went offline
