@@ -26,26 +26,41 @@ function pickPreferredVoice(lang: "en" | "es") {
 export default function MarketingDemoSlideshow({ lang }: { lang: "en" | "es" }) {
   const slides: Slide[] = useMemo(() => {
     // IMPORTANT: Use only IslaPOS-owned assets. Do NOT use 3rd-party screenshots.
+    // To show real UI screens here, add your own screenshots under:
+    // - public/demo/01-login.png
+    // - public/demo/02-pos.png
+    // - public/demo/03-tables.png
+    // - public/demo/04-offline.png
+    // - public/demo/05-reports.png
+    // (PNG/JPG is fine; keep the same filenames and extensions you choose.)
+    //
+    // Fallback uses the existing POS preview image so nothing "stock" shows.
     return [
       {
-        src: "/hero/hero.jpg",
-        caption: {
-          en: "IslaPOS — built for Puerto Rico restaurants.",
-          es: "IslaPOS — hecho para restaurantes en Puerto Rico.",
-        },
+        src: "/demo/01-login.png",
+        caption: { en: "Login and start your shift.", es: "Inicia sesión y comienza tu turno." },
+      },
+      {
+        src: "/demo/02-pos.png",
+        caption: { en: "POS: add items and place an order.", es: "POS: agrega productos y guarda el ticket." },
+      },
+      {
+        src: "/demo/03-tables.png",
+        caption: { en: "Tables: manage dine-in by table.", es: "Mesas: maneja salón por mesa." },
+      },
+      {
+        src: "/demo/04-offline.png",
+        caption: { en: "Offline (Hurricane Mode) and sync.", es: "Modo offline (Huracán) y sincronización." },
+      },
+      {
+        src: "/demo/05-reports.png",
+        caption: { en: "Reports and history.", es: "Reportes e historial." },
       },
       {
         src: "/hero/PART2.png",
         caption: {
-          en: "Fast POS workflow: tables, tickets, and checkout.",
-          es: "Flujo rápido: mesas, tickets y cobro.",
-        },
-      },
-      {
-        src: "/hero/PARTY1.jpg",
-        caption: {
-          en: "Simple setup and onboarding — go live quickly.",
-          es: "Configuración simple y onboarding — listo rápido.",
+          en: "Preview: fast POS workflow.",
+          es: "Vista previa: flujo rápido del POS.",
         },
       },
     ];
@@ -154,7 +169,17 @@ export default function MarketingDemoSlideshow({ lang }: { lang: "en" | "es" }) 
       </div>
 
       <div className="mt-4 overflow-hidden rounded-2xl border border-[var(--mp-border)] bg-white/60">
-        <img src={current.src} alt={current.caption[lang]} className="h-[360px] w-full object-contain bg-black/[0.04]" />
+        <img
+          src={current.src}
+          alt={current.caption[lang]}
+          className="h-[360px] w-full object-contain bg-black/[0.04]"
+          onError={(e) => {
+            const el = e.currentTarget;
+            if (el.dataset.fallbackApplied === "1") return;
+            el.dataset.fallbackApplied = "1";
+            el.src = "/hero/PART2.png";
+          }}
+        />
       </div>
 
       <div className="mt-3 text-sm text-[var(--mp-muted)]">{current.caption[lang]}</div>
