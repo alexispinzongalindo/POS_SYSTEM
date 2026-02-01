@@ -1330,8 +1330,96 @@ export default function PosPage() {
     setSuccess(null);
     setPlacing(true);
 
+    // Build items first (doesn't need network)
+    const items = cartLines.map((it) => ({
+      menu_item_id: it.id,
+      name: it.name,
+      unit_price: it.unitPrice,
+      qty: it.qty,
+      line_total: it.unitPrice * it.qty,
+      modifiers: it.modifiers,
+    }));
+
+    // Validate inputs before any network calls
+    if (orderType === "delivery") {
+      if (!customerName.trim()) {
+        setError("Delivery requires customer name");
+        setPlacing(false);
+        return;
+      }
+      if (!customerPhone.trim()) {
+        setError("Delivery requires customer phone");
+        setPlacing(false);
+        return;
+      }
+      if (!deliveryAddress1.trim() || !deliveryCity.trim() || !deliveryState.trim() || !deliveryPostalCode.trim()) {
+        setError("Delivery requires address, city, state, and postal code");
+        setPlacing(false);
+        return;
+      }
+    }
+
+    if (orderType !== "dine_in") {
+      if (!customerName.trim()) {
+        setError("Customer name is required");
+        setPlacing(false);
+        return;
+      }
+      if (!idVerified) {
+        setError("Driver's license must be verified by staff");
+        setPlacing(false);
+        return;
+      }
+    }
+
     let userId: string | null = null;
     let payload: CreateOrderInput | null = null;
+
+    // Check if offline - save locally without network calls
+    const isOfflineNow = typeof navigator !== "undefined" && !navigator.onLine;
+    
+    if (isOfflineNow) {
+      // Build payload for offline save (use placeholder userId)
+      payload = {
+        restaurant_id: data.restaurantId,
+        created_by_user_id: "offline-user",
+        discount_amount: Number(totals.discount.toFixed(2)),
+        discount_reason: discountReason.trim() ? discountReason.trim() : null,
+        subtotal: Number(totals.subtotal.toFixed(2)),
+        tax: Number(totals.tax.toFixed(2)),
+        total: Number(totals.total.toFixed(2)),
+        order_type: orderType,
+        customer_name: customerName.trim() ? customerName.trim() : null,
+        customer_phone: customerPhone.trim() ? customerPhone.trim() : null,
+        id_verified: orderType === "dine_in" ? null : idVerified,
+        id_verified_at: orderType === "dine_in" || !idVerified ? null : new Date().toISOString(),
+        id_verified_by_user_id: null,
+        delivery_address1: orderType === "delivery" && deliveryAddress1.trim() ? deliveryAddress1.trim() : null,
+        delivery_address2: orderType === "delivery" && deliveryAddress2.trim() ? deliveryAddress2.trim() : null,
+        delivery_city: orderType === "delivery" && deliveryCity.trim() ? deliveryCity.trim() : null,
+        delivery_state: orderType === "delivery" && deliveryState.trim() ? deliveryState.trim() : null,
+        delivery_postal_code: orderType === "delivery" && deliveryPostalCode.trim() ? deliveryPostalCode.trim() : null,
+        delivery_instructions: orderType === "delivery" && deliveryInstructions.trim() ? deliveryInstructions.trim() : null,
+        items,
+      };
+
+      const { local_id } = upsertOfflineOrder(data.restaurantId, {
+        local_id: activeOrderId && isOfflineOrderId(activeOrderId) ? activeOrderId : undefined,
+        created_by_user_id: "offline-user",
+        payload,
+        status: "open",
+      });
+
+      setIsOffline(true);
+      setActiveOrderId(local_id);
+      setActiveOrderStatus("open");
+      refreshOfflineQueueCount(data.restaurantId);
+      clearCart();
+      await refreshOrders(data.restaurantId);
+      setSuccess(`Saved OFFLINE: ${local_id}`);
+      setPlacing(false);
+      return;
+    }
 
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -1340,41 +1428,6 @@ export default function PosPage() {
       if (!userId) {
         router.replace("/login");
         return;
-      }
-
-      const items = cartLines.map((it) => ({
-        menu_item_id: it.id,
-        name: it.name,
-        unit_price: it.unitPrice,
-        qty: it.qty,
-        line_total: it.unitPrice * it.qty,
-        modifiers: it.modifiers,
-      }));
-
-      if (orderType === "delivery") {
-        if (!customerName.trim()) {
-          setError("Delivery requires customer name");
-          return;
-        }
-        if (!customerPhone.trim()) {
-          setError("Delivery requires customer phone");
-          return;
-        }
-        if (!deliveryAddress1.trim() || !deliveryCity.trim() || !deliveryState.trim() || !deliveryPostalCode.trim()) {
-          setError("Delivery requires address, city, state, and postal code");
-          return;
-        }
-      }
-
-      if (orderType !== "dine_in") {
-        if (!customerName.trim()) {
-          setError("Customer name is required");
-          return;
-        }
-        if (!idVerified) {
-          setError("Driver's license must be verified by staff");
-          return;
-        }
       }
 
       payload = {
@@ -1399,7 +1452,14 @@ export default function PosPage() {
           orderType === "delivery" && deliveryPostalCode.trim() ? deliveryPostalCode.trim() : null,
         delivery_instructions:
           orderType === "delivery" && deliveryInstructions.trim() ? deliveryInstructions.trim() : null,
-        items,
+        items: cartLines.map((it) => ({
+          menu_item_id: it.id,
+          name: it.name,
+          unit_price: it.unitPrice,
+          qty: it.qty,
+          line_total: it.unitPrice * it.qty,
+          modifiers: it.modifiers,
+        })),
       };
 
       if (!payload) throw new Error("Failed to build ticket payload");
