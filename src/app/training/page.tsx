@@ -427,10 +427,27 @@ export default function TrainingPage() {
                 ? "Guía completa para usar IslaPOS en tu restaurante"
                 : "Complete guide to using IslaPOS in your restaurant"}
             </p>
+            <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <a
+                href="/tour"
+                className="inline-flex h-11 items-center justify-center rounded-lg bg-[var(--mp-primary)] px-6 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+              >
+                {lang === "es" ? "Empezar entrenamiento guiado" : "Start guided training"}
+              </a>
+              <a
+                href="/"
+                className="inline-flex h-11 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-white px-6 text-sm font-semibold text-[var(--mp-fg)] hover:bg-black/[0.03]"
+              >
+                {lang === "es" ? "Volver" : "Back"}
+              </a>
+            </div>
           </div>
 
           {/* Table of Contents */}
-          <div className="mt-10 rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6">
+          <div
+            data-tour="training.toc"
+            className="mt-10 rounded-2xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6"
+          >
             <h2 className="text-lg font-semibold">
               {lang === "es" ? "Contenido" : "Table of Contents"}
             </h2>

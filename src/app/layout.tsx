@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import GlobalLangToggle from "@/components/GlobalLangToggle";
+import TourProvider from "@/components/TourProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,8 +38,10 @@ export default function RootLayout({
       <body
         className={`islapos-marketing ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <GlobalLangToggle />
-        {children}
+        <TourProvider>
+          <GlobalLangToggle />
+          {children}
+        </TourProvider>
       </body>
     </html>
   );

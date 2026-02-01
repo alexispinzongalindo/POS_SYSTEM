@@ -1553,6 +1553,7 @@ export default function PosPage() {
           <div className="flex gap-2">
             <div className="hidden md:block">
               <input
+                data-tour="pos.scan"
                 value={scanCode}
                 onChange={(e) => setScanCode(e.target.value)}
                 onKeyDown={(e) => {
@@ -1568,12 +1569,14 @@ export default function PosPage() {
               />
             </div>
             <button
+              data-tour="pos.tables"
               onClick={() => router.push("/pos/tables")}
               className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
             >
               Tables
             </button>
             <button
+              data-tour="pos.openTickets"
               type="button"
               onClick={() => {
                 setShowOpenTickets(true);
@@ -1619,7 +1622,10 @@ export default function PosPage() {
         </div>
 
         {isOffline || offlineQueueCount > 0 ? (
-          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <div
+            data-tour="pos.offlineBanner"
+            className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="font-medium">
@@ -1988,6 +1994,7 @@ export default function PosPage() {
                     onClick={clearCart}
                     disabled={placing || cartLines.length === 0}
                     className="inline-flex h-11 items-center justify-center rounded-2xl border border-blue-200 bg-blue-50 px-5 text-sm font-semibold text-blue-800 hover:bg-blue-100 disabled:opacity-60"
+                  data-tour="pos.placeOrder"
                   >
                     Clear
                   </button>

@@ -172,6 +172,7 @@ export default function LoginPage() {
                 <label className="flex flex-col gap-2">
                   <span className="text-sm font-medium">{t.login.email}</span>
                   <input
+                    data-tour="login.email"
                     className="h-12 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                     type="email"
                     value={email}
@@ -185,6 +186,7 @@ export default function LoginPage() {
                   <span className="text-sm font-medium">{t.login.password}</span>
                   <div className="relative">
                     <input
+                      data-tour="login.password"
                       className="h-12 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 pr-14 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                       type={showPassword ? "text" : "password"}
                       value={password}
@@ -231,6 +233,7 @@ export default function LoginPage() {
                 ) : null}
 
                 <button
+                  data-tour="login.submit"
                   type="submit"
                   disabled={loading}
                   className="mt-2 inline-flex h-12 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
