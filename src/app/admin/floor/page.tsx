@@ -3,13 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { supabase } from "@/lib/supabaseClient";
+
 import {
   addFloorArea,
   addFloorObject,
   addFloorTable,
-  deleteFloorArea,
-  deleteFloorObject,
-  deleteFloorTable,
   listFloorAreas,
   listFloorObjects,
   listRestaurantFloorTables,
@@ -56,6 +55,23 @@ export default function AdminFloorPlanPage() {
   const [selected, setSelected] = useState<Selected>(null);
 
   const canEdit = role === "owner" || role === "manager";
+
+  async function authedFetch(path: string, init?: RequestInit) {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) {
+      router.replace("/login");
+      throw new Error("Not signed in");
+    }
+
+    return fetch(path, {
+      ...init,
+      headers: {
+        ...(init?.headers ?? {}),
+        authorization: `Bearer ${token}`,
+      },
+    });
+  }
 
   async function refreshAreas(rid: string) {
     const res = await listFloorAreas(rid);
@@ -186,9 +202,15 @@ export default function AdminFloorPlanPage() {
     if (!restaurantId || !canEdit) return;
     setError(null);
 
-    const res = await deleteFloorArea(areaId);
-    if (res.error) {
-      setError(res.error.message);
+    const res = await authedFetch("/api/admin/floor", {
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind: "area", id: areaId }),
+    });
+
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+    if (!res.ok || json?.error) {
+      setError(json?.error ?? "Failed to delete area");
       return;
     }
 
@@ -305,18 +327,30 @@ export default function AdminFloorPlanPage() {
     setError(null);
 
     if (selected.kind === "table") {
-      const res = await deleteFloorTable(selected.row.id);
-      if (res.error) {
-        setError(res.error.message);
+      const res = await authedFetch("/api/admin/floor", {
+        method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ kind: "table", id: selected.row.id }),
+      });
+
+      const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+      if (!res.ok || json?.error) {
+        setError(json?.error ?? "Failed to delete table");
         return;
       }
       await refreshAreaContents(activeAreaId);
       return;
     }
 
-    const res = await deleteFloorObject(selected.row.id);
-    if (res.error) {
-      setError(res.error.message);
+    const res = await authedFetch("/api/admin/floor", {
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind: "object", id: selected.row.id }),
+    });
+
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+    if (!res.ok || json?.error) {
+      setError(json?.error ?? "Failed to delete object");
       return;
     }
     await refreshAreaContents(activeAreaId);

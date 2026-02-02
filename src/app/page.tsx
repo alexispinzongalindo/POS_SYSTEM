@@ -229,12 +229,6 @@ export default function Home() {
                     >
                       {lang === "es" ? "Empieza la prueba" : "Start free trial"}
                     </a>
-                    <a
-                      className="inline-flex h-11 flex-1 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-white px-6 text-sm font-medium text-[var(--mp-fg)] hover:bg-black/[0.03] focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
-                      href="/training"
-                    >
-                      {lang === "es" ? "Ver entrenamiento" : "View training"}
-                    </a>
                   </div>
                 </div>
               </div>

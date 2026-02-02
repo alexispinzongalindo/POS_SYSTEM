@@ -28,9 +28,6 @@ export default function MarketingHeader({ ctaVariant = "trial", ctaHref }: Marke
         <a className="text-[var(--mp-muted)] hover:text-[var(--mp-fg)]" href="/pricing">
           {t.nav.pricing}
         </a>
-        <a className="text-[var(--mp-muted)] hover:text-[var(--mp-fg)]" href="/onboarding">
-          {t.nav.training}
-        </a>
         <a className="text-[var(--mp-muted)] hover:text-[var(--mp-fg)]" href="/contact">
           {t.nav.contact}
         </a>

@@ -542,13 +542,65 @@ export default function AdminPage() {
               Sign out
             </button>
           </div>
+
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a4 4 0 0 1-4 4H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+                  <path d="M7 8h10" />
+                  <path d="M7 12h6" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Support Station</h2>
+                <p className="mt-1 text-sm text-[var(--mp-muted)]">Create and track support cases.</p>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <button
+                onClick={() => router.push("/admin/support")}
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+              >
+                Open support
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+                  <path d="M8 6h8" />
+                  <path d="M8 10h8" />
+                  <path d="M8 14h6" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Training</h2>
+                <p className="mt-1 text-sm text-[var(--mp-muted)]">Step-by-step guides for staff and setup.</p>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <button
+                onClick={() => router.push("/admin/training")}
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+              >
+                Open training
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="fixed right-3 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-3 md:flex">
         <button
           type="button"
-          onClick={() => router.push("/onboarding")}
+          onClick={() => router.push("/admin/training")}
           className="group flex items-center gap-2 rounded-2xl border border-[var(--mp-border)] bg-white px-3 py-2 shadow-sm"
         >
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--mp-primary)] text-white">

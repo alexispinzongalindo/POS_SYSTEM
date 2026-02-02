@@ -68,3 +68,24 @@ create index if not exists order_item_modifiers_order_item_id_idx on public.orde
 -- NOTE:
 -- - You must also create a Storage bucket (e.g. "menu") and allow reads for public menus.
 -- - RLS policies are not included here because they depend on your current policy approach.
+
+ create table if not exists public.support_cases (
+   id uuid primary key default gen_random_uuid(),
+   restaurant_id uuid not null references public.restaurants(id) on delete cascade,
+   status text not null default 'open' check (status in ('open', 'in_progress', 'closed')),
+   priority text not null default 'normal' check (priority in ('low', 'normal', 'high')),
+   customer_name text,
+   customer_phone text,
+   subject text not null,
+   description text,
+   internal_notes text,
+   resolution text,
+   created_by_user_id uuid,
+   closed_at timestamptz,
+   created_at timestamptz not null default now(),
+   updated_at timestamptz not null default now()
+ );
+
+ create index if not exists support_cases_restaurant_id_idx on public.support_cases(restaurant_id);
+ create index if not exists support_cases_status_idx on public.support_cases(status);
+ create index if not exists support_cases_created_at_idx on public.support_cases(created_at desc);

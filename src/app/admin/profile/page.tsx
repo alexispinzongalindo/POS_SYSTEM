@@ -54,6 +54,11 @@ export default function AdminProfilePage() {
 
   const [tab, setTab] = useState<TabKey>("profile");
 
+  const [wipeConfirm, setWipeConfirm] = useState("");
+  const [wipeSaving, setWipeSaving] = useState(false);
+  const [wipeError, setWipeError] = useState<string | null>(null);
+  const [wipeStatus, setWipeStatus] = useState<string | null>(null);
+
   const activeRestaurant = useMemo(
     () => restaurants.find((r) => r.id === activeRestaurantId) ?? null,
     [restaurants, activeRestaurantId],
@@ -73,6 +78,57 @@ export default function AdminProfilePage() {
 
     return parts.length ? parts.join("\n") : "N/A";
   }, [location]);
+
+  async function authedFetch(path: string, init?: RequestInit) {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) {
+      router.replace("/login");
+      throw new Error("Not signed in");
+    }
+
+    return fetch(path, {
+      ...init,
+      headers: {
+        ...(init?.headers ?? {}),
+        authorization: `Bearer ${token}`,
+      },
+    });
+  }
+
+  async function runFullWipe() {
+    if (wipeConfirm.trim().toUpperCase() !== "WIPE") return;
+    setWipeError(null);
+    setWipeStatus(null);
+    setWipeSaving(true);
+
+    try {
+      const res = await authedFetch("/api/admin/full-wipe", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ confirm: wipeConfirm.trim() }),
+      });
+
+      const json = (await res.json().catch(() => null)) as
+        | { ok?: boolean; error?: string; warning?: string }
+        | null;
+
+      if (!res.ok || json?.error) {
+        throw new Error(json?.error ?? "Full wipe failed");
+      }
+
+      setWipeStatus(json?.warning ?? "Wiped");
+
+      // After wipe, the current user may be deleted. Try to sign out anyway.
+      await supabase.auth.signOut().catch(() => null);
+      router.replace("/login");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Full wipe failed";
+      setWipeError(msg);
+    } finally {
+      setWipeSaving(false);
+    }
+  }
 
   async function refreshRestaurants(uid: string) {
     const res = await listRestaurantsByOwner(uid);
@@ -553,8 +609,39 @@ export default function AdminProfilePage() {
                   </div>
                 </>
               ) : (
-                <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-5 py-4 text-sm text-[var(--mp-muted)]">
-                  Select “Billing & Subscription” to view plan details.
+                <div className="grid gap-4">
+                  <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-5 py-4 text-sm text-[var(--mp-muted)]">
+                    Select “Billing & Subscription” to view plan details.
+                  </div>
+
+                  <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-5">
+                    <div className="text-base font-semibold text-red-900">Danger Zone</div>
+                    <div className="mt-1 text-sm text-red-900/80">
+                      Full wipe deletes your restaurant, all data, and all staff accounts. This cannot be undone.
+                    </div>
+
+                    <div className="mt-4 grid gap-3">
+                      <div className="text-xs font-semibold text-red-900/80">Type WIPE to enable</div>
+                      <input
+                        value={wipeConfirm}
+                        onChange={(e) => setWipeConfirm(e.target.value)}
+                        className="h-11 w-full rounded-xl border border-red-200 bg-white px-4 text-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-200"
+                        placeholder="WIPE"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={runFullWipe}
+                        disabled={wipeSaving || wipeConfirm.trim().toUpperCase() !== "WIPE"}
+                        className="inline-flex h-11 items-center justify-center rounded-xl bg-red-600 px-5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                      >
+                        {wipeSaving ? "Wiping..." : "Full Wipe (Delete Everything)"}
+                      </button>
+
+                      {wipeError ? <div className="text-sm text-red-800">{wipeError}</div> : null}
+                      {wipeStatus ? <div className="text-sm text-emerald-800">{wipeStatus}</div> : null}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

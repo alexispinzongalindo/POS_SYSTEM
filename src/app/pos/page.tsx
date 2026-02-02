@@ -84,6 +84,9 @@ export default function PosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const [canAccessSupport, setCanAccessSupport] = useState(false);
+  const supportAccessHydratedUserIdRef = useRef<string | null>(null);
   const [placing, setPlacing] = useState(false);
 
   const [activeCategoryId, setActiveCategoryId] = useState<string>("all");
@@ -97,10 +100,17 @@ export default function PosPage() {
   const [scanCode, setScanCode] = useState<string>("");
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentTarget, setPaymentTarget] = useState<"main" | "split">("main");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "ath_movil" | "other">("cash");
   const [amountTendered, setAmountTendered] = useState<string>("");
   const [otherPaymentReason, setOtherPaymentReason] = useState<string>("");
   const [otherPaymentApproved, setOtherPaymentApproved] = useState(false);
+
+  const [showSplitModal, setShowSplitModal] = useState(false);
+  const [splitDraftQty, setSplitDraftQty] = useState<Record<string, number>>({});
+  const [splitPayOrderId, setSplitPayOrderId] = useState<string | null>(null);
+  const [splitPayCart, setSplitPayCart] = useState<Record<string, CartLine>>({});
+  const [splitPayDiscount, setSplitPayDiscount] = useState<number>(0);
 
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [receiptLoading, setReceiptLoading] = useState(false);
@@ -343,6 +353,134 @@ export default function PosPage() {
   useEffect(() => {
     let cancelled = false;
 
+    const SUPPORT_CACHE_PREFIX = "islapos_canAccessSupport_";
+    const SUPPORT_CACHE_LAST_USER = "islapos_supportAccess_lastUserId";
+
+    async function loadSupportAccess() {
+      try {
+        if (typeof navigator !== "undefined" && !navigator.onLine) {
+          return;
+        }
+
+        const { data, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) return;
+        const userId = data.session?.user?.id ?? null;
+        if (userId && supportAccessHydratedUserIdRef.current !== userId) {
+          supportAccessHydratedUserIdRef.current = userId;
+          try {
+            if (typeof window !== "undefined") {
+              const cached = localStorage.getItem(`${SUPPORT_CACHE_PREFIX}${userId}`);
+              if (cached === "1") setCanAccessSupport(true);
+            }
+          } catch {
+            // ignore
+          }
+        }
+
+        const token = data.session?.access_token;
+        if (!token) {
+          return;
+        }
+
+        const res = await fetch("/api/admin/support-access", {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.status === 401) {
+          const refreshed = await supabase.auth.refreshSession();
+          const nextToken = refreshed.data.session?.access_token;
+          if (!nextToken) {
+            return;
+          }
+
+          const retry = await fetch("/api/admin/support-access", {
+            headers: {
+              authorization: `Bearer ${nextToken}`,
+            },
+          });
+
+          const json = (await retry.json().catch(() => null)) as { canAccessSupport?: boolean } | null;
+          if (cancelled) return;
+          const allowed = !!json?.canAccessSupport;
+          setCanAccessSupport(allowed);
+          try {
+            if (typeof window !== "undefined" && userId) {
+              localStorage.setItem(`${SUPPORT_CACHE_PREFIX}${userId}`, allowed ? "1" : "0");
+              localStorage.setItem(SUPPORT_CACHE_LAST_USER, userId);
+            }
+          } catch {
+            // ignore
+          }
+          return;
+        }
+
+        const json = (await res.json().catch(() => null)) as { canAccessSupport?: boolean } | null;
+        if (cancelled) return;
+        const allowed = !!json?.canAccessSupport;
+        setCanAccessSupport(allowed);
+        try {
+          if (typeof window !== "undefined" && userId) {
+            localStorage.setItem(`${SUPPORT_CACHE_PREFIX}${userId}`, allowed ? "1" : "0");
+            localStorage.setItem(SUPPORT_CACHE_LAST_USER, userId);
+          }
+        } catch {
+          // ignore
+        }
+      } catch {
+        // Transient failure: keep last known value
+      }
+    }
+
+    function onFocus() {
+      void loadSupportAccess();
+    }
+
+    function onOnline() {
+      void loadSupportAccess();
+    }
+
+    const authSub = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        setCanAccessSupport(false);
+        supportAccessHydratedUserIdRef.current = null;
+        try {
+          if (typeof window !== "undefined") {
+            const last = localStorage.getItem(SUPPORT_CACHE_LAST_USER);
+            if (last) localStorage.removeItem(`${SUPPORT_CACHE_PREFIX}${last}`);
+            localStorage.removeItem(SUPPORT_CACHE_LAST_USER);
+          }
+        } catch {
+          // ignore
+        }
+        return;
+      }
+      void loadSupportAccess();
+    });
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("focus", onFocus);
+      window.addEventListener("online", onOnline);
+    }
+
+    void loadSupportAccess();
+
+    return () => {
+      cancelled = true;
+
+      if (typeof window !== "undefined") {
+        window.removeEventListener("focus", onFocus);
+        window.removeEventListener("online", onOnline);
+      }
+
+      authSub.data.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
     async function loadStaffPins() {
       if (!data?.restaurantId) return;
       if (typeof navigator !== "undefined" && !navigator.onLine) return;
@@ -484,6 +622,51 @@ export default function PosPage() {
     const n = Number(v);
     if (!Number.isFinite(n)) return 0;
     return Math.max(0, n);
+  }
+
+  function computeTotalsForCart(linesIn: CartLine[], discountInput: number) {
+    const pricesIncludeTax = data?.pricesIncludeTax ?? false;
+
+    const STATE_TAX_RATE = 0.07;
+    const MUNICIPAL_TAX_RATE = data?.ivuRate ?? 0;
+
+    const lines: Array<{ base: number; tax: number; rate: number }> = [];
+    for (const it of linesIn) {
+      const lineTotal = Number(it.unitPrice) * Number(it.qty);
+      const taxRate = it.taxType === "state_tax" ? STATE_TAX_RATE : it.taxType === "municipal_tax" ? MUNICIPAL_TAX_RATE : 0;
+
+      if (pricesIncludeTax) {
+        const lineTax = taxRate > 0 ? lineTotal - lineTotal / (1 + taxRate) : 0;
+        const base = lineTotal - lineTax;
+        lines.push({ base, tax: lineTax, rate: taxRate });
+      } else {
+        const lineTax = taxRate > 0 ? lineTotal * taxRate : 0;
+        lines.push({ base: lineTotal, tax: lineTax, rate: taxRate });
+      }
+    }
+
+    const baseSubtotal = lines.reduce((sum, l) => sum + l.base, 0);
+    const discount = Math.min(baseSubtotal, Math.max(0, discountInput));
+
+    let discountedSubtotal = 0;
+    let tax = 0;
+    for (const l of lines) {
+      const share = baseSubtotal > 0 ? l.base / baseSubtotal : 0;
+      const lineDiscount = discount * share;
+      const discountedBase = Math.max(0, l.base - lineDiscount);
+      discountedSubtotal += discountedBase;
+
+      if (pricesIncludeTax) {
+        const originalBase = l.base;
+        const scale = originalBase > 0 ? discountedBase / originalBase : 0;
+        tax += l.tax * scale;
+      } else {
+        tax += discountedBase * l.rate;
+      }
+    }
+
+    const total = discountedSubtotal + tax;
+    return { baseSubtotal, subtotal: discountedSubtotal, tax, total, discount };
   }
 
   function sumModifierDelta(mods: SelectedModifier[]) {
@@ -850,12 +1033,34 @@ export default function PosPage() {
     return { subtotal: discountedSubtotal, tax, total, discount };
   }, [cartLines, data, discountAmount]);
 
+  const splitDraftLines = useMemo(() => {
+    return cartLines
+      .map((l) => ({ line: l, qty: Math.max(0, Math.min(l.qty, splitDraftQty[l.id] ?? 0)) }))
+      .filter((r) => r.qty > 0);
+  }, [cartLines, splitDraftQty]);
+
+  const splitDraftCartLines = useMemo(() => {
+    return splitDraftLines.map(({ line, qty }) => ({ ...line, qty }));
+  }, [splitDraftLines]);
+
+  const splitDraftTotals = useMemo(() => {
+    return computeTotalsForCart(splitDraftCartLines, 0);
+  }, [splitDraftCartLines, data]);
+
+  const splitPayCartLines = useMemo(() => Object.values(splitPayCart), [splitPayCart]);
+
+  const splitPayTotals = useMemo(() => {
+    return computeTotalsForCart(splitPayCartLines, splitPayDiscount);
+  }, [splitPayCartLines, splitPayDiscount, data]);
+
+  const paymentTotals = paymentTarget === "split" ? splitPayTotals : totals;
+
   const tenderedNumber = Number(amountTendered);
   const isCashPayment = paymentMethod === "cash";
   const cashTenderedValid =
-    !isCashPayment || (Number.isFinite(tenderedNumber) && tenderedNumber >= totals.total);
+    !isCashPayment || (Number.isFinite(tenderedNumber) && tenderedNumber >= paymentTotals.total);
   const changeDueDisplay =
-    isCashPayment && Number.isFinite(tenderedNumber) ? Math.max(0, tenderedNumber - totals.total) : 0;
+    isCashPayment && Number.isFinite(tenderedNumber) ? Math.max(0, tenderedNumber - paymentTotals.total) : 0;
 
   function normalizeCode(value: string) {
     return value.trim().toLowerCase();
@@ -1041,6 +1246,159 @@ export default function PosPage() {
       setSuccess("Ticket opened");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to open ticket";
+      setError(msg);
+    } finally {
+      setPlacing(false);
+    }
+  }
+
+  async function confirmSplitCheck() {
+    if (!data || !activeOrderId) return;
+    if ((activeOrderStatus ?? "open") !== "open") return;
+    if (splitDraftLines.length === 0) {
+      setError("Select at least 1 item to split");
+      return;
+    }
+
+    setError(null);
+    setSuccess(null);
+    setPlacing(true);
+
+    try {
+      const rawDiscount = normalizeMoneyInput(discountAmount);
+      const fullBase = computeTotalsForCart(cartLines, 0).baseSubtotal;
+      const splitBase = computeTotalsForCart(splitDraftCartLines, 0).baseSubtotal;
+      const splitDiscount = fullBase > 0 ? Math.min(rawDiscount, rawDiscount * (splitBase / fullBase)) : 0;
+      const remainingDiscount = Math.max(0, rawDiscount - splitDiscount);
+
+      const remainingCart: Record<string, CartLine> = { ...cart };
+      const splitCart: Record<string, CartLine> = {};
+
+      for (const { line, qty } of splitDraftLines) {
+        const ex = remainingCart[line.id];
+        if (!ex) continue;
+        const nextQty = ex.qty - qty;
+        if (nextQty < 0) throw new Error("Split quantity exceeds cart quantity");
+        if (nextQty === 0) {
+          delete remainingCart[line.id];
+        } else {
+          remainingCart[line.id] = { ...ex, qty: nextQty };
+        }
+        splitCart[line.id] = { ...ex, qty };
+      }
+
+      const remainingLines = Object.values(remainingCart);
+      const splitLines = Object.values(splitCart);
+
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      const userId = sessionData.session?.user.id ?? null;
+      if (!userId) {
+        router.replace("/login");
+        return;
+      }
+
+      const splitOrderType: OrderType = orderType === "dine_in" ? "counter" : orderType;
+      const splitCustomerName =
+        orderType === "dine_in"
+          ? `${customerName.trim() || "Table"} (Split)`
+          : customerName.trim()
+            ? customerName.trim()
+            : null;
+
+      if (isOfflineOrderId(activeOrderId)) {
+        const offline = getOfflineOrder(data.restaurantId, activeOrderId);
+        if (!offline) throw new Error("Offline ticket not found");
+
+        const remainingPayload = buildPayloadFromCartLines(remainingLines, remainingDiscount);
+        const splitPayload = buildPayloadFromCartLines(splitLines, splitDiscount);
+        if (!remainingPayload || !splitPayload) throw new Error("Failed to build split payload");
+
+        upsertOfflineOrder(data.restaurantId, {
+          local_id: offline.local_id,
+          created_by_user_id: offline.created_by_user_id,
+          payload: { ...remainingPayload, created_by_user_id: offline.created_by_user_id },
+          status: "open",
+          payment: null,
+          created_at: offline.created_at,
+        });
+
+        const createdSplit = upsertOfflineOrder(data.restaurantId, {
+          created_by_user_id: offline.created_by_user_id,
+          payload: {
+            ...splitPayload,
+            created_by_user_id: offline.created_by_user_id,
+            order_type: splitOrderType,
+            customer_name: splitCustomerName,
+          },
+          status: "open",
+        });
+
+        setCart(remainingCart);
+        setSplitDraftQty({});
+        setDiscountAmount(String(toFixedMoney(remainingDiscount)));
+
+        setSplitPayOrderId(createdSplit.local_id);
+        setSplitPayCart(splitCart);
+        setSplitPayDiscount(splitDiscount);
+        setPaymentTarget("split");
+
+        setShowSplitModal(false);
+        setPaymentMethod("cash");
+        setAmountTendered("");
+        setOtherPaymentReason("");
+        setOtherPaymentApproved(false);
+        setShowPaymentModal(true);
+        return;
+      }
+
+      const remainingPayloadBase = buildPayloadFromCartLines(remainingLines, remainingDiscount);
+      const splitPayloadBase = buildPayloadFromCartLines(splitLines, splitDiscount);
+      if (!remainingPayloadBase || !splitPayloadBase) throw new Error("Failed to build split payload");
+
+      const remainingPayload: CreateOrderInput = {
+        ...remainingPayloadBase,
+        created_by_user_id: userId,
+        id_verified_by_user_id: orderType === "dine_in" || !idVerified ? null : userId,
+      };
+
+      const splitPayload: CreateOrderInput = {
+        ...splitPayloadBase,
+        created_by_user_id: userId,
+        discount_reason: splitDiscount > 0 && discountReason.trim() ? discountReason.trim() : null,
+        id_verified_by_user_id: orderType === "dine_in" || !idVerified ? null : userId,
+        order_type: splitOrderType,
+        customer_name: splitCustomerName,
+      };
+
+      const updated = await updateOrder(activeOrderId, remainingPayload);
+      if (updated.error) throw updated.error;
+
+      const created = await createOrder(splitPayload);
+      if (created.error) throw created.error;
+      const newOrderId = created.data?.orderId ?? null;
+      if (!newOrderId) throw new Error("Failed to create split check");
+
+      setCart(remainingCart);
+      setSplitDraftQty({});
+      setDiscountAmount(String(toFixedMoney(remainingDiscount)));
+
+      setSplitPayOrderId(newOrderId);
+      setSplitPayCart(splitCart);
+      setSplitPayDiscount(splitDiscount);
+      setPaymentTarget("split");
+
+      setShowSplitModal(false);
+      setPaymentMethod("cash");
+      setAmountTendered("");
+      setOtherPaymentReason("");
+      setOtherPaymentApproved(false);
+      setShowPaymentModal(true);
+
+      await refreshOrders(data.restaurantId);
+      setSuccess("Split check created. Select payment.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to split check";
       setError(msg);
     } finally {
       setPlacing(false);
@@ -1369,14 +1727,58 @@ export default function PosPage() {
     }
   }
 
+  function toFixedMoney(n: number) {
+    return Number(n.toFixed(2));
+  }
+
+  function buildPayloadFromCartLines(linesIn: CartLine[], discountAmt: number) {
+    if (!data) return null;
+    const items = linesIn.map((it) => ({
+      menu_item_id: it.id,
+      name: it.name,
+      unit_price: it.unitPrice,
+      qty: it.qty,
+      line_total: it.unitPrice * it.qty,
+      modifiers: it.modifiers,
+    }));
+
+    const computed = computeTotalsForCart(linesIn, discountAmt);
+
+    return {
+      restaurant_id: data.restaurantId,
+      created_by_user_id: "",
+      discount_amount: toFixedMoney(discountAmt),
+      discount_reason: discountAmt > 0 && discountReason.trim() ? discountReason.trim() : null,
+      subtotal: toFixedMoney(computed.subtotal),
+      tax: toFixedMoney(computed.tax),
+      total: toFixedMoney(computed.total),
+      order_type: orderType,
+      customer_name: customerName.trim() ? customerName.trim() : null,
+      customer_phone: customerPhone.trim() ? customerPhone.trim() : null,
+      id_verified: orderType === "dine_in" ? null : idVerified,
+      id_verified_at: orderType === "dine_in" || !idVerified ? null : new Date().toISOString(),
+      id_verified_by_user_id: null,
+      delivery_address1: orderType === "delivery" && deliveryAddress1.trim() ? deliveryAddress1.trim() : null,
+      delivery_address2: orderType === "delivery" && deliveryAddress2.trim() ? deliveryAddress2.trim() : null,
+      delivery_city: orderType === "delivery" && deliveryCity.trim() ? deliveryCity.trim() : null,
+      delivery_state: orderType === "delivery" && deliveryState.trim() ? deliveryState.trim() : null,
+      delivery_postal_code: orderType === "delivery" && deliveryPostalCode.trim() ? deliveryPostalCode.trim() : null,
+      delivery_instructions: orderType === "delivery" && deliveryInstructions.trim() ? deliveryInstructions.trim() : null,
+      items,
+    } satisfies CreateOrderInput;
+  }
+
   async function confirmPayment() {
-    if (!data || !activeOrderId) return;
+    if (!data) return;
+
+    const paymentOrderId = paymentTarget === "split" ? splitPayOrderId : activeOrderId;
+    if (!paymentOrderId) return;
 
     const tendered = Number(amountTendered);
     const isCash = paymentMethod === "cash";
     const isOther = paymentMethod === "other";
-    const changeDue = isCash && Number.isFinite(tendered) ? tendered - totals.total : 0;
-    if (isCash && (!Number.isFinite(tendered) || tendered < totals.total)) {
+    const changeDue = isCash && Number.isFinite(tendered) ? tendered - paymentTotals.total : 0;
+    if (isCash && (!Number.isFinite(tendered) || tendered < paymentTotals.total)) {
       setError("Cash payment requires amount tendered >= total");
       return;
     }
@@ -1405,8 +1807,8 @@ export default function PosPage() {
     };
 
     try {
-      if (isOfflineOrderId(activeOrderId)) {
-        const offline = getOfflineOrder(data.restaurantId, activeOrderId);
+      if (isOfflineOrderId(paymentOrderId)) {
+        const offline = getOfflineOrder(data.restaurantId, paymentOrderId);
         if (!offline) throw new Error("Offline ticket not found");
 
         upsertOfflineOrder(data.restaurantId, {
@@ -1430,13 +1832,26 @@ export default function PosPage() {
 
         setIsOffline(true);
         setShowPaymentModal(false);
-        clearCart();
+
+        if (paymentTarget !== "split") {
+          clearCart();
+        } else {
+          setSplitPayOrderId(null);
+          setSplitPayCart({});
+          setSplitPayDiscount(0);
+          setPaymentTarget("main");
+        }
+
         await refreshOrders(data.restaurantId);
-        setSuccess(`Ticket marked paid OFFLINE (${paymentMethod.replace("_", " ")})`);
+        setSuccess(
+          paymentTarget === "split"
+            ? `Split check marked paid OFFLINE (${paymentMethod.replace("_", " ")})`
+            : `Ticket marked paid OFFLINE (${paymentMethod.replace("_", " ")})`,
+        );
         return;
       }
 
-      const res = await markOrderPaid(activeOrderId, {
+      const res = await markOrderPaid(paymentOrderId, {
         payment_method: paymentMethod,
         paid_at: payment.paid_at,
         amount_tendered: payment.amount_tendered,
@@ -1445,7 +1860,7 @@ export default function PosPage() {
       if (res.error) throw res.error;
 
       try {
-        const itemsRes = await getOrderItems(activeOrderId);
+        const itemsRes = await getOrderItems(paymentOrderId);
         if (!itemsRes.error && itemsRes.data) {
           applyInventoryDelta(
             data.restaurantId,
@@ -1457,12 +1872,25 @@ export default function PosPage() {
       }
 
       setShowPaymentModal(false);
-      clearCart();
+
+      if (paymentTarget !== "split") {
+        clearCart();
+      } else {
+        setSplitPayOrderId(null);
+        setSplitPayCart({});
+        setSplitPayDiscount(0);
+        setPaymentTarget("main");
+      }
+
       await refreshOrders(data.restaurantId);
-      setSuccess(`Ticket marked paid (${paymentMethod.replace("_", " ")})`);
+      setSuccess(
+        paymentTarget === "split"
+          ? `Split check marked paid (${paymentMethod.replace("_", " ")})`
+          : `Ticket marked paid (${paymentMethod.replace("_", " ")})`,
+      );
     } catch (e) {
       if (isLikelyOfflineError(e)) {
-        const offline = getOfflineOrder(data.restaurantId, activeOrderId);
+        const offline = getOfflineOrder(data.restaurantId, paymentOrderId);
         if (!offline) {
           setError("Offline save failed");
           return;
@@ -1783,6 +2211,141 @@ export default function PosPage() {
                 className="h-11 w-64 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
               />
             </div>
+            {canAccessSupport ? (
+              <button
+                type="button"
+                onClick={() => router.push("/admin/support")}
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
+              >
+                Support
+              </button>
+            ) : null}
+
+      {showSplitModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-200 bg-[#fffdf7] p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-base font-semibold">Split check</div>
+                <div className="mt-1 text-sm text-[var(--mp-muted)]">Choose quantities to move into a new check.</div>
+              </div>
+              <button
+                onClick={() => setShowSplitModal(false)}
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-white"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-2">
+              {cartLines.length === 0 ? (
+                <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3 text-sm text-[var(--mp-muted)]">
+                  Cart is empty.
+                </div>
+              ) : (
+                cartLines.map((l) => {
+                  const v = splitDraftQty[l.id] ?? 0;
+                  const max = l.qty;
+                  const canDec = v > 0;
+                  const canInc = v < max;
+                  return (
+                    <div key={l.id} className="rounded-2xl border border-[var(--mp-border)] bg-white p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold">{l.name}</div>
+                          <div className="mt-1 text-xs text-[var(--mp-muted)]">
+                            In ticket: {l.qty} • Selected: {v}/{max} • ${l.unitPrice.toFixed(2)}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSplitDraftQty((prev) => ({
+                                ...prev,
+                                [l.id]: Math.max(0, (prev[l.id] ?? 0) - 1),
+                              }))
+                            }
+                            disabled={!canDec}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white text-sm font-semibold hover:bg-white disabled:opacity-50"
+                          >
+                            -
+                          </button>
+                          <input
+                            inputMode="numeric"
+                            value={String(v)}
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              const n = Number.parseInt(raw.replace(/\D+/g, ""), 10);
+                              const next = Number.isFinite(n) ? Math.max(0, Math.min(max, n)) : 0;
+                              setSplitDraftQty((prev) => ({ ...prev, [l.id]: next }));
+                            }}
+                            className="h-9 w-14 rounded-xl border border-[var(--mp-border)] bg-white px-2 text-center text-sm font-semibold tabular-nums outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSplitDraftQty((prev) => ({
+                                ...prev,
+                                [l.id]: Math.min(max, (prev[l.id] ?? 0) + 1),
+                              }))
+                            }
+                            disabled={!canInc}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white text-sm font-semibold hover:bg-white disabled:opacity-50"
+                          >
+                            +
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSplitDraftQty((prev) => ({ ...prev, [l.id]: max }))}
+                            disabled={max <= 0 || v === max}
+                            className="inline-flex h-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-white disabled:opacity-50"
+                          >
+                            ALL
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-[var(--mp-border)] bg-white p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-[var(--mp-muted)]">Split subtotal</div>
+                <div className="text-sm font-semibold tabular-nums">${splitDraftTotals.subtotal.toFixed(2)}</div>
+              </div>
+              <div className="mt-2 flex items-center justify-between">
+                <div className="text-xs text-[var(--mp-muted)]">Split tax</div>
+                <div className="text-sm font-semibold tabular-nums">${splitDraftTotals.tax.toFixed(2)}</div>
+              </div>
+              <div className="mt-2 flex items-center justify-between">
+                <div className="text-xs font-semibold">Split total</div>
+                <div className="text-base font-semibold tabular-nums">${splitDraftTotals.total.toFixed(2)}</div>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setSplitDraftQty({})}
+                className="inline-flex h-11 items-center justify-center rounded-2xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-zinc-50"
+              >
+                Reset
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmSplitCheck()}
+                disabled={placing || splitDraftLines.length === 0}
+                className="inline-flex h-11 items-center justify-center rounded-2xl bg-blue-600 px-5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+              >
+                Create split & pay
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
             <button
               type="button"
               onClick={() => {
@@ -2382,11 +2945,12 @@ export default function PosPage() {
                 </button>
 
                 {activeOrderId && (activeOrderStatus ?? "open") === "open" ? (
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     <button
                       onClick={() => {
                         setError(null);
                         setSuccess(null);
+                        setPaymentTarget("main");
                         setPaymentMethod("cash");
                         setAmountTendered("");
                         setOtherPaymentReason("");
@@ -2397,6 +2961,18 @@ export default function PosPage() {
                       className="inline-flex h-11 items-center justify-center rounded-2xl bg-blue-600 px-5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
                     >
                       Close (Paid)
+                    </button>
+                    <button
+                      onClick={() => {
+                        setError(null);
+                        setSuccess(null);
+                        setSplitDraftQty({});
+                        setShowSplitModal(true);
+                      }}
+                      disabled={placing || cartLines.length === 0}
+                      className="inline-flex h-11 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 px-5 text-sm font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-60"
+                    >
+                      Split
                     </button>
                     <button
                       onClick={() => setTicketStatus("canceled")}
@@ -2499,18 +3075,18 @@ export default function PosPage() {
                   inputMode="decimal"
                   value={amountTendered}
                   onChange={(e) => setAmountTendered(e.target.value)}
-                  placeholder={totals.total.toFixed(2)}
+                  placeholder={paymentTotals.total.toFixed(2)}
                   className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                 />
                 <div className="text-xs text-[var(--mp-muted)]">
-                  Total: ${totals.total.toFixed(2)}
+                  Total: ${paymentTotals.total.toFixed(2)}
                   {amountTendered && Number.isFinite(tenderedNumber)
                     ? ` • Change due: $${changeDueDisplay.toFixed(2)}`
                     : ""}
                 </div>
                 {amountTendered && !cashTenderedValid ? (
                   <div className="text-xs text-rose-600">
-                    Amount tendered must be at least ${totals.total.toFixed(2)}
+                    Amount tendered must be at least ${paymentTotals.total.toFixed(2)}
                   </div>
                 ) : null}
               </div>
