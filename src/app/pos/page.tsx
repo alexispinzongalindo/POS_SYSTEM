@@ -1062,6 +1062,13 @@ export default function PosPage() {
   const changeDueDisplay =
     isCashPayment && Number.isFinite(tenderedNumber) ? Math.max(0, tenderedNumber - paymentTotals.total) : 0;
 
+  function addCashTender(amt: number) {
+    const current = Number(amountTendered);
+    const base = Number.isFinite(current) ? current : 0;
+    const next = Math.max(0, base + amt);
+    setAmountTendered(next.toFixed(2));
+  }
+
   function normalizeCode(value: string) {
     return value.trim().toLowerCase();
   }
@@ -3071,14 +3078,28 @@ export default function PosPage() {
             {paymentMethod === "cash" ? (
               <div className="mt-4 grid gap-2">
                 <label className="text-sm font-medium">Amount tendered</label>
-                <input
-                  inputMode="decimal"
-                  value={amountTendered}
-                  onChange={(e) => setAmountTendered(e.target.value)}
-                  placeholder={paymentTotals.total.toFixed(2)}
-                  className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                />
-                <div className="text-xs text-[var(--mp-muted)]">
+                <div className="grid grid-cols-[1fr_auto] gap-2">
+                  <input
+                    inputMode="decimal"
+                    value={amountTendered}
+                    onChange={(e) => setAmountTendered(e.target.value)}
+                    placeholder={paymentTotals.total.toFixed(2)}
+                    className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    {[1, 5, 10, 20].map((amt) => (
+                      <button
+                        key={amt}
+                        type="button"
+                        onClick={() => addCashTender(amt)}
+                        className="inline-flex h-11 w-14 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-sm font-bold text-emerald-900 hover:bg-emerald-100"
+                      >
+                        ${amt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="text-base font-bold text-[var(--mp-fg)]">
                   Total: ${paymentTotals.total.toFixed(2)}
                   {amountTendered && Number.isFinite(tenderedNumber)
                     ? ` • Change due: $${changeDueDisplay.toFixed(2)}`
