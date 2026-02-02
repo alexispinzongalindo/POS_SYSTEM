@@ -43,3 +43,12 @@ next-env.d.ts
 # Local Netlify folder
 .netlify
 public/Screen*Recording*.mov
+
+# Playwright recordings
+recordings/
+
+# Archived recordings (local cleanup archives)
+recordings_old_*/
+
+# Saved auth state for Playwright (local, contains session tokens)
+auth-state-*.json

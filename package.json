@@ -8,7 +8,15 @@
     "start": "next start",
     "lint": "eslint ./src",
     "seed:menu": "node scripts/seed-menu.mjs",
-    "gen:images": "node scripts/generate-menu-images.mjs"
+    "gen:images": "node scripts/generate-menu-images.mjs",
+    "record:tour:en": "RECORD_LANG=en node scripts/record-tour.mjs",
+    "record:tour:es": "RECORD_LANG=es node scripts/record-tour.mjs",
+    "record:training:en": "RECORD_LANG=en node scripts/record-training.mjs",
+    "record:training:es": "RECORD_LANG=es node scripts/record-training.mjs",
+    "record:auto:tour:en": "node scripts/record-auto.mjs tour en",
+    "record:auto:tour:es": "node scripts/record-auto.mjs tour es",
+    "record:auto:training:en": "node scripts/record-auto.mjs training en",
+    "record:auto:training:es": "node scripts/record-auto.mjs training es"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",
@@ -24,8 +32,10 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^16.4.7",
     "eslint": "^9",
     "eslint-config-next": "16.1.2",
+    "playwright": "^1.50.1",
     "typescript": "^5"
   }
 }
