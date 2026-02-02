@@ -3056,7 +3056,7 @@ export default function PosPage() {
       ) : null}
 
       {showPaymentModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 md:justify-start md:pl-10 lg:pl-16">
           <div className="w-full max-w-md rounded-3xl border border-zinc-200 bg-[#fffdf7] p-6 shadow-xl">
             <div className="text-base font-semibold">Close ticket as paid</div>
             <div className="mt-1 text-sm text-[var(--mp-muted)]">Select payment method</div>
