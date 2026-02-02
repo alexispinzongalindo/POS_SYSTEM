@@ -56,6 +56,29 @@ export default function AdminFloorPlanPage() {
 
   const canEdit = role === "owner" || role === "manager";
 
+  useEffect(() => {
+    if (!canEdit) return;
+    if (!activeAreaId) return;
+
+    function isTypingTarget(el: EventTarget | null) {
+      if (!el || !(el instanceof HTMLElement)) return false;
+      const tag = el.tagName.toLowerCase();
+      return tag === "input" || tag === "textarea" || tag === "select" || el.isContentEditable;
+    }
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Delete" && e.key !== "Backspace") return;
+      if (!selected) return;
+      if (isTypingTarget(e.target)) return;
+
+      e.preventDefault();
+      void onDeleteSelected();
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [canEdit, activeAreaId, selected]);
+
   async function authedFetch(path: string, init?: RequestInit) {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
@@ -326,6 +349,11 @@ export default function AdminFloorPlanPage() {
     if (!canEdit || !activeAreaId || !selected) return;
     setError(null);
 
+    const confirmed = window.confirm(
+      selected.kind === "table" ? "Delete this table from the floor plan?" : "Delete this object from the floor plan?",
+    );
+    if (!confirmed) return;
+
     if (selected.kind === "table") {
       const res = await authedFetch("/api/admin/floor", {
         method: "DELETE",
@@ -578,6 +606,16 @@ export default function AdminFloorPlanPage() {
 
                   <button
                     type="button"
+                    onClick={() => void onDeleteSelected()}
+                    disabled={!canEdit || !selected}
+                    className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
+                    title={selected ? "Delete selected item (or press Delete)" : "Select an item to delete"}
+                  >
+                    Delete selected
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => void onDeleteArea(activeArea.id)}
                     disabled={!canEdit}
                     className="ml-auto inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
@@ -621,7 +659,7 @@ export default function AdminFloorPlanPage() {
                 <div className="mt-6 text-sm font-semibold">Selected</div>
 
                 {!selected ? (
-                  <div className="mt-2 text-sm text-[var(--mp-muted)]">Click a table/object to edit it.</div>
+                  <div className="mt-2 text-sm text-[var(--mp-muted)]">Click a table/object to edit it. Tip: press Delete to remove the selected item.</div>
                 ) : selected.kind === "table" ? (
                   <div className="mt-3 flex flex-col gap-3">
                     <label className="flex flex-col gap-1 text-xs font-semibold text-[var(--mp-muted)]">
