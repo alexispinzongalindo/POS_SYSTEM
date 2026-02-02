@@ -81,6 +81,8 @@ export default function PosPage() {
   const [showOpenTickets, setShowOpenTickets] = useState(false);
   const [tableQuery, setTableQuery] = useState<string | null>(null);
   const [offlineQuery, setOfflineQuery] = useState<string | null>(null);
+  const [splitQuery, setSplitQuery] = useState<string | null>(null);
+  const splitQueryConsumedRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -832,13 +834,30 @@ export default function PosPage() {
       const params = new URLSearchParams(window.location.search);
       const table = params.get("table");
       const offline = params.get("offline");
+      const split = params.get("split");
       setTableQuery(table);
       setOfflineQuery(offline);
+      setSplitQuery(split);
+      splitQueryConsumedRef.current = false;
     } catch {
       setTableQuery(null);
       setOfflineQuery(null);
+      setSplitQuery(null);
+      splitQueryConsumedRef.current = false;
     }
   }, []);
+
+  useEffect(() => {
+    if (!splitQuery || splitQueryConsumedRef.current) return;
+    if (!data || loading) return;
+    if (!activeOrderId) return;
+    if (showSplitModal) return;
+
+    // Open split UI once, after the ticket is loaded.
+    setSplitDraftQty({});
+    setShowSplitModal(true);
+    splitQueryConsumedRef.current = true;
+  }, [activeOrderId, data, loading, showSplitModal, splitQuery]);
 
   useEffect(() => {
     if (!data) return;
@@ -2227,6 +2246,8 @@ export default function PosPage() {
                 Support
               </button>
             ) : null}
+          </div>
+        </div>
 
       {showSplitModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -2353,6 +2374,7 @@ export default function PosPage() {
           </div>
         </div>
       ) : null}
+        <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => {
@@ -2370,6 +2392,13 @@ export default function PosPage() {
               className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
             >
               Tables
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/pos/history")}
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
+            >
+              History
             </button>
             <button
               data-tour="pos.openTickets"
@@ -2414,7 +2443,7 @@ export default function PosPage() {
             >
               New ticket
             </button>
-          </div>
+        </div>
         </div>
 
         {isOffline || offlineQueueCount > 0 ? (
@@ -2908,7 +2937,6 @@ export default function PosPage() {
 
               <div className="text-xs text-[var(--mp-muted)]">
                 Tax settings: {(data.ivuRate * 100).toFixed(2)}%{data.pricesIncludeTax ? " (prices include tax)" : ""}
-              </div>
               </div>
             </div>
 
