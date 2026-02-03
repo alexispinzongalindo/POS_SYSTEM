@@ -263,12 +263,12 @@ export default function Home() {
           {/* Pricing Section */}
           <div className="mt-16">
             <MarketingSection
-              eyebrow={lang === "es" ? "Precios" : "Pricing"}
+              eyebrow={lang === "es" ? "Planes" : "Pricing"}
               title={lang === "es" ? "Simple y transparente" : "Simple and transparent"}
               subtitle={
                 lang === "es"
-                  ? "Un precio por local. Sin sorpresas. Empieza gratis."
-                  : "One price per location. No surprises. Start free."
+                  ? "Empieza con una prueba gratis. Cambia o cancela cuando quieras."
+                  : "Start with a free trial. Change or cancel anytime."
               }
             >
               <div className="grid gap-6 lg:grid-cols-3">
@@ -328,35 +328,6 @@ export default function Home() {
                   >
                     {lang === "es" ? "Contactar" : "Contact us"}
                   </a>
-                </div>
-              </div>
-            </MarketingSection>
-          </div>
-
-          <div className="mt-16">
-            <MarketingSection
-              eyebrow={lang === "es" ? "Confianza" : "Trust"}
-              title={lang === "es" ? "Restaurantes en Puerto Rico" : "Restaurants in Puerto Rico"}
-              subtitle={lang === "es" ? "Pon logos y testimonios reales aquí cuando los tengas." : "Add real logos and testimonials here as you get them."}
-            >
-              <div className="grid gap-4 lg:grid-cols-2">
-                <MarketingCard
-                  title={lang === "es" ? "Logos" : "Logos"}
-                  description={lang === "es" ? "Placeholders para logo strip." : "Logo strip placeholders."}
-                >
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="h-10 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)]" />
-                    <div className="h-10 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)]" />
-                    <div className="h-10 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)]" />
-                    <div className="h-10 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)]" />
-                    <div className="h-10 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)]" />
-                    <div className="h-10 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)]" />
-                  </div>
-                </MarketingCard>
-
-                <div className="grid gap-4">
-                  <MarketingCard title={t.home.trust.title2} description={t.home.trust.body2} />
-                  <MarketingCard title={t.home.trust.title3} description={t.home.trust.body3} />
                 </div>
               </div>
             </MarketingSection>
