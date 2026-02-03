@@ -17,8 +17,16 @@ function ocrText(imagePath) {
 }
 
 function hasRedErrorBanner(imagePath) {
-  // Disabled: too aggressive. Only rely on OCR for now.
-  return false;
+  // Detect red error banners typically at the top of the page
+  try {
+    // Crop to top 15% and check for significant red pixels
+    const result = execSync(`magick "${imagePath}" -crop 100x15%+0+0 -fill black +opaque "rgb(220, 38, 38)" -format "%[fx:w*h-mean*w*h]" info:`, { encoding: 'utf-8' });
+    const redPixelRatio = parseFloat(result.trim());
+    // If >3% of top area is strong red, likely an error banner
+    return redPixelRatio > 0.03;
+  } catch {
+    return false;
+  }
 }
 
 function scanFrames(framesDir) {
