@@ -2,6 +2,8 @@
 
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { writeFile as writeFileCallback, readFile as readFileCallback, mkdir } from 'node:fs';
 import { access } from 'node:fs/promises';
 
@@ -100,7 +102,7 @@ export async function detectErrorFrames(videoPath) {
   console.log('Running error frame detection (basic heuristic)...');
   
   // Extract 1 frame per second for analysis
-  const tempDir = '/tmp/frame_analysis';
+  const tempDir = join(tmpdir(), 'frame_analysis');
   await ensureDir(tempDir);
   
   try {

@@ -34,10 +34,12 @@ export async function generateTTS(scriptPath, language, outputPath) {
   const scriptText = await readFile(scriptPath);
   
   // Choose voice based on language
-  // These are example voice IDs - replace with actual ElevenLabs voice IDs
+  // These are placeholder voice IDs - replace with actual ElevenLabs voice IDs from your account
+  // Rachel voice (21m00Tcm4TlvDq8ikWAM) is multilingual and supports both English and Spanish
+  // For production, you may want to use different voices for each language
   const voiceId = language === 'es' 
-    ? '21m00Tcm4TlvDq8ikWAM'  // Example Spanish voice (Rachel)
-    : '21m00Tcm4TlvDq8ikWAM';  // Example English voice (Rachel)
+    ? process.env.ELEVENLABS_VOICE_ID_ES || '21m00Tcm4TlvDq8ikWAM'  // Spanish voice (or use Rachel multilingual)
+    : process.env.ELEVENLABS_VOICE_ID_EN || '21m00Tcm4TlvDq8ikWAM';  // English voice (Rachel)
   
   console.log(`Using voice ID: ${voiceId} for language: ${language}`);
   

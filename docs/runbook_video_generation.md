@@ -116,6 +116,16 @@ If you want to skip TTS and add voiceover manually later:
 3. Change `TTS_PROVIDER: elevenlabs` to `TTS_PROVIDER: none`
 4. Commit and push the change
 
+### Customizing Voice Selection
+By default, the system uses the same multilingual voice (Rachel) for both languages. To use different voices:
+
+1. Go to ElevenLabs and select voices for each language
+2. Copy the voice IDs
+3. Add optional secrets in GitHub:
+   - `ELEVENLABS_VOICE_ID_EN` - Voice ID for English
+   - `ELEVENLABS_VOICE_ID_ES` - Voice ID for Spanish
+4. The system will use these instead of the default
+
 ### Adding Google Cloud TTS or AWS Polly
 These providers are planned for future versions. When implemented:
 
