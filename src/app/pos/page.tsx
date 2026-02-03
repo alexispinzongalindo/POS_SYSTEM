@@ -2658,11 +2658,11 @@ export default function PosPage() {
           </div>
         ) : null}
 
-        {error ? (
+        {/* {error ? (
           <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
-        ) : null}
+        ) : null} */}
 
         <div className="mt-8 grid gap-4 lg:grid-cols-[1fr_380px]">
           <div className="flex flex-col gap-4">
@@ -3434,11 +3434,11 @@ export default function PosPage() {
               </button>
             </div>
 
-            {modifiersError ? (
+            {/* {modifiersError ? (
               <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {modifiersError}
               </div>
-            ) : null}
+            ) : null} */}
 
             <div className="mt-4 grid gap-4">
               {modifiersData.map((g) => {

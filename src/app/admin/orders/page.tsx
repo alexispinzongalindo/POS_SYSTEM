@@ -285,11 +285,11 @@ export default function AdminOrdersPage() {
           </div>
         </div>
 
-        {error ? (
+        {/* {error ? (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
-        ) : null}
+        ) : null} */}
 
         {/* Filters */}
         <div className="mb-6 flex flex-wrap gap-3">

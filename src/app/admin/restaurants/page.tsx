@@ -171,11 +171,11 @@ export default function AdminRestaurantsPage() {
           </button>
         </div>
 
-        {error ? (
+        {/* {error ? (
           <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
             {error}
           </div>
-        ) : null}
+        ) : null} */}
 
         {success ? (
           <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">

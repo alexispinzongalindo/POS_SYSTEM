@@ -516,11 +516,11 @@ export default function PosTablesPage() {
           </div>
         </div>
 
-        {error ? (
+        {/* {error ? (
           <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
-        ) : null}
+        ) : null} */}
 
         {hasFloorPlan ? (
           <div className="mt-8">

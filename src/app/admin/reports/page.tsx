@@ -136,11 +136,11 @@ export default function AdminReportsPage() {
           </button>
         </div>
 
-        {error ? (
+        {/* {error ? (
           <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
-        ) : null}
+        ) : null} */}
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">

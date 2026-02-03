@@ -62,9 +62,9 @@ export default async function PublicMenuPage(props: PageProps) {
     return (
       <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
         <div className="mx-auto w-full max-w-3xl px-6 py-10">
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
+          {/* <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
             {restaurantRes.error.message}
-          </div>
+          </div> */}
         </div>
       </div>
     );
@@ -115,17 +115,17 @@ export default async function PublicMenuPage(props: PageProps) {
           </div>
         </div>
 
-        {categoriesRes.error ? (
+        {/* {categoriesRes.error ? (
           <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
             {categoriesRes.error.message}
           </div>
-        ) : null}
+        ) : null} */}
 
-        {itemsRes.error ? (
+        {/* {itemsRes.error ? (
           <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
             {itemsRes.error.message}
           </div>
-        ) : null}
+        ) : null} */}
 
         <div className="mt-8 flex flex-col gap-6">
           {uncategorized.length > 0 ? (
