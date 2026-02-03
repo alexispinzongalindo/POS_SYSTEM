@@ -165,11 +165,15 @@ export default function TourProvider({ children }: { children: React.ReactNode }
     [],
   );
 
-  const [state, setState] = useState<TourState>(() => readState(steps.length));
+  const [state, setState] = useState<TourState>({ active: false, index: 0, voiceEnabled: true });
   const [rect, setRect] = useState<ReturnType<typeof getRectForTarget> | null>(null);
   const [voiceReady, setVoiceReady] = useState(false);
 
   const step = steps[Math.min(Math.max(0, state.index), steps.length - 1)];
+
+  useEffect(() => {
+    setState(readState(steps.length));
+  }, [steps.length]);
 
   useEffect(() => {
     // keep state in sync if another tab updates localStorage
