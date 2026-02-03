@@ -44,6 +44,18 @@ next-env.d.ts
 .netlify
 public/Screen*Recording*.mov
 
+# Local video build artifacts (keep only the two published marketing videos)
+public/videos/*.mp4
+!public/videos/islapos-en.mp4
+!public/videos/islapos-es.mp4
+public/videos/*.txt
+
+# Local video review/debug artifacts
+public/_debug_frames/
+public/_scan_frames_*/
+public/_review_frames_*/
+public/voiceover-*.aac
+
 # Playwright recordings
 recordings/
 
