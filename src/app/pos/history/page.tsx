@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
@@ -72,6 +72,8 @@ function money(n: unknown) {
 
 export default function PosOrderHistoryPage() {
   const router = useRouter();
+
+  const ordersLoadingRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -161,38 +163,45 @@ export default function PosOrderHistoryPage() {
 
   async function loadOrders() {
     if (!restaurantId) return;
+    if (ordersLoadingRef.current) return;
+
+    ordersLoadingRef.current = true;
     setError(null);
 
-    const since = date ? startOfLocalDayIso(date) : undefined;
-    const until = date ? endOfLocalDayIso(date) : undefined;
+    try {
+      const since = date ? startOfLocalDayIso(date) : undefined;
+      const until = date ? endOfLocalDayIso(date) : undefined;
 
-    const opts: {
-      limit: number;
-      status?: OrderStatus;
-      orderType?: OrderType;
-      since?: string;
-      until?: string;
-    } = {
-      limit: 150,
-      since,
-      until,
-    };
+      const opts: {
+        limit: number;
+        status?: OrderStatus;
+        orderType?: OrderType;
+        since?: string;
+        until?: string;
+      } = {
+        limit: 150,
+        since,
+        until,
+      };
 
-    if (status !== "all") opts.status = status;
-    if (source !== "all") opts.orderType = source;
+      if (status !== "all") opts.status = status;
+      if (source !== "all") opts.orderType = source;
 
-    const res = await listAllOrders(restaurantId, opts);
-    if (res.error) {
-      setError(res.error.message);
-      return;
-    }
+      const res = await listAllOrders(restaurantId, opts);
+      if (res.error) {
+        setError(res.error.message);
+        return;
+      }
 
-    const next = res.data ?? [];
-    setOrders(next);
+      const next = res.data ?? [];
+      setOrders(next);
 
-    if (selectedOrderId && next.every((o) => o.id !== selectedOrderId)) {
-      setSelectedOrderId(null);
-      setReceipt(null);
+      if (selectedOrderId && next.every((o) => o.id !== selectedOrderId)) {
+        setSelectedOrderId(null);
+        setReceipt(null);
+      }
+    } finally {
+      ordersLoadingRef.current = false;
     }
   }
 
@@ -200,6 +209,18 @@ export default function PosOrderHistoryPage() {
     if (!restaurantId) return;
     void loadOrders();
   }, [restaurantId, applyNonce]);
+
+  useEffect(() => {
+    if (!restaurantId) return;
+
+    const id = setInterval(() => {
+      setApplyNonce((n) => n + 1);
+    }, 10_000);
+
+    return () => {
+      clearInterval(id);
+    };
+  }, [restaurantId]);
 
   async function viewOrder(orderId: string) {
     setSelectedOrderId(orderId);
@@ -297,13 +318,6 @@ export default function PosOrderHistoryPage() {
           <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="text-sm font-semibold">Filters</div>
-              <button
-                type="button"
-                onClick={() => setApplyNonce((n) => n + 1)}
-                className="inline-flex h-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-white"
-              >
-                Refresh
-              </button>
             </div>
 
             <div className="mt-4 grid gap-3">
