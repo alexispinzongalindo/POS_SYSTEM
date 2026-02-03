@@ -228,3 +228,78 @@ export async function safeGoto(page, url) {
     return false;
   }
 }
+
+export async function waitForUiReady(
+  page,
+  { h1Text, readySelector, alternateTexts, timeoutMs = 60_000, retries = 1 } = {},
+) {
+  const errorBanner = page.locator("div.border-red-200.bg-red-50.text-red-700");
+  const loadingTexts = ["Loading...", "Loading kitchen display..."];
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle").catch(() => {});
+
+    for (const text of loadingTexts) {
+      await page
+        .getByText(text, { exact: true })
+        .waitFor({ state: "hidden", timeout: Math.min(30_000, timeoutMs) })
+        .catch(() => {});
+    }
+
+    const waits = [];
+    if (h1Text) {
+      waits.push(page.locator("h1", { hasText: h1Text }).first().waitFor({ state: "visible", timeout: timeoutMs }));
+    }
+    if (readySelector) {
+      waits.push(page.locator(readySelector).first().waitFor({ state: "visible", timeout: timeoutMs }));
+    }
+    const alts = Array.isArray(alternateTexts) ? alternateTexts : [];
+    for (const t of alts) {
+      if (!t || !String(t).trim()) continue;
+      waits.push(page.getByText(String(t), { exact: true }).first().waitFor({ state: "visible", timeout: timeoutMs }));
+    }
+
+    if (waits.length) {
+      await new Promise((resolve, reject) => {
+        let pending = waits.length;
+        let done = false;
+        for (const p of waits) {
+          p.then(() => {
+            if (done) return;
+            done = true;
+            resolve();
+          }).catch((e) => {
+            pending -= 1;
+            if (pending <= 0 && !done) reject(e);
+          });
+        }
+      });
+    }
+
+    const hasError = await errorBanner.first().isVisible().catch(() => false);
+    if (!hasError) return;
+
+    if (attempt < retries) {
+      await page.reload({ waitUntil: "networkidle" }).catch(() => {});
+      continue;
+    }
+
+    throw new Error("UI error banner detected while recording");
+  }
+}
+
+export async function gotoTourStep(
+  page,
+  { url, h1Text, readySelector, alternateTexts, holdMs = 10_000, timeoutMs = 60_000, retries = 1 } = {},
+) {
+  const ok = await safeGoto(page, url);
+  if (!ok) {
+    await settle(page, 1200);
+    const ok2 = await safeGoto(page, url);
+    if (!ok2) throw new Error(`Navigation failed: ${url}`);
+  }
+
+  await waitForUiReady(page, { h1Text, readySelector, alternateTexts, timeoutMs, retries });
+  await settle(page, holdMs);
+}

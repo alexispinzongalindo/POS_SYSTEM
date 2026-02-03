@@ -5,8 +5,7 @@ import {
   launchRecorderContext,
   login,
   maybeConvertToMp4,
-  safeGoto,
-  settle,
+  gotoTourStep,
 } from "./record-utils.mjs";
 
 async function run() {
@@ -19,49 +18,27 @@ async function run() {
 
   try {
     await login(page, { baseUrl, email, password });
-    await settle(page, 1200);
 
-    await safeGoto(page, `${baseUrl}/admin`);
-    await settle(page, 1200);
+    await gotoTourStep(page, { url: `${baseUrl}/admin`, h1Text: "Admin", holdMs: 6_000, retries: 1 });
+    await gotoTourStep(page, { url: `${baseUrl}/admin/floor`, h1Text: "Floor Plan", holdMs: 6_000, retries: 1 });
+    await gotoTourStep(page, { url: `${baseUrl}/admin/orders`, h1Text: "Orders", holdMs: 6_000, retries: 1 });
+    await gotoTourStep(page, { url: `${baseUrl}/admin/reports`, h1Text: "Reports", holdMs: 6_000, retries: 1 });
+    await gotoTourStep(page, { url: `${baseUrl}/admin/inventory`, h1Text: "Inventory", holdMs: 6_000, retries: 1 });
+    await gotoTourStep(page, { url: `${baseUrl}/admin/reservations`, h1Text: "Reservations", holdMs: 6_000, retries: 1 });
+    await gotoTourStep(page, { url: `${baseUrl}/admin/staff`, h1Text: "Staff", holdMs: 6_000, retries: 1 });
+    await gotoTourStep(page, {
+      url: `${baseUrl}/admin/support`,
+      timeoutMs: 120_000,
+      holdMs: 6_000,
+      retries: 1,
+    });
+    await gotoTourStep(page, { url: `${baseUrl}/admin/training`, h1Text: "Training", holdMs: 6_000, retries: 1 });
 
-    await safeGoto(page, `${baseUrl}/admin/floor`);
-    await settle(page, 1500);
-
-    await safeGoto(page, `${baseUrl}/admin/orders`);
-    await settle(page, 1500);
-
-    await safeGoto(page, `${baseUrl}/admin/reports`);
-    await settle(page, 1500);
-
-    await safeGoto(page, `${baseUrl}/admin/inventory`);
-    await settle(page, 1500);
-
-    await safeGoto(page, `${baseUrl}/admin/reservations`);
-    await settle(page, 1500);
-
-    await safeGoto(page, `${baseUrl}/admin/staff`);
-    await settle(page, 1500);
-
-    await safeGoto(page, `${baseUrl}/admin/support`);
-    await settle(page, 1500);
-
-    await safeGoto(page, `${baseUrl}/admin/training`);
-    await settle(page, 1500);
-
-    await safeGoto(page, `${baseUrl}/pos`);
-    await settle(page, 1500);
-
-    await safeGoto(page, `${baseUrl}/pos/tables`);
-    await settle(page, 1500);
-
-    await safeGoto(page, `${baseUrl}/pos/kitchen`);
-    await settle(page, 1500);
-
-    await safeGoto(page, `${baseUrl}/pos/history`);
-    await settle(page, 1500);
-
-    await safeGoto(page, `${baseUrl}/pos/offline`);
-    await settle(page, 1500);
+    await gotoTourStep(page, { url: `${baseUrl}/pos`, readySelector: '[data-tour="pos.tables"]', holdMs: 6_000, retries: 1 });
+    await gotoTourStep(page, { url: `${baseUrl}/pos/tables`, h1Text: "Tables", holdMs: 6_000, retries: 1 });
+    await gotoTourStep(page, { url: `${baseUrl}/pos/kitchen`, h1Text: "Kitchen Display", holdMs: 6_000, retries: 1 });
+    await gotoTourStep(page, { url: `${baseUrl}/pos/history`, h1Text: "Order History", holdMs: 6_000, retries: 1 });
+    await gotoTourStep(page, { url: `${baseUrl}/pos/offline`, h1Text: "Offline Queue Manager", holdMs: 6_000, retries: 1 });
   } finally {
     await context.close();
     await browser.close();

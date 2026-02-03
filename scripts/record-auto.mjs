@@ -17,7 +17,8 @@ async function waitForHttpOk(url, timeoutMs = 90_000) {
   while (true) {
     try {
       const res = await fetch(url, { method: "GET" });
-      if (res.ok) return;
+      // For our purposes, any HTTP response means the server is up.
+      if (res && typeof res.status === "number") return;
     } catch {
     }
 
@@ -25,6 +26,15 @@ async function waitForHttpOk(url, timeoutMs = 90_000) {
       throw new Error(`Timed out waiting for ${url}`);
     }
     await sleep(800);
+  }
+}
+
+async function isHttpOk(url, timeoutMs = 1500) {
+  try {
+    await waitForHttpOk(url, timeoutMs);
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -68,8 +78,23 @@ async function main() {
   let dev = null;
   try {
     if (shouldStartDevServer) {
-      dev = spawnLogged(npmCmd(), ["run", "dev", "--", "-p", "3000"], { PORT: "3000" });
-      await waitForHttpOk("http://localhost:3000");
+      const alreadyUp = await isHttpOk("http://localhost:3000", 1500);
+      if (!alreadyUp) {
+        dev = spawnLogged(npmCmd(), ["run", "dev", "--", "-p", "3000"], { PORT: "3000" });
+
+        const exitPromise = new Promise((resolve) => {
+          dev.on("exit", (code) => resolve(code ?? 1));
+        });
+
+        const readyPromise = waitForHttpOk("http://localhost:3000");
+        const first = await Promise.race([exitPromise, readyPromise.then(() => "ready")]);
+        if (first !== "ready") {
+          // If it died immediately, the most common reason is EADDRINUSE.
+          // Re-check whether something is already serving on :3000 and continue if so.
+          const nowUp = await isHttpOk("http://localhost:3000", 2500);
+          if (!nowUp) throw new Error("Failed to start dev server on :3000");
+        }
+      }
     }
 
     if (target === "tour") {
