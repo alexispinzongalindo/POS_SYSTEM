@@ -1,0 +1,17 @@
+Welcome to IslaPOS, the modern point-of-sale system designed for restaurants and cafes.
+
+In this tour, we'll explore the key features that make IslaPOS simple, fast, and reliable.
+
+First, let's look at the intuitive menu interface. Browse categories like appetizers, main courses, beverages, and desserts with ease.
+
+Adding items to an order is as simple as tapping the item. Modify quantities, add special instructions, and see your order total update in real-time.
+
+The order summary keeps everything organized. Review items, adjust quantities, or remove items before finalizing.
+
+When you're ready to checkout, multiple payment options are available: cash, card, or digital payments.
+
+IslaPOS also includes powerful reporting features. Track sales, monitor inventory, and analyze customer preferences.
+
+The system works offline, ensuring your business never stops, even without internet connectivity.
+
+Thank you for exploring IslaPOS. Let's transform your point-of-sale experience together.

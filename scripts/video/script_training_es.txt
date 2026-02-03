@@ -1,0 +1,19 @@
+Bienvenido al módulo de capacitación de IslaPOS. Esta guía ayudará a su equipo a dominar el sistema de manera rápida y eficiente.
+
+Comencemos con lo básico. Cuando abre IslaPOS por primera vez, verá la pantalla del menú principal con todas las categorías disponibles.
+
+Para crear un nuevo pedido, simplemente toque los artículos que su cliente desea. Cada toque agrega el artículo al pedido actual.
+
+¿Necesita modificar un artículo? Tóquelo en el resumen del pedido para ajustar la cantidad o agregar solicitudes especiales como "sin cebolla" o "salsa extra".
+
+Administrar múltiples pedidos es fácil. El sistema realiza un seguimiento de los números de mesa o nombres de pedidos para evitar confusiones.
+
+Cuando sea el momento de procesar el pago, seleccione el método de pago. El sistema calculará el cambio automáticamente para pagos en efectivo.
+
+Al final de cada turno, puede generar informes para revisar el rendimiento de ventas y los niveles de inventario.
+
+Si encuentra algún problema, el menú de ayuda proporciona respuestas rápidas a preguntas comunes.
+
+La práctica hace al maestro. Dedique tiempo a explorar cada función para sentirse seguro con el sistema.
+
+Gracias por completar esta capacitación. Ahora está listo para usar IslaPOS de manera efectiva.

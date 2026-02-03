@@ -1,0 +1,17 @@
+Bienvenido a IslaPOS, el sistema de punto de venta moderno diseñado para restaurantes y cafeterías.
+
+En este recorrido, exploraremos las características clave que hacen que IslaPOS sea simple, rápido y confiable.
+
+Primero, veamos la interfaz de menú intuitiva. Navegue por categorías como aperitivos, platos principales, bebidas y postres con facilidad.
+
+Agregar artículos a un pedido es tan simple como tocar el artículo. Modifique cantidades, agregue instrucciones especiales y vea su total de pedido actualizarse en tiempo real.
+
+El resumen del pedido mantiene todo organizado. Revise los artículos, ajuste las cantidades o elimine artículos antes de finalizar.
+
+Cuando esté listo para pagar, hay múltiples opciones de pago disponibles: efectivo, tarjeta o pagos digitales.
+
+IslaPOS también incluye potentes funciones de informes. Realice un seguimiento de las ventas, supervise el inventario y analice las preferencias de los clientes.
+
+El sistema funciona sin conexión, lo que garantiza que su negocio nunca se detenga, incluso sin conectividad a Internet.
+
+Gracias por explorar IslaPOS. Transformemos juntos su experiencia de punto de venta.
