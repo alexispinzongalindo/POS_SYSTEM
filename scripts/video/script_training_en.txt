@@ -1,0 +1,19 @@
+Welcome to the IslaPOS training module. This guide will help your team master the system quickly and efficiently.
+
+Let's start with the basics. When you first open IslaPOS, you'll see the main menu screen with all available categories.
+
+To create a new order, simply tap the items your customer wants. Each tap adds the item to the current order.
+
+Need to modify an item? Tap it in the order summary to adjust quantity or add special requests like "no onions" or "extra sauce".
+
+Managing multiple orders is easy. The system keeps track of table numbers or order names to prevent confusion.
+
+When it's time to process payment, select the payment method. The system will calculate change automatically for cash payments.
+
+At the end of each shift, you can generate reports to review sales performance and inventory levels.
+
+If you encounter any issues, the help menu provides quick answers to common questions.
+
+Practice makes perfect. Spend time exploring each feature to become confident with the system.
+
+Thank you for completing this training. You're now ready to use IslaPOS effectively.

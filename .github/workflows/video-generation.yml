@@ -1,0 +1,123 @@
+name: Video Generation
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_type:
+        description: 'Type of video to generate (tour, training, or all)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - tour
+          - training
+  push:
+    branches:
+      - copilot/featurevideo-automation
+      - feature/video-automation
+
+jobs:
+  generate-videos:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install ffmpeg and other tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version
+      
+      - name: Verify Node.js setup
+        run: |
+          node --version
+          npm --version
+          echo "Node.js and npm are ready"
+      
+      - name: Download source video (if configured)
+        if: ${{ secrets.VIDEO_SOURCE_URL != '' }}
+        run: |
+          mkdir -p public/videos
+          # Download video if VIDEO_SOURCE_URL is provided
+          # Token/auth should be included in the URL if needed
+          curl -L -o public/videos/source.mp4 "${{ secrets.VIDEO_SOURCE_URL }}" || echo "Failed to download, will use existing videos"
+      
+      - name: Create output directories
+        run: |
+          mkdir -p out/slides
+          mkdir -p out/videos
+          mkdir -p out/audio
+          mkdir -p public/slides/tour
+          mkdir -p public/slides/training
+      
+      - name: Dry-run video generation script
+        run: |
+          echo "Testing video generation script..."
+          node scripts/video/generate_videos.mjs --dry-run || echo "Dry-run test completed"
+      
+      - name: Generate TTS audio files
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+        run: |
+          if [ -n "$ELEVENLABS_API_KEY" ]; then
+            echo "Generating TTS audio with ElevenLabs..."
+            node scripts/video/generate_tts.mjs
+          else
+            echo "⚠️  ELEVENLABS_API_KEY not set. Skipping TTS generation."
+            echo "Please add ELEVENLABS_API_KEY secret to run full video generation."
+          fi
+      
+      - name: Generate videos
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          VIDEO_TYPE: ${{ github.event.inputs.video_type || 'all' }}
+        run: |
+          echo "Generating videos (type: $VIDEO_TYPE)..."
+          node scripts/video/generate_videos.mjs --type="$VIDEO_TYPE"
+      
+      - name: List generated files
+        run: |
+          echo "=== Generated Videos ==="
+          ls -lh out/videos/ || echo "No videos generated yet"
+          echo ""
+          echo "=== Generated Audio ==="
+          ls -lh out/audio/ || echo "No audio generated yet"
+          echo ""
+          echo "=== Generated Slides ==="
+          ls -lh out/slides/ || echo "No slides generated yet"
+      
+      - name: Upload video artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-videos
+          path: |
+            out/videos/*.mp4
+            out/videos/*.srt
+            out/audio/*.mp3
+            scripts/video/script_*.txt
+          retention-days: 30
+          if-no-files-found: warn
+      
+      - name: Print summary
+        run: |
+          echo "✅ Video generation workflow completed!"
+          echo ""
+          echo "📦 Artifacts uploaded:"
+          echo "  - Videos: out/videos/*.mp4"
+          echo "  - Subtitles: out/videos/*.srt"
+          echo "  - Audio: out/audio/*.mp3"
+          echo "  - Scripts: scripts/video/script_*.txt"
+          echo ""
+          echo "📥 Download artifacts from the Actions tab in GitHub"

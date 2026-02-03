@@ -1,0 +1,135 @@
+# IslaPOS Video Slides Template
+
+This template provides an outline for creating slides for the tour and training videos.
+
+## Tour Video Slides (10 slides recommended)
+
+### Slide 1: Welcome/Title
+- Title: "IslaPOS - Modern Point of Sale"
+- Subtitle: "Simple. Fast. Reliable."
+- Background: Brand logo or hero image
+
+### Slide 2: Menu Interface Overview
+- Show the main menu screen
+- Highlight category navigation
+- Screenshot or mockup of the menu interface
+
+### Slide 3: Adding Items to Order
+- Demonstrate item selection
+- Show how items appear in order summary
+- Include visual indicators (tap gesture, etc.)
+
+### Slide 4: Order Management
+- Display order summary panel
+- Show quantity controls
+- Highlight special instructions field
+
+### Slide 5: Checkout Options
+- Multiple payment methods (cash, card, digital)
+- Payment selection interface
+- Total calculation display
+
+### Slide 6: Reporting Features
+- Sales dashboard screenshot
+- Charts/graphs showing analytics
+- Inventory tracking view
+
+### Slide 7: Offline Capability
+- Visual showing offline mode
+- Data sync indicator
+- Reliability messaging
+
+### Slide 8: Mobile Responsive
+- Show mobile and tablet views
+- Cross-device compatibility
+- Touch-optimized interface
+
+### Slide 9: Key Benefits Summary
+- Bullet points of main features
+- Icons representing each benefit
+- Clean, professional design
+
+### Slide 10: Call to Action
+- Thank you message
+- Contact information or website
+- "Get Started" prompt
+
+---
+
+## Training Video Slides (10 slides recommended)
+
+### Slide 1: Training Title
+- Title: "IslaPOS Training Guide"
+- Subtitle: "Master Your POS System"
+- Professional training aesthetic
+
+### Slide 2: Getting Started
+- Main screen overview
+- Login/startup process
+- Initial navigation
+
+### Slide 3: Creating Orders
+- Step-by-step order creation
+- Item selection process
+- Add to cart flow
+
+### Slide 4: Modifying Orders
+- Edit quantity demonstration
+- Add special instructions
+- Remove items process
+
+### Slide 5: Managing Multiple Orders
+- Table number system
+- Order tracking
+- Queue management
+
+### Slide 6: Processing Payments
+- Payment method selection
+- Cash calculation
+- Transaction completion
+
+### Slide 7: End-of-Shift Reports
+- How to generate reports
+- Reading sales data
+- Inventory checks
+
+### Slide 8: Help & Support
+- Where to find help menu
+- Common troubleshooting
+- Support resources
+
+### Slide 9: Practice Tips
+- Encourage exploration
+- Training mode features
+- Best practices
+
+### Slide 10: Training Complete
+- Congratulations message
+- Quick reference resources
+- Next steps
+
+---
+
+## Slide Design Guidelines
+
+### Visual Consistency
+- Use brand colors consistently
+- Maintain same font family throughout
+- Keep layout template uniform
+
+### Content Guidelines
+- Limit text to 2-3 bullet points per slide
+- Use high-quality images (1920x1080)
+- Ensure good contrast for readability
+
+### Image Requirements
+- Resolution: 1920x1080 (16:9 aspect ratio)
+- Format: PNG or JPG
+- File naming: slide_001.png, slide_002.png, etc.
+- Location: public/slides/tour/ or public/slides/training/
+
+### Tips
+- Keep slides simple and focused
+- Use screenshots from actual application
+- Add arrows or highlights to guide attention
+- Test readability on different screen sizes
