@@ -1,0 +1,29 @@
+Bienvenido a IslaPOS, el sistema de punto de venta moderno para restaurantes.
+
+Comience en el panel de Administración para gestionar todo su negocio desde un centro central.
+
+Use el Plano de Piso para organizar mesas y asientos para un servicio óptimo.
+
+Vea y gestione Órdenes en tiempo real, manteniendo sincronizados su cocina y personal de servicio.
+
+Revise Informes para rastrear tendencias de ventas y métricas de rendimiento del negocio.
+
+Gestione Inventario para mantener niveles de stock precisos y prevenir escasez.
+
+Configure Reservas y acepte reservas para maximizar la utilización de mesas.
+
+Gestione roles y permisos del Personal para garantizar acceso seguro en todo su equipo.
+
+Acceda a recursos de Soporte cuando necesite ayuda o tenga preguntas.
+
+Use materiales de Capacitación para integrar nuevos miembros del equipo de manera rápida y efectiva.
+
+La pantalla POS le permite tomar órdenes rápidamente con una interfaz intuitiva.
+
+Vea Mesas y gestione el estado de los asientos de un vistazo.
+
+La Pantalla de Cocina muestra órdenes activas priorizadas para una preparación eficiente.
+
+Revise el Historial de Órdenes en cualquier momento para rastrear preferencias de clientes y resolver problemas.
+
+Gracias por recorrer IslaPOS. Estamos aquí para ayudar a que su restaurante tenga éxito.

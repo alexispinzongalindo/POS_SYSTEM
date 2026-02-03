@@ -1,0 +1,29 @@
+Welcome to IslaPOS, the modern point of sale system for restaurants.
+
+Start at the Admin dashboard to manage your entire business from one central hub.
+
+Use the Floor Plan to arrange tables and seating for optimal service.
+
+View and manage Orders in real time, keeping your kitchen and service staff synchronized.
+
+Check Reports to track sales trends and business performance metrics.
+
+Manage Inventory to keep stock levels accurate and prevent shortages.
+
+Set up Reservations and accept bookings to maximize table utilization.
+
+Manage Staff roles and permissions to ensure secure access across your team.
+
+Access Support resources when you need help or have questions.
+
+Use Training materials to onboard new team members quickly and effectively.
+
+The POS screen lets you take orders quickly with an intuitive interface.
+
+View Tables and manage seating status at a glance.
+
+The Kitchen Display shows active orders prioritized for efficient preparation.
+
+Review Order History anytime to track customer preferences and resolve issues.
+
+Thank you for touring IslaPOS. We're here to help your restaurant succeed.
