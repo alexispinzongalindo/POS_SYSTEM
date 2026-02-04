@@ -89,3 +89,38 @@ create index if not exists order_item_modifiers_order_item_id_idx on public.orde
  create index if not exists support_cases_restaurant_id_idx on public.support_cases(restaurant_id);
  create index if not exists support_cases_status_idx on public.support_cases(status);
  create index if not exists support_cases_created_at_idx on public.support_cases(created_at desc);
+
+ create table if not exists public.payroll_schedule_shifts (
+   id uuid primary key default gen_random_uuid(),
+   restaurant_id uuid not null references public.restaurants(id) on delete cascade,
+   staff_user_id uuid not null,
+   staff_pin text,
+   staff_label text,
+   starts_at timestamptz not null,
+   ends_at timestamptz not null,
+   break_minutes int not null default 0,
+   created_by_user_id uuid,
+   created_at timestamptz not null default now()
+ );
+
+ create index if not exists payroll_schedule_shifts_restaurant_id_idx on public.payroll_schedule_shifts(restaurant_id);
+ create index if not exists payroll_schedule_shifts_staff_user_id_idx on public.payroll_schedule_shifts(staff_user_id);
+ create index if not exists payroll_schedule_shifts_staff_pin_idx on public.payroll_schedule_shifts(staff_pin);
+ create index if not exists payroll_schedule_shifts_starts_at_idx on public.payroll_schedule_shifts(starts_at);
+
+ create table if not exists public.time_clock_entries (
+   id uuid primary key default gen_random_uuid(),
+   restaurant_id uuid not null references public.restaurants(id) on delete cascade,
+   staff_user_id uuid,
+   staff_pin text,
+   staff_label text,
+   action text not null check (action in ('clock_in', 'break_out', 'break_in', 'clock_out')),
+   at timestamptz not null,
+   recorded_by_user_id uuid,
+   created_at timestamptz not null default now()
+ );
+
+ create index if not exists time_clock_entries_restaurant_id_idx on public.time_clock_entries(restaurant_id);
+ create index if not exists time_clock_entries_staff_user_id_idx on public.time_clock_entries(staff_user_id);
+ create index if not exists time_clock_entries_staff_pin_idx on public.time_clock_entries(staff_pin);
+ create index if not exists time_clock_entries_at_idx on public.time_clock_entries(at);

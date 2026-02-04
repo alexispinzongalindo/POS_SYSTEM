@@ -590,6 +590,32 @@ export default function PosPage() {
         const nextAll = Array.isArray(parsed) ? [...parsed, entry] : [entry];
         localStorage.setItem("islapos_timeclock_v2", JSON.stringify(nextAll));
 
+        try {
+          if (typeof navigator !== "undefined" && navigator.onLine) {
+            const { data: sessionData } = await supabase.auth.getSession();
+            const token = sessionData.session?.access_token;
+            if (token) {
+              await fetch("/api/pos/time-clock", {
+                method: "POST",
+                headers: {
+                  "content-type": "application/json",
+                  authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  restaurantId: data.restaurantId,
+                  staffUserId: staff.id,
+                  staffPin: pin,
+                  staffLabel: staff.name?.trim() ? staff.name : `PIN ${pin}`,
+                  action,
+                  at: entry.at,
+                }),
+              });
+            }
+          }
+        } catch {
+          // ignore sync failures; offline/local storage remains the source of truth on this device
+        }
+
         setTimeClockEntries(nextAll.filter((e) => e.restaurantId === data.restaurantId));
         setSuccess(
           action === "clock_in"

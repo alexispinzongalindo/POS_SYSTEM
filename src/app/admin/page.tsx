@@ -264,6 +264,33 @@ export default function AdminPage() {
             <div className="flex items-start gap-3">
               <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 7h18" />
+                  <path d="M7 3v18" />
+                  <path d="M17 3v18" />
+                  <path d="M7 11h10" />
+                  <path d="M7 15h10" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Payroll</h2>
+                <p className="mt-1 text-sm text-[var(--mp-muted)]">Create staff schedules and compare vs time clock.</p>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <button
+                onClick={() => router.push("/admin/payroll")}
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+              >
+                Open payroll
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 3v18h18" />
                   <path d="M7 15v-4" />
                   <path d="M11 15V7" />
