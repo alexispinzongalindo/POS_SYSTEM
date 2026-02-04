@@ -64,3 +64,6 @@ recordings_old_*/
 
 # Saved auth state for Playwright (local, contains session tokens)
 auth-state-*.json
+
+edge-gateway/node_modules/
+edge-gateway/data/

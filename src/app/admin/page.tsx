@@ -6,6 +6,12 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getOrCreateAppConfig } from "@/lib/appConfig";
 
+type AiChatMsg = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+};
+
 export default function AdminPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -15,6 +21,15 @@ export default function AdminPage() {
   const [inviteRole, setInviteRole] = useState<"manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security">("cashier");
   const [inviteStatus, setInviteStatus] = useState<string | null>(null);
   const [showAiPanel, setShowAiPanel] = useState(false);
+  const [aiMessages, setAiMessages] = useState<AiChatMsg[]>([]);
+  const [aiInput, setAiInput] = useState("");
+  const [aiSending, setAiSending] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  function makeAiId() {
+    const maybe = globalThis.crypto?.randomUUID?.();
+    return maybe || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -113,6 +128,68 @@ export default function AdminPage() {
     setInviteEmail("");
     setInviteRole("cashier");
     setInviteStatus("Invite sent.");
+  }
+
+  useEffect(() => {
+    if (!showAiPanel) return;
+    if (aiMessages.length > 0) return;
+    setAiMessages([
+      {
+        id: makeAiId(),
+        role: "assistant",
+        content:
+          "Hi — I’m your IslaPOS Support AI. Tell me what you’re trying to do (printing, Edge Gateway, KDS), and what’s not working.",
+      },
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAiPanel]);
+
+  async function sendAiMessage() {
+    const text = aiInput.trim();
+    if (!text) return;
+    if (aiSending) return;
+
+    setAiError(null);
+    setAiSending(true);
+
+    const userMsg: AiChatMsg = { id: makeAiId(), role: "user", content: text };
+    setAiMessages((prev) => [...prev, userMsg]);
+    setAiInput("");
+
+    try {
+      const { data } = await supabase.auth.getSession();
+      const accessToken = data.session?.access_token;
+      if (!accessToken) {
+        router.replace("/login");
+        return;
+      }
+
+      const history = aiMessages.map((m) => ({ role: m.role, content: m.content }));
+      const res = await fetch("/api/agent/chat", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ message: text, history }),
+      });
+
+      const json = (await res.json().catch(() => null)) as
+        | { ok?: boolean; reply?: string; error?: string }
+        | null;
+
+      if (!res.ok || json?.error) {
+        setAiError(json?.error ?? `AI request failed (${res.status})`);
+        return;
+      }
+
+      const reply = (json?.reply ?? "").trim();
+      if (reply) {
+        setAiMessages((prev) => [...prev, { id: makeAiId(), role: "assistant", content: reply }]);
+      }
+    } finally {
+      setAiSending(false);
+    }
   }
 
   if (loading) {
@@ -477,6 +554,31 @@ export default function AdminPage() {
             <div className="flex items-start gap-3">
               <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 9V2h12v7" />
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                  <path d="M6 14h12v8H6z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Edge Gateway</h2>
+                <p className="mt-1 text-sm text-[var(--mp-muted)]">Pair your Windows Print Hub for offline printing + KDS.</p>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <button
+                onClick={() => router.push("/admin/edge-gateway")}
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+              >
+                Pair gateway
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
@@ -631,7 +733,7 @@ export default function AdminPage() {
       <div className="fixed right-3 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-3 md:flex">
         <button
           type="button"
-          onClick={() => router.push("/admin/training")}
+          onClick={() => router.push("/see-app-in-action")}
           className="group flex items-center gap-2 rounded-2xl border border-[var(--mp-border)] bg-white px-3 py-2 shadow-sm"
         >
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--mp-primary)] text-white">
@@ -681,8 +783,59 @@ export default function AdminPage() {
             </div>
 
             <div className="p-5">
-              <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3 text-sm text-[var(--mp-muted)]">
-                AI chat will be wired next. For now, use “View Tutorial” for training.
+              <div className="flex h-[calc(100vh-110px)] flex-col">
+                <div className="flex-1 overflow-auto rounded-2xl border border-[var(--mp-border)] bg-white p-4">
+                  <div className="flex flex-col gap-3">
+                    {aiMessages.map((m) => (
+                      <div
+                        key={m.id}
+                        className={`max-w-[90%] rounded-2xl px-4 py-3 text-sm ${
+                          m.role === "user"
+                            ? "ml-auto bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]"
+                            : "mr-auto bg-[var(--mp-bg)] text-[var(--mp-fg)]"
+                        }`}
+                      >
+                        {m.content}
+                      </div>
+                    ))}
+
+                    {aiSending ? (
+                      <div className="mr-auto max-w-[90%] rounded-2xl bg-[var(--mp-bg)] px-4 py-3 text-sm text-[var(--mp-muted)]">
+                        Thinking...
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                {aiError ? (
+                  <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+                    {aiError}
+                  </div>
+                ) : null}
+
+                <div className="mt-3 flex gap-2">
+                  <input
+                    value={aiInput}
+                    onChange={(e) => setAiInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        void sendAiMessage();
+                      }
+                    }}
+                    placeholder="Ask a question…"
+                    className="h-11 flex-1 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)]"
+                    disabled={aiSending}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void sendAiMessage()}
+                    className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-50"
+                    disabled={aiSending || !aiInput.trim()}
+                  >
+                    Send
+                  </button>
+                </div>
               </div>
             </div>
           </div>

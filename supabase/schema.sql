@@ -124,3 +124,41 @@ create index if not exists order_item_modifiers_order_item_id_idx on public.orde
  create index if not exists time_clock_entries_staff_user_id_idx on public.time_clock_entries(staff_user_id);
  create index if not exists time_clock_entries_staff_pin_idx on public.time_clock_entries(staff_pin);
  create index if not exists time_clock_entries_at_idx on public.time_clock_entries(at);
+
+ create table if not exists public.edge_gateways (
+   id uuid primary key default gen_random_uuid(),
+   restaurant_id uuid not null references public.restaurants(id) on delete cascade,
+   name text,
+   secret_hash text not null,
+   last_seen_at timestamptz,
+   created_at timestamptz not null default now()
+ );
+
+ create index if not exists edge_gateways_restaurant_id_idx on public.edge_gateways(restaurant_id);
+ create index if not exists edge_gateways_last_seen_at_idx on public.edge_gateways(last_seen_at desc);
+
+ create table if not exists public.edge_gateway_pair_codes (
+   code text primary key,
+   restaurant_id uuid not null references public.restaurants(id) on delete cascade,
+   created_by_user_id uuid,
+   expires_at timestamptz not null,
+   created_at timestamptz not null default now()
+ );
+
+ create index if not exists edge_gateway_pair_codes_restaurant_id_idx on public.edge_gateway_pair_codes(restaurant_id);
+ create index if not exists edge_gateway_pair_codes_expires_at_idx on public.edge_gateway_pair_codes(expires_at);
+
+ create table if not exists public.edge_events (
+   id uuid primary key,
+   restaurant_id uuid not null references public.restaurants(id) on delete cascade,
+   gateway_id uuid not null references public.edge_gateways(id) on delete cascade,
+   device_id uuid,
+   type text not null,
+   payload_json jsonb not null default '{}'::jsonb,
+   created_at timestamptz not null default now(),
+   received_at timestamptz not null default now()
+ );
+
+ create index if not exists edge_events_restaurant_id_idx on public.edge_events(restaurant_id);
+ create index if not exists edge_events_gateway_id_idx on public.edge_events(gateway_id);
+ create index if not exists edge_events_created_at_idx on public.edge_events(created_at desc);
