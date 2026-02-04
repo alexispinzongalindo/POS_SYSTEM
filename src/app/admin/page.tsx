@@ -12,7 +12,7 @@ export default function AdminPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"manager" | "cashier">("cashier");
+  const [inviteRole, setInviteRole] = useState<"manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security">("cashier");
   const [inviteStatus, setInviteStatus] = useState<string | null>(null);
   const [showAiPanel, setShowAiPanel] = useState(false);
 
@@ -36,7 +36,7 @@ export default function AdminPage() {
       }
 
       const role = (data.session.user.app_metadata as { role?: string } | undefined)?.role ?? null;
-      if (role === "cashier") {
+      if (role === "cashier" || role === "kitchen" || role === "maintenance" || role === "driver" || role === "security") {
         router.replace("/pos");
         return;
       }
@@ -517,9 +517,13 @@ export default function AdminPage() {
               <select
                 className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm font-medium outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                 value={inviteRole}
-                onChange={(e) => setInviteRole(e.target.value as "manager" | "cashier")}
+                onChange={(e) => setInviteRole(e.target.value as "manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security")}
               >
                 <option value="cashier">Cashier (POS only)</option>
+                <option value="kitchen">Kitchen (POS only)</option>
+                <option value="maintenance">Maintenance (POS only)</option>
+                <option value="driver">Driver (POS only)</option>
+                <option value="security">Security (POS only)</option>
                 <option value="manager">Manager (Admin + POS)</option>
               </select>
 

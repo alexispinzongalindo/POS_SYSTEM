@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-type Role = "owner" | "manager" | "cashier" | null;
+type Role = "owner" | "manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security" | null;
 
 type DeleteBody =
   | { kind?: "table"; id?: string }
@@ -33,7 +33,7 @@ async function getActiveRestaurantId(userId: string) {
 }
 
 async function requireRestaurantOwnerOrManager(userId: string, userRole: Role, restaurantId: string) {
-  if (userRole === "cashier") {
+  if (userRole === "cashier" || userRole === "kitchen" || userRole === "maintenance" || userRole === "driver" || userRole === "security") {
     return { ok: false, error: new Error("Cashiers cannot edit the floor plan") };
   }
 
@@ -70,7 +70,15 @@ export async function DELETE(req: Request) {
 
   const requesterRoleRaw = (user.app_metadata as { role?: string } | undefined)?.role ?? null;
   const requesterRole: Role =
-    requesterRoleRaw === "owner" || requesterRoleRaw === "manager" || requesterRoleRaw === "cashier" ? requesterRoleRaw : null;
+    requesterRoleRaw === "owner" ||
+    requesterRoleRaw === "manager" ||
+    requesterRoleRaw === "cashier" ||
+    requesterRoleRaw === "kitchen" ||
+    requesterRoleRaw === "maintenance" ||
+    requesterRoleRaw === "driver" ||
+    requesterRoleRaw === "security"
+      ? requesterRoleRaw
+      : null;
 
   const active = await getActiveRestaurantId(user.id);
   if (active.error) return NextResponse.json({ error: active.error.message }, { status: 400 });

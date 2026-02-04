@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-type StaffRole = "manager" | "cashier";
+type StaffRole = "manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security";
 
 export async function POST(req: Request) {
   try {
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     const requesterRole = (requester.app_metadata as { role?: string } | undefined)?.role ?? null;
 
     const body = (await req.json().catch(() => null)) as
-      | { email?: string; role?: "manager" | "cashier" }
+      | { email?: string; role?: StaffRole }
       | null;
 
     const email = body?.email?.trim();
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     }
 
     const role = body?.role ?? "cashier";
-    if (role !== "manager" && role !== "cashier") {
+    if (role !== "manager" && role !== "cashier" && role !== "kitchen" && role !== "maintenance" && role !== "driver" && role !== "security") {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "No active restaurant selected" }, { status: 400 });
       }
 
-      if (requesterRole === "cashier") {
+      if (requesterRole === "cashier" || requesterRole === "kitchen" || requesterRole === "maintenance" || requesterRole === "driver" || requesterRole === "security") {
         return NextResponse.json({ error: "Cashiers cannot invite staff" }, { status: 403 });
       }
 

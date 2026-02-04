@@ -157,7 +157,7 @@ export default function AdminProfilePage() {
       }
 
       const r = (data.session.user.app_metadata as { role?: string } | undefined)?.role ?? null;
-      if (r === "cashier") {
+      if (r === "cashier" || r === "kitchen" || r === "maintenance" || r === "driver" || r === "security") {
         router.replace("/pos");
         return;
       }

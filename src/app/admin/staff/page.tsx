@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
 
-type StaffRole = "manager" | "cashier";
+type StaffRole = "manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security";
 
 type StaffRow = {
   id: string;
@@ -91,7 +91,7 @@ export default function AdminStaffPage() {
       }
 
       const role = (data.session.user.app_metadata as { role?: string } | undefined)?.role ?? null;
-      if (role === "cashier") {
+      if (role === "cashier" || role === "kitchen" || role === "maintenance" || role === "driver" || role === "security") {
         router.replace("/pos");
         return;
       }
@@ -295,6 +295,10 @@ export default function AdminStaffPage() {
                       onChange={(e) => void setRole(r.id, e.target.value as StaffRole)}
                     >
                       <option value="cashier">Cashier (POS only)</option>
+                      <option value="kitchen">Kitchen (POS only)</option>
+                      <option value="maintenance">Maintenance (POS only)</option>
+                      <option value="driver">Driver (POS only)</option>
+                      <option value="security">Security (POS only)</option>
                       <option value="manager">Manager (Admin + POS)</option>
                     </select>
 

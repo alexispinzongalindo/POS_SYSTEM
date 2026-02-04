@@ -289,16 +289,23 @@ export default function PosPage() {
             const rawV1 = localStorage.getItem("islapos_timeclock_v1");
             const rawV2 = localStorage.getItem("islapos_timeclock_v2");
 
-            const parsedV1 = rawV1 ? (JSON.parse(rawV1) as any[]) : [];
-            const parsedV2 = rawV2 ? (JSON.parse(rawV2) as any[]) : [];
+            const parsedV1 = rawV1 ? (JSON.parse(rawV1) as unknown) : null;
+            const parsedV2 = rawV2 ? (JSON.parse(rawV2) as unknown) : null;
 
             const migratedFromV1: TimeClockEntry[] = Array.isArray(parsedV1)
-              ? parsedV1
-                  .filter((e) => e && typeof e === "object" && e.restaurantId === res.data.restaurantId)
+              ? (parsedV1 as unknown[])
+                  .filter((e): e is Record<string, unknown> => {
+                    if (!e || typeof e !== "object") return false;
+                    const obj = e as Record<string, unknown>;
+                    return obj.restaurantId === res.data.restaurantId;
+                  })
                   .map((e) => {
                     const staffId = typeof e.userId === "string" ? e.userId : "";
                     const at = typeof e.at === "string" ? e.at : new Date().toISOString();
-                    const action = (e.action as TimeClockAction) ?? "clock_in";
+                    const action: TimeClockAction =
+                      e.action === "clock_in" || e.action === "break_out" || e.action === "break_in" || e.action === "clock_out"
+                        ? e.action
+                        : "clock_in";
                     return {
                       id: typeof e.id === "string" ? e.id : `tc_${Date.now()}_${Math.random().toString(16).slice(2)}`,
                       restaurantId: res.data.restaurantId,
@@ -312,17 +319,27 @@ export default function PosPage() {
               : [];
 
             const parsedCleanV2: TimeClockEntry[] = Array.isArray(parsedV2)
-              ? parsedV2
-                  .filter((e) => e && typeof e === "object" && e.restaurantId === res.data.restaurantId)
-                  .map((e) => ({
-                    id: typeof e.id === "string" ? e.id : `tc_${Date.now()}_${Math.random().toString(16).slice(2)}`,
-                    restaurantId: res.data.restaurantId,
-                    staffId: typeof e.staffId === "string" ? e.staffId : "",
-                    staffType: "pin",
-                    staffLabel: typeof e.staffLabel === "string" ? e.staffLabel : undefined,
-                    action: (e.action as TimeClockAction) ?? "clock_in",
-                    at: typeof e.at === "string" ? e.at : new Date().toISOString(),
-                  }))
+              ? (parsedV2 as unknown[])
+                  .filter((e): e is Record<string, unknown> => {
+                    if (!e || typeof e !== "object") return false;
+                    const obj = e as Record<string, unknown>;
+                    return obj.restaurantId === res.data.restaurantId;
+                  })
+                  .map((e) => {
+                    const action: TimeClockAction =
+                      e.action === "clock_in" || e.action === "break_out" || e.action === "break_in" || e.action === "clock_out"
+                        ? e.action
+                        : "clock_in";
+                    return {
+                      id: typeof e.id === "string" ? e.id : `tc_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+                      restaurantId: res.data.restaurantId,
+                      staffId: typeof e.staffId === "string" ? e.staffId : "",
+                      staffType: "pin",
+                      staffLabel: typeof e.staffLabel === "string" ? e.staffLabel : undefined,
+                      action,
+                      at: typeof e.at === "string" ? e.at : new Date().toISOString(),
+                    };
+                  })
               : [];
 
             setTimeClockEntries([...migratedFromV1, ...parsedCleanV2].filter((e) => e.staffId));

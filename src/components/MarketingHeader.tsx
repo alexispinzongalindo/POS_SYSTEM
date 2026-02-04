@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { marketingCopy } from "@/lib/marketingCopy";
 import { useMarketingLang } from "@/lib/useMarketingLang";
 import MarketingLogo from "@/components/MarketingLogo";
@@ -17,20 +19,20 @@ export default function MarketingHeader({ ctaVariant = "trial", ctaHref }: Marke
 
   return (
     <header className="flex items-center justify-between gap-4">
-      <a href="/" className="inline-flex items-center gap-3 text-sm font-semibold tracking-tight">
+      <Link href="/" className="inline-flex items-center gap-3 text-sm font-semibold tracking-tight">
         <MarketingLogo className="shrink-0" size={56} variant="lockup" />
         <span className="sr-only">{t.brand}</span>
-      </a>
+      </Link>
       <nav className="flex items-center gap-4 text-sm">
-        <a className="text-[var(--mp-muted)] hover:text-[var(--mp-fg)]" href="/features">
+        <Link className="text-[var(--mp-muted)] hover:text-[var(--mp-fg)]" href="/features">
           {t.nav.features}
-        </a>
-        <a className="text-[var(--mp-muted)] hover:text-[var(--mp-fg)]" href="/pricing">
+        </Link>
+        <Link className="text-[var(--mp-muted)] hover:text-[var(--mp-fg)]" href="/pricing">
           {t.nav.pricing}
-        </a>
-        <a className="text-[var(--mp-muted)] hover:text-[var(--mp-fg)]" href="/contact">
+        </Link>
+        <Link className="text-[var(--mp-muted)] hover:text-[var(--mp-fg)]" href="/contact">
           {t.nav.contact}
-        </a>
+        </Link>
 
         <div className="inline-flex items-center gap-1 rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)] p-1">
           <button

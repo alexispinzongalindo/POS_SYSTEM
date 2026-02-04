@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-type Role = "owner" | "manager" | "cashier" | null;
+type Role = "owner" | "manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security" | null;
 
 type CreateCaseBody = {
   customerName?: string;
@@ -63,7 +63,7 @@ async function resolveRestaurantId(userId: string, role: Role, userAppMeta: Reco
 }
 
 async function requireRestaurantOwnerOrManager(userId: string, userRole: Role, restaurantId: string) {
-  if (userRole === "cashier") {
+  if (userRole === "cashier" || userRole === "kitchen" || userRole === "maintenance" || userRole === "driver" || userRole === "security") {
     return { ok: false, error: new Error("Cashiers cannot access support") };
   }
 
@@ -101,7 +101,15 @@ export async function GET(req: Request) {
 
     const requesterRoleRaw = (user.app_metadata as { role?: string } | undefined)?.role ?? null;
     const requesterRole: Role =
-      requesterRoleRaw === "owner" || requesterRoleRaw === "manager" || requesterRoleRaw === "cashier" ? requesterRoleRaw : null;
+      requesterRoleRaw === "owner" ||
+      requesterRoleRaw === "manager" ||
+      requesterRoleRaw === "cashier" ||
+      requesterRoleRaw === "kitchen" ||
+      requesterRoleRaw === "maintenance" ||
+      requesterRoleRaw === "driver" ||
+      requesterRoleRaw === "security"
+        ? requesterRoleRaw
+        : null;
 
     const userMeta = (user.app_metadata ?? {}) as Record<string, unknown>;
     const active = await resolveRestaurantId(user.id, requesterRole, userMeta);

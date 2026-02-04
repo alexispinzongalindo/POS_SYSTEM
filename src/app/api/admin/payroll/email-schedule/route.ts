@@ -2,13 +2,19 @@ import { NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-type Role = "owner" | "manager" | "cashier" | null;
+type Role = "owner" | "manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security" | null;
 
 type Body = {
   staffUserId?: string;
   start?: string;
   end?: string;
 } | null;
+
+type ShiftRow = {
+  starts_at: string;
+  ends_at: string;
+  break_minutes: number | null;
+};
 
 async function requireRequester(req: Request) {
   const authHeader = req.headers.get("authorization");
@@ -49,7 +55,7 @@ async function resolveRestaurantId(userId: string, role: Role, userAppMeta: Reco
 }
 
 async function requireRestaurantOwnerOrManager(userId: string, userRole: Role, restaurantId: string) {
-  if (userRole === "cashier") {
+  if (userRole === "cashier" || userRole === "kitchen" || userRole === "maintenance" || userRole === "driver" || userRole === "security") {
     return { ok: false, error: new Error("Cashiers cannot email schedules") };
   }
 
@@ -103,7 +109,15 @@ export async function POST(req: Request) {
 
     const requesterRoleRaw = (user.app_metadata as { role?: string } | undefined)?.role ?? null;
     const requesterRole: Role =
-      requesterRoleRaw === "owner" || requesterRoleRaw === "manager" || requesterRoleRaw === "cashier" ? requesterRoleRaw : null;
+      requesterRoleRaw === "owner" ||
+      requesterRoleRaw === "manager" ||
+      requesterRoleRaw === "cashier" ||
+      requesterRoleRaw === "kitchen" ||
+      requesterRoleRaw === "maintenance" ||
+      requesterRoleRaw === "driver" ||
+      requesterRoleRaw === "security"
+        ? requesterRoleRaw
+        : null;
 
     const userMeta = (user.app_metadata ?? {}) as Record<string, unknown>;
     const active = await resolveRestaurantId(user.id, requesterRole, userMeta);
@@ -142,7 +156,8 @@ export async function POST(req: Request) {
       .gte("starts_at", new Date(start).toISOString())
       .lt("starts_at", new Date(end).toISOString())
       .order("starts_at", { ascending: true })
-      .limit(200);
+      .limit(200)
+      .returns<ShiftRow[]>();
 
     if (shiftsRes.error) return NextResponse.json({ error: shiftsRes.error.message }, { status: 400 });
 
@@ -153,9 +168,9 @@ export async function POST(req: Request) {
     const rowsHtml = shifts.length
       ? shifts
           .map((s) => {
-            const startAt = fmtLocal(String((s as any).starts_at));
-            const endAt = fmtLocal(String((s as any).ends_at));
-            const br = Number((s as any).break_minutes ?? 0);
+            const startAt = fmtLocal(s.starts_at);
+            const endAt = fmtLocal(s.ends_at);
+            const br = Number(s.break_minutes ?? 0);
             return `<tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;">${startAt}</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;">${endAt}</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;">${br}m</td></tr>`;
           })
           .join("")
@@ -194,9 +209,15 @@ export async function POST(req: Request) {
       }),
     });
 
-    const resendJson = (await resendRes.json().catch(() => null)) as any;
+    const resendJson = (await resendRes.json().catch(() => null)) as unknown;
     if (!resendRes.ok) {
-      const msg = typeof resendJson?.message === "string" ? resendJson.message : "Failed to send email";
+      const msg =
+        typeof resendJson === "object" &&
+        resendJson !== null &&
+        "message" in resendJson &&
+        typeof (resendJson as { message?: unknown }).message === "string"
+          ? (resendJson as { message?: string }).message
+          : "Failed to send email";
       return NextResponse.json({ error: msg }, { status: 400 });
     }
 

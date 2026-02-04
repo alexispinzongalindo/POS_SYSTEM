@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-type StaffRole = "manager" | "cashier";
+type StaffRole = "manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security";
 
 type StaffPinRow = {
   id: string;
@@ -31,7 +31,7 @@ async function requireRequester(req: Request) {
 }
 
 async function getActiveRestaurantIdForUser(userId: string, role: string | null) {
-  if (role === "cashier" || role === "manager") {
+  if (role === "cashier" || role === "manager" || role === "kitchen" || role === "maintenance" || role === "driver" || role === "security") {
     const u = await supabaseAdmin.auth.admin.getUserById(userId);
     if (u.error) return { restaurantId: null as string | null, error: new Error(u.error.message) };
     const meta = (u.data.user?.app_metadata ?? {}) as Record<string, unknown>;
@@ -73,7 +73,10 @@ async function listUsersForRestaurant(restaurantId: string): Promise<{ data: Sta
       rows.push({
         id: u.id,
         email: u.email ?? null,
-        role: role === "manager" ? "manager" : "cashier",
+        role:
+          role === "manager" || role === "cashier" || role === "kitchen" || role === "maintenance" || role === "driver" || role === "security"
+            ? role
+            : "cashier",
         name,
         pin,
       });

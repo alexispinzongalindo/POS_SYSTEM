@@ -55,7 +55,7 @@ export default function AdminKDSPage() {
       }
 
       const role = (ctx.session.user.app_metadata as { role?: string } | undefined)?.role ?? null;
-      if (role === "cashier") {
+      if (role === "cashier" || role === "kitchen" || role === "maintenance" || role === "driver" || role === "security") {
         router.replace("/pos");
         return;
       }

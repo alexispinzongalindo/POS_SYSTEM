@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-type Role = "owner" | "manager" | "cashier" | null;
+type Role = "owner" | "manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security" | null;
 
 type Body = {
   restaurantId?: string;
@@ -36,7 +36,7 @@ async function getActiveRestaurantId(userId: string) {
 }
 
 async function resolveRestaurantId(userId: string, role: Role, userAppMeta: Record<string, unknown>) {
-  if (role === "cashier" || role === "manager") {
+  if (role === "cashier" || role === "manager" || role === "kitchen" || role === "maintenance" || role === "driver" || role === "security") {
     const fromMeta = typeof userAppMeta.restaurant_id === "string" ? userAppMeta.restaurant_id : null;
     if (fromMeta) return { restaurantId: fromMeta, error: null as Error | null };
 
@@ -57,7 +57,16 @@ export async function POST(req: Request) {
     if (error || !user) return NextResponse.json({ error: error?.message ?? "Unauthorized" }, { status: 401 });
 
     const roleRaw = (user.app_metadata as { role?: string } | undefined)?.role ?? null;
-    const role: Role = roleRaw === "owner" || roleRaw === "manager" || roleRaw === "cashier" ? roleRaw : null;
+    const role: Role =
+      roleRaw === "owner" ||
+      roleRaw === "manager" ||
+      roleRaw === "cashier" ||
+      roleRaw === "kitchen" ||
+      roleRaw === "maintenance" ||
+      roleRaw === "driver" ||
+      roleRaw === "security"
+        ? roleRaw
+        : null;
 
     const body = (await req.json().catch(() => null)) as Body;
     const action = body?.action;

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { getOrCreateAppConfig } from "@/lib/appConfig";
 import { supabase } from "@/lib/supabaseClient";
@@ -116,12 +117,9 @@ export default function LoginPage() {
         <div className="flex min-h-screen items-center justify-center bg-[var(--mp-bg)] px-6 py-12">
           <div className="w-full max-w-xl">
             <div className="mb-6 flex items-center justify-between">
-              <a
-                href="/"
-                className="text-xs font-medium text-[var(--mp-muted)] hover:text-[var(--mp-fg)]"
-              >
+              <Link href="/" className="text-xs font-medium text-[var(--mp-muted)] hover:text-[var(--mp-fg)]">
                 {t.login.back}
-              </a>
+              </Link>
               <MarketingLogo size={28} variant="lockup" />
             </div>
 
@@ -249,14 +247,14 @@ export default function LoginPage() {
 
             <p className="mt-6 text-center text-xs text-[var(--mp-muted)]">
               {t.login.helpPrefix}{" "}
-              <a className="underline hover:text-[var(--mp-fg)]" href="/onboarding">
+              <Link className="underline hover:text-[var(--mp-fg)]" href="/onboarding">
                 {t.login.training}
-              </a>
+              </Link>
               {" "}
               {t.login.or}{" "}
-              <a className="underline hover:text-[var(--mp-fg)]" href="/contact">
+              <Link className="underline hover:text-[var(--mp-fg)]" href="/contact">
                 {t.login.contact}
-              </a>
+              </Link>
               .
             </p>
           </div>
