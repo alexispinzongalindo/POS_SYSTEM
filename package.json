@@ -16,7 +16,9 @@
     "record:auto:tour:en": "node scripts/record-auto.mjs tour en",
     "record:auto:tour:es": "node scripts/record-auto.mjs tour es",
     "record:auto:training:en": "node scripts/record-auto.mjs training en",
-    "record:auto:training:es": "node scripts/record-auto.mjs training es"
+    "record:auto:training:es": "node scripts/record-auto.mjs training es",
+    "capture:tour:slides:en": "RECORD_LANG=en node scripts/capture-tour-slides.mjs en",
+    "capture:tour:slides:es": "RECORD_LANG=es node scripts/capture-tour-slides.mjs es"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",
