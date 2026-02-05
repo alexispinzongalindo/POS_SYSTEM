@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint ./src",
+    "typecheck": "tsc --noEmit",
     "seed:menu": "node scripts/seed-menu.mjs",
     "gen:images": "node scripts/generate-menu-images.mjs",
     "record:tour:en": "RECORD_LANG=en node scripts/record-tour.mjs",

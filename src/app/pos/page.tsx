@@ -118,6 +118,10 @@ export default function PosPage() {
   const [receiptLoading, setReceiptLoading] = useState(false);
   const [receipt, setReceipt] = useState<OrderReceipt | null>(null);
 
+  const [showPrintHubModal, setShowPrintHubModal] = useState(false);
+  const [printHubUrl, setPrintHubUrl] = useState("");
+  const [printHubStatus, setPrintHubStatus] = useState<string | null>(null);
+
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundReason, setRefundReason] = useState<string>("");
 
@@ -368,6 +372,141 @@ export default function PosPage() {
       cancelled = true;
     };
   }, [router]);
+
+  function normalizeGatewayUrl(raw: string) {
+    const s = raw.trim().replace(/\/$/, "");
+    if (!s) return "";
+    if (/^https?:\/\//i.test(s)) return s;
+    return `http://${s}`;
+  }
+
+  function printHubStorageKey(restaurantId: string) {
+    return `islapos.pos.printHubUrl.${restaurantId}`;
+  }
+
+  useEffect(() => {
+    const restaurantId = data?.restaurantId;
+    if (!restaurantId) return;
+    try {
+      const saved = localStorage.getItem(printHubStorageKey(restaurantId));
+      if (saved) setPrintHubUrl(saved);
+    } catch {
+      // ignore
+    }
+  }, [data?.restaurantId]);
+
+  async function enqueueGatewayPrint({
+    gatewayUrl,
+    template,
+    kind = "receipt",
+  }: {
+    gatewayUrl: string;
+    template: { title?: string; subtitle?: string; lines: string[] };
+    kind?: "receipt" | "kitchen";
+  }) {
+    const base = normalizeGatewayUrl(gatewayUrl);
+    if (!base) return { ok: false as const, error: new Error("Missing Print Hub URL") };
+
+    const res = await fetch(`${base}/print/enqueue`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        kind,
+        protocol: "escpos",
+        template: {
+          title: typeof template?.title === "string" ? template.title : "ISLAPOS",
+          subtitle: typeof template?.subtitle === "string" ? template.subtitle : "RECEIPT",
+          lines: Array.isArray(template?.lines) ? template.lines : [],
+        },
+      }),
+    });
+
+    const json = (await res.json().catch(() => null)) as unknown;
+    if (!res.ok) {
+      return {
+        ok: false as const,
+        error: new Error(typeof (json as { error?: unknown } | null)?.error === "string" ? (json as { error: string }).error : `Print enqueue failed (${res.status})`),
+      };
+    }
+
+    return { ok: true as const, data: json };
+  }
+
+  function buildBasicReceiptLinesFromOfflineOrder(offline: ReturnType<typeof getOfflineOrder>) {
+    if (!offline) return [] as string[];
+
+    const lines: string[] = [];
+    lines.push(`Ticket: ${offline.local_id}`);
+    lines.push(`Time: ${offline.payment?.paid_at ?? new Date().toISOString()}`);
+    lines.push("------------------------------");
+    for (const it of offline.payload.items ?? []) {
+      lines.push(`${it.qty} x ${it.name}`);
+    }
+    lines.push("------------------------------");
+    lines.push(`Total: $${Number(offline.payload.total ?? 0).toFixed(2)}`);
+    return lines;
+  }
+
+  async function queueReceiptPrintForOnlineOrder(orderId: string) {
+    const base = normalizeGatewayUrl(printHubUrl);
+    if (!base) return;
+
+    try {
+      const receiptRes = await getOrderReceipt(orderId);
+      if (receiptRes.error || !receiptRes.data) throw receiptRes.error ?? new Error("Receipt not found");
+
+      const r = receiptRes.data;
+      const lines: string[] = [];
+      const when = r.order?.paid_at ?? r.order?.created_at;
+      lines.push(r.restaurant_name ?? "");
+      if (r.order?.ticket_no != null) lines.push(`#${r.order.ticket_no}`);
+      if (when) lines.push(new Date(when).toLocaleString());
+      lines.push("------------------------------");
+      for (const it of r.items ?? []) {
+        lines.push(`${it.qty} x ${it.name}`);
+      }
+      lines.push("------------------------------");
+      lines.push(`Subtotal: $${Number(r.order.subtotal ?? 0).toFixed(2)}`);
+      lines.push(`Tax: $${Number(r.order.tax ?? 0).toFixed(2)}`);
+      lines.push(`Total: $${Number(r.order.total ?? 0).toFixed(2)}`);
+
+      await enqueueGatewayPrint({
+        gatewayUrl: base,
+        kind: "receipt",
+        template: {
+          title: "ISLAPOS",
+          subtitle: "RECEIPT",
+          lines: lines.filter((x) => String(x).trim().length > 0),
+        },
+      });
+    } catch {
+      // ignore (payment flow should not be blocked by print failures)
+    }
+  }
+
+  async function queueReceiptPrintForOfflineOrder(localId: string) {
+    if (!data?.restaurantId) return;
+    const base = normalizeGatewayUrl(printHubUrl);
+    if (!base) return;
+
+    const offline = getOfflineOrder(data.restaurantId, localId);
+    if (!offline) return;
+
+    try {
+      const lines = buildBasicReceiptLinesFromOfflineOrder(offline);
+      await enqueueGatewayPrint({
+        gatewayUrl: base,
+        kind: "receipt",
+        template: {
+          title: "ISLAPOS",
+          subtitle: "OFFLINE RECEIPT",
+          lines,
+        },
+      });
+    } catch {
+      // ignore
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -1902,6 +2041,8 @@ export default function PosPage() {
         setIsOffline(true);
         setShowPaymentModal(false);
 
+        void queueReceiptPrintForOfflineOrder(paymentOrderId);
+
         if (paymentTarget !== "split") {
           clearCart();
         } else {
@@ -1957,6 +2098,8 @@ export default function PosPage() {
           ? `Split check marked paid (${paymentMethod.replace("_", " ")})`
           : `Ticket marked paid (${paymentMethod.replace("_", " ")})`,
       );
+
+      void queueReceiptPrintForOnlineOrder(paymentOrderId);
     } catch (e) {
       if (isLikelyOfflineError(e)) {
         const offline = getOfflineOrder(data.restaurantId, paymentOrderId);
@@ -1986,6 +2129,9 @@ export default function PosPage() {
         setIsOffline(true);
         setShowPaymentModal(false);
         clearCart();
+
+        void queueReceiptPrintForOfflineOrder(paymentOrderId);
+
         await refreshOrders(data.restaurantId);
         setSuccess(`Ticket marked paid OFFLINE (${paymentMethod.replace("_", " ")})`);
         return;
@@ -2280,6 +2426,18 @@ export default function PosPage() {
                 className="h-11 w-64 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
               />
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPrintHubStatus(null);
+                setShowPrintHubModal(true);
+              }}
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
+            >
+              Print Hub
+            </button>
+
             {canAccessSupport ? (
               <button
                 type="button"
@@ -2291,6 +2449,82 @@ export default function PosPage() {
             ) : null}
           </div>
         </div>
+
+      {showPrintHubModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-200 bg-[#fffdf7] p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-base font-semibold">Print Hub</div>
+                <div className="mt-1 text-sm text-[var(--mp-muted)]">Set the Edge Gateway URL for this POS device.</div>
+              </div>
+              <button
+                onClick={() => setShowPrintHubModal(false)}
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-white"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-2">
+              <label className="text-sm font-medium">Gateway URL</label>
+              <input
+                value={printHubUrl}
+                onChange={(e) => setPrintHubUrl(e.target.value)}
+                placeholder="http://192.168.0.50:9123"
+                className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+              />
+              <div className="text-xs text-[var(--mp-muted)]">Example: http://192.168.0.50:9123</div>
+            </div>
+
+            {printHubStatus ? (
+              <div className="mt-3 rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3 text-xs text-[var(--mp-muted)]">
+                {printHubStatus}
+              </div>
+            ) : null}
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    const url = normalizeGatewayUrl(printHubUrl);
+                    setPrintHubUrl(url);
+                    localStorage.setItem(printHubStorageKey(data.restaurantId), url);
+                    setPrintHubStatus("Saved.");
+                  } catch {
+                    setPrintHubStatus("Save failed.");
+                  }
+                }}
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const base = normalizeGatewayUrl(printHubUrl);
+                    if (!base) {
+                      setPrintHubStatus("Missing Gateway URL");
+                      return;
+                    }
+                    setPrintHubStatus("Checking health...");
+                    const r = await fetch(`${base}/health`);
+                    const json = await r.json().catch(() => null);
+                    setPrintHubStatus(JSON.stringify(json, null, 2));
+                  } catch (e) {
+                    setPrintHubStatus(e instanceof Error ? e.message : "Health check failed");
+                  }
+                }}
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-white"
+              >
+                Test
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {showSplitModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

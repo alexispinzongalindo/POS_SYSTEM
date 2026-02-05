@@ -25,6 +25,7 @@ export default function AdminPage() {
   const [aiInput, setAiInput] = useState("");
   const [aiSending, setAiSending] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [aiGatewayUrl, setAiGatewayUrl] = useState("");
 
   function makeAiId() {
     const maybe = globalThis.crypto?.randomUUID?.();
@@ -132,6 +133,14 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!showAiPanel) return;
+
+    try {
+      const saved = typeof window !== "undefined" ? window.localStorage.getItem("islapos.ai.gatewayUrl") : null;
+      if (saved && !aiGatewayUrl) setAiGatewayUrl(saved);
+    } catch {
+      // ignore
+    }
+
     if (aiMessages.length > 0) return;
     setAiMessages([
       {
@@ -143,6 +152,81 @@ export default function AdminPage() {
     ]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showAiPanel]);
+
+  function normalizeGatewayUrl(raw: string) {
+    const s = raw.trim().replace(/\/$/, "");
+    if (!s) return "";
+    if (/^https?:\/\//i.test(s)) return s;
+    return `http://${s}`;
+  }
+
+  async function runGatewayAction(action: "health" | "printers" | "queue_test" | "queue") {
+    const base = normalizeGatewayUrl(aiGatewayUrl);
+    if (!base) {
+      setAiError("Missing Gateway URL. Example: http://192.168.0.50:9123");
+      return;
+    }
+
+    setAiError(null);
+
+    try {
+      let url = "";
+      let init: RequestInit | undefined;
+
+      if (action === "health") {
+        url = `${base}/health`;
+      } else if (action === "printers") {
+        url = `${base}/printers`;
+      } else if (action === "queue") {
+        url = `${base}/print/jobs?limit=50`;
+      } else {
+        url = `${base}/print/enqueue`;
+        init = {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            kind: "receipt",
+            protocol: "escpos",
+            template: {
+              title: "ISLAPOS",
+              subtitle: "AI QUEUED TEST",
+              lines: [
+                "Queued from Admin AI panel",
+                `Time: ${new Date().toISOString()}`,
+              ],
+            },
+          }),
+        };
+      }
+
+      setAiMessages((prev) => [
+        ...prev,
+        {
+          id: makeAiId(),
+          role: "assistant",
+          content:
+            action === "health"
+              ? `Running gateway health check at ${base}...`
+              : action === "printers"
+                ? `Loading printers from ${base}...`
+                : action === "queue"
+                  ? `Loading print queue from ${base}...`
+                  : `Queueing a test print job on ${base}...`,
+        },
+      ]);
+
+      const res = await fetch(url, init);
+      const json = (await res.json().catch(() => null)) as unknown;
+      const content = res.ok
+        ? `Result:\n${JSON.stringify(json, null, 2)}`
+        : `Error (${res.status}):\n${JSON.stringify(json, null, 2)}`;
+
+      setAiMessages((prev) => [...prev, { id: makeAiId(), role: "assistant", content }]);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Gateway request failed";
+      setAiError(msg);
+    }
+  }
 
   async function sendAiMessage() {
     const text = aiInput.trim();
@@ -171,7 +255,7 @@ export default function AdminPage() {
           "content-type": "application/json",
           authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ message: text, history }),
+        body: JSON.stringify({ message: text, history, context: { gatewayUrl: normalizeGatewayUrl(aiGatewayUrl) } }),
       });
 
       const json = (await res.json().catch(() => null)) as
@@ -387,6 +471,33 @@ export default function AdminPage() {
                 className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
               >
                 View reports
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12h18" />
+                  <path d="M3 6h18" />
+                  <path d="M3 18h18" />
+                  <path d="M7 6v12" />
+                  <path d="M17 6v12" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Food Cost</h2>
+                <p className="mt-1 text-sm text-[var(--mp-muted)]">Actual vs theoretical usage and cost.</p>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <button
+                onClick={() => router.push("/admin/food-cost")}
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+              >
+                Open food cost
               </button>
             </div>
           </div>
@@ -784,6 +895,70 @@ export default function AdminPage() {
 
             <div className="p-5">
               <div className="flex h-[calc(100vh-110px)] flex-col">
+                <div className="mb-3 rounded-2xl border border-[var(--mp-border)] bg-white p-3">
+                  <div className="text-xs font-semibold text-[var(--mp-muted)]">EDGE GATEWAY URL (optional)</div>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      value={aiGatewayUrl}
+                      onChange={(e) => setAiGatewayUrl(e.target.value)}
+                      placeholder="http://192.168.0.50:9123"
+                      className="h-10 flex-1 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)]"
+                      disabled={aiSending}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        try {
+                          const v = normalizeGatewayUrl(aiGatewayUrl);
+                          window.localStorage.setItem("islapos.ai.gatewayUrl", v);
+                          setAiGatewayUrl(v);
+                        } catch {
+                          // ignore
+                        }
+                      }}
+                      className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-zinc-50"
+                      disabled={aiSending}
+                    >
+                      Save
+                    </button>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void runGatewayAction("health")}
+                      className="inline-flex h-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-zinc-50"
+                      disabled={aiSending}
+                    >
+                      Health
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void runGatewayAction("printers")}
+                      className="inline-flex h-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-zinc-50"
+                      disabled={aiSending}
+                    >
+                      Printers
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void runGatewayAction("queue_test")}
+                      className="inline-flex h-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-zinc-50"
+                      disabled={aiSending}
+                    >
+                      Queue test print
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void runGatewayAction("queue")}
+                      className="inline-flex h-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-zinc-50"
+                      disabled={aiSending}
+                    >
+                      View queue
+                    </button>
+                  </div>
+                </div>
+
                 <div className="flex-1 overflow-auto rounded-2xl border border-[var(--mp-border)] bg-white p-4">
                   <div className="flex flex-col gap-3">
                     {aiMessages.map((m) => (

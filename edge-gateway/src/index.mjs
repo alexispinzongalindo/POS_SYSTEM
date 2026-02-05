@@ -7,7 +7,19 @@ import QRCode from "qrcode";
 
 import * as crypto from "crypto";
 
-import { appendOutboxEvent, dropOutboxEvents, readConfig, readOutboxEvents, writeConfig } from "./store.mjs";
+import {
+  appendOutboxEvent,
+  dropOutboxEvents,
+  readConfig,
+  readOutboxEvents,
+  writeConfig,
+  readPrintQueue,
+  writePrintQueue,
+  enqueuePrintJob,
+  updatePrintJob,
+  cancelPrintJob,
+  prunePrintQueue,
+} from "./store.mjs";
 
 const PORT = Number(process.env.EDGE_GATEWAY_PORT ?? "9123");
 
@@ -69,6 +81,140 @@ function normalizePrinters(cfg) {
       createdAt: typeof p.createdAt === "string" ? p.createdAt : null,
     }))
     .filter((p) => p.id && p.ip && Number.isFinite(p.port));
+}
+
+function normalizePrintRoutes(cfg) {
+  const r = cfg?.printRoutes;
+  const receiptPrinterId = typeof r?.receiptPrinterId === "string" ? r.receiptPrinterId.trim() : "";
+  const kitchenPrinterId = typeof r?.kitchenPrinterId === "string" ? r.kitchenPrinterId.trim() : "";
+  return {
+    receiptPrinterId: receiptPrinterId || null,
+    kitchenPrinterId: kitchenPrinterId || null,
+  };
+}
+
+function resolvePrinterIdForJob({ cfg, job }) {
+  const explicit = typeof job?.printerId === "string" ? job.printerId.trim() : "";
+  if (explicit) return explicit;
+
+  const routes = normalizePrintRoutes(cfg);
+  const kind = typeof job?.kind === "string" ? job.kind.trim() : "";
+  if (kind === "kitchen") return routes.kitchenPrinterId;
+  return routes.receiptPrinterId;
+}
+
+function buildPrintData({ protocol, template, rawBase64 }) {
+  const p = (protocol || "").toLowerCase();
+  if (p === "raw") {
+    if (!rawBase64) throw new Error("Missing rawBase64");
+    return Buffer.from(String(rawBase64), "base64");
+  }
+
+  const lines = Array.isArray(template?.lines) ? template.lines.map((l) => String(l)) : [];
+  if (p === "pcl") return buildPclTestTicket({ lines });
+  if (p === "text") return buildPlainTextTestTicket({ lines });
+
+  const title = typeof template?.title === "string" ? template.title : "ISLAPOS";
+  const subtitle = typeof template?.subtitle === "string" ? template.subtitle : "";
+  return buildEscposTestTicket({ title, subtitle, lines });
+}
+
+function computeBackoffMs(attempt) {
+  const a = Math.max(0, Number(attempt) || 0);
+  const base = 1500;
+  const ms = Math.min(120_000, base * Math.pow(2, a));
+  return Math.max(1500, ms);
+}
+
+let printWorkerRunning = false;
+async function processPrintQueueTick() {
+  if (printWorkerRunning) return { ok: true, skipped: true };
+  printWorkerRunning = true;
+  try {
+    const cfg = readConfig() ?? {};
+    const printers = normalizePrinters(cfg);
+    const now = Date.now();
+
+    const queue = readPrintQueue();
+    const idx = queue.findIndex((j) => {
+      if (!j || typeof j !== "object") return false;
+      const status = j.status;
+      if (status !== "queued") return false;
+      const next = Date.parse(j.nextAttemptAt ?? j.createdAt ?? "");
+      if (!Number.isFinite(next)) return true;
+      return next <= now;
+    });
+
+    if (idx < 0) {
+      prunePrintQueue({ keepLast: 350, maxAgeDays: 10 });
+      return { ok: true, processed: 0 };
+    }
+
+    const job = queue[idx];
+    const id = String(job.id || "");
+    if (!id) {
+      queue.splice(idx, 1);
+      writePrintQueue(queue);
+      return { ok: true, processed: 0 };
+    }
+
+    const updatedAt = new Date().toISOString();
+    queue[idx] = { ...job, status: "printing", updatedAt };
+    writePrintQueue(queue);
+
+    const printerId = resolvePrinterIdForJob({ cfg, job });
+    const printer = printerId ? printers.find((p) => p.id === printerId) ?? null : null;
+    if (!printer) {
+      const attempts = Math.max(0, Number(job.attempts) || 0) + 1;
+      const maxAttempts = Math.max(1, Number(job.maxAttempts) || 10);
+      const terminal = attempts >= maxAttempts;
+      const nextAttemptAt = terminal ? null : new Date(Date.now() + computeBackoffMs(attempts - 1)).toISOString();
+
+      updatePrintJob(id, {
+        status: terminal ? "failed" : "queued",
+        attempts,
+        maxAttempts,
+        lastError: "Printer not found (check routes or printerId)",
+        nextAttemptAt,
+        updatedAt: new Date().toISOString(),
+      });
+      return { ok: true, processed: 1, failed: 1 };
+    }
+
+    const protocol = typeof job.protocol === "string" ? job.protocol : "escpos";
+    const data = buildPrintData({ protocol, template: job.template, rawBase64: job.rawBase64 });
+
+    try {
+      await sendRawTcp({ ip: printer.ip, port: printer.port, data });
+      updatePrintJob(id, {
+        status: "succeeded",
+        updatedAt: new Date().toISOString(),
+        lastError: null,
+        nextAttemptAt: null,
+      });
+      prunePrintQueue({ keepLast: 350, maxAgeDays: 10 });
+      return { ok: true, processed: 1, succeeded: 1 };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Print failed";
+      const attempts = Math.max(0, Number(job.attempts) || 0) + 1;
+      const maxAttempts = Math.max(1, Number(job.maxAttempts) || 10);
+      const terminal = attempts >= maxAttempts;
+      const nextAttemptAt = terminal ? null : new Date(Date.now() + computeBackoffMs(attempts - 1)).toISOString();
+
+      updatePrintJob(id, {
+        status: terminal ? "failed" : "queued",
+        attempts,
+        maxAttempts,
+        lastError: msg,
+        nextAttemptAt,
+        updatedAt: new Date().toISOString(),
+      });
+      prunePrintQueue({ keepLast: 350, maxAgeDays: 10 });
+      return { ok: true, processed: 1, failed: 1 };
+    }
+  } finally {
+    printWorkerRunning = false;
+  }
 }
 
 function buildEscposTestTicket({ title, subtitle, lines }) {
@@ -244,6 +390,96 @@ app.get("/qr", async (req, res) => {
   }
 });
 
+app.get("/print/routes", (_req, res) => {
+  const cfg = readConfig() ?? {};
+  res.json({ ok: true, routes: normalizePrintRoutes(cfg) });
+});
+
+app.post("/print/routes", (req, res) => {
+  const receiptPrinterId = typeof req.body?.receiptPrinterId === "string" ? req.body.receiptPrinterId.trim() : "";
+  const kitchenPrinterId = typeof req.body?.kitchenPrinterId === "string" ? req.body.kitchenPrinterId.trim() : "";
+
+  const cfg = readConfig() ?? {};
+  writeConfig({
+    ...cfg,
+    printRoutes: {
+      receiptPrinterId: receiptPrinterId || null,
+      kitchenPrinterId: kitchenPrinterId || null,
+    },
+  });
+  res.json({ ok: true });
+});
+
+app.get("/print/jobs", (req, res) => {
+  const status = typeof req.query?.status === "string" ? req.query.status.trim() : "";
+  const limit = Math.max(1, Math.min(1000, Number(req.query?.limit ?? 200)));
+  const queue = readPrintQueue();
+  const filtered = status ? queue.filter((j) => j && typeof j === "object" && j.status === status) : queue;
+  res.json({ ok: true, jobs: filtered.slice(-limit) });
+});
+
+app.post("/print/enqueue", async (req, res) => {
+  try {
+    const kind = typeof req.body?.kind === "string" ? req.body.kind.trim() : "receipt";
+    const protocol = typeof req.body?.protocol === "string" ? req.body.protocol.trim() : "escpos";
+    const printerId = typeof req.body?.printerId === "string" ? req.body.printerId.trim() : "";
+    const rawBase64 = typeof req.body?.rawBase64 === "string" ? req.body.rawBase64.trim() : null;
+    const template = req.body?.template && typeof req.body.template === "object" ? req.body.template : null;
+    const maxAttempts = Math.max(1, Math.min(25, Number(req.body?.maxAttempts ?? 10)));
+
+    if (!rawBase64 && !template) return res.status(400).json({ error: "Missing template or rawBase64" });
+
+    const nowIso = new Date().toISOString();
+    const job = {
+      id: crypto.randomUUID(),
+      kind,
+      protocol,
+      printerId: printerId || null,
+      template,
+      rawBase64,
+      status: "queued",
+      attempts: 0,
+      maxAttempts,
+      nextAttemptAt: nowIso,
+      lastError: null,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    };
+
+    enqueuePrintJob(job);
+    const processed = await processPrintQueueTick();
+    res.json({ ok: true, job, processed });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Failed";
+    res.status(400).json({ error: msg });
+  }
+});
+
+app.post("/print/process", async (_req, res) => {
+  const result = await processPrintQueueTick().catch((e) => ({ ok: false, error: e instanceof Error ? e.message : "Failed" }));
+  res.json(result);
+});
+
+app.post("/print/jobs/:id/cancel", (req, res) => {
+  const id = typeof req.params?.id === "string" ? req.params.id.trim() : "";
+  if (!id) return res.status(400).json({ error: "Missing id" });
+  const job = cancelPrintJob(id);
+  if (!job) return res.status(404).json({ error: "Not found" });
+  res.json({ ok: true, job });
+});
+
+app.post("/print/jobs/:id/retry", (req, res) => {
+  const id = typeof req.params?.id === "string" ? req.params.id.trim() : "";
+  if (!id) return res.status(400).json({ error: "Missing id" });
+  const job = updatePrintJob(id, {
+    status: "queued",
+    nextAttemptAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  if (!job) return res.status(404).json({ error: "Not found" });
+  res.json({ ok: true, job });
+});
+
 app.get("/", async (req, res) => {
   const cfg = readConfig();
   const gatewayUrl = getGatewayUrl(req);
@@ -273,6 +509,7 @@ app.get("/", async (req, res) => {
       .row { display: flex; gap: 16px; flex-wrap: wrap; }
       .muted { color: #475569; }
       input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 16px; }
+      select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 16px; background: white; }
       button { padding: 10px 12px; border: 0; border-radius: 10px; font-size: 16px; background: #16a34a; color: white; cursor: pointer; }
       button.secondary { background: #0ea5e9; }
       button.danger { background: #dc2626; }
@@ -359,6 +596,18 @@ app.get("/", async (req, res) => {
         <button class="secondary" onclick="discoverPrinters()">Find printers</button>
       </div>
 
+      <div style="margin-top:14px">
+        <div class="muted">Default printer (Receipt + Kitchen)</div>
+        <div class="row" style="margin-top:8px; align-items: center">
+          <div style="flex:1; min-width: 220px;">
+            <select id="defaultPrinter"></select>
+          </div>
+          <button class="secondary" onclick="saveDefaultPrinter()">Save default</button>
+          <button class="secondary" onclick="queueDefaultTest()">Queue test print</button>
+          <button class="secondary" onclick="viewQueue()">View queue</button>
+        </div>
+      </div>
+
       <div style="margin-top:12px" class="muted">Configured printers</div>
       <div id="plist" class="muted" style="margin-top:6px">Loading...</div>
 
@@ -370,6 +619,9 @@ app.get("/", async (req, res) => {
     </div>
 
     <script>
+      let _printers = [];
+      let _routes = null;
+
       async function pair() {
         const code = document.getElementById('code').value.trim();
         const name = document.getElementById('name').value.trim();
@@ -429,7 +681,8 @@ app.get("/", async (req, res) => {
 
           const label = document.createElement('div');
           label.style.flex = '1';
-          label.textContent = (p.name || '(unnamed)') + ' — ' + p.ip + ':' + p.port;
+          const isDefault = _routes && _routes.receiptPrinterId && _routes.receiptPrinterId === p.id;
+          label.textContent = (p.name || '(unnamed)') + (isDefault ? ' (default)' : '') + ' — ' + p.ip + ':' + p.port;
 
           const testBtn = document.createElement('button');
           testBtn.className = 'secondary';
@@ -497,10 +750,90 @@ app.get("/", async (req, res) => {
         }
       }
 
+      function renderRoutes() {
+        const sel = document.getElementById('defaultPrinter');
+        if (!sel) return;
+
+        sel.innerHTML = '';
+        const optNone = document.createElement('option');
+        optNone.value = '';
+        optNone.textContent = '(not set)';
+        sel.appendChild(optNone);
+
+        for (const p of _printers) {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = (p.name || '(unnamed)') + ' — ' + p.ip + ':' + p.port;
+          sel.appendChild(opt);
+        }
+
+        const current = _routes && _routes.receiptPrinterId ? _routes.receiptPrinterId : '';
+        sel.value = current;
+      }
+
+      async function loadRoutes() {
+        const res = await fetch('/print/routes');
+        const json = await res.json().catch(() => ({}));
+        _routes = json?.routes ?? null;
+      }
+
+      async function saveDefaultPrinter() {
+        const sel = document.getElementById('defaultPrinter');
+        const printerId = sel ? String(sel.value || '').trim() : '';
+        const out = document.getElementById('out');
+        out.textContent = 'Saving default printer...';
+
+        const res = await fetch('/print/routes', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ receiptPrinterId: printerId || null, kitchenPrinterId: printerId || null }),
+        });
+        const json = await res.json().catch(() => ({}));
+        out.textContent = JSON.stringify(json, null, 2);
+        await refreshPrinters();
+      }
+
+      async function queueDefaultTest() {
+        const out = document.getElementById('out');
+        out.textContent = 'Queueing test print...';
+
+        const res = await fetch('/print/enqueue', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            kind: 'receipt',
+            protocol: 'escpos',
+            template: {
+              title: 'ISLAPOS',
+              subtitle: 'QUEUED TEST',
+              lines: [
+                'This is a queued print job',
+                'It will retry automatically if the printer is offline',
+                'Time: ' + new Date().toISOString(),
+              ],
+            },
+          }),
+        });
+
+        const json = await res.json().catch(() => ({}));
+        out.textContent = JSON.stringify(json, null, 2);
+      }
+
+      async function viewQueue() {
+        const out = document.getElementById('out');
+        out.textContent = 'Loading print queue...';
+        const res = await fetch('/print/jobs?limit=50');
+        const json = await res.json().catch(() => ({}));
+        out.textContent = JSON.stringify(json, null, 2);
+      }
+
       async function refreshPrinters() {
         const res = await fetch('/printers');
         const json = await res.json().catch(() => ({}));
-        renderPrinters(json?.printers ?? []);
+        _printers = Array.isArray(json?.printers) ? json.printers : [];
+        await loadRoutes().catch(() => {});
+        renderRoutes();
+        renderPrinters(_printers);
       }
 
       async function addPrinter() {
@@ -566,7 +899,7 @@ app.get("/", async (req, res) => {
         renderDiscovered(json?.printers ?? []);
       }
 
-      refreshPrinters().catch(() => {
+      Promise.all([refreshPrinters()]).catch(() => {
         const root = document.getElementById('plist');
         root.textContent = 'Failed to load printers.';
       });
@@ -878,4 +1211,9 @@ app.listen(PORT, () => {
   const ip = getLanAddress();
   const url = ip ? `http://${ip}:${PORT}` : `http://localhost:${PORT}`;
   console.log(`[edge-gateway] listening on ${url}`);
+
+  const tickMs = Math.max(500, Math.min(5000, Number(process.env.PRINT_WORKER_TICK_MS ?? 1500)));
+  setInterval(() => {
+    processPrintQueueTick().catch(() => {});
+  }, tickMs);
 });

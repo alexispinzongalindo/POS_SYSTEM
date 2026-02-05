@@ -162,3 +162,60 @@ create index if not exists order_item_modifiers_order_item_id_idx on public.orde
  create index if not exists edge_events_restaurant_id_idx on public.edge_events(restaurant_id);
  create index if not exists edge_events_gateway_id_idx on public.edge_events(gateway_id);
  create index if not exists edge_events_created_at_idx on public.edge_events(created_at desc);
+
+ create table if not exists public.ingredients (
+   id uuid primary key default gen_random_uuid(),
+   restaurant_id uuid not null references public.restaurants(id) on delete cascade,
+   name text not null,
+   unit text not null default 'each',
+   is_active boolean not null default true,
+   created_at timestamptz not null default now(),
+   unique (restaurant_id, name)
+ );
+
+ create index if not exists ingredients_restaurant_id_idx on public.ingredients(restaurant_id);
+ create index if not exists ingredients_created_at_idx on public.ingredients(created_at desc);
+
+ create table if not exists public.menu_item_recipe_lines (
+   id uuid primary key default gen_random_uuid(),
+   restaurant_id uuid not null references public.restaurants(id) on delete cascade,
+   menu_item_id uuid not null references public.menu_items(id) on delete cascade,
+   ingredient_id uuid not null references public.ingredients(id) on delete cascade,
+   qty numeric not null default 0,
+   created_at timestamptz not null default now(),
+   unique (menu_item_id, ingredient_id)
+ );
+
+ create index if not exists menu_item_recipe_lines_restaurant_id_idx on public.menu_item_recipe_lines(restaurant_id);
+ create index if not exists menu_item_recipe_lines_menu_item_id_idx on public.menu_item_recipe_lines(menu_item_id);
+ create index if not exists menu_item_recipe_lines_ingredient_id_idx on public.menu_item_recipe_lines(ingredient_id);
+
+ create table if not exists public.ingredient_purchases (
+   id uuid primary key default gen_random_uuid(),
+   restaurant_id uuid not null references public.restaurants(id) on delete cascade,
+   ingredient_id uuid not null references public.ingredients(id) on delete cascade,
+   purchased_at timestamptz not null,
+   vendor text,
+   qty numeric not null default 0,
+   total_cost numeric not null default 0,
+   created_by_user_id uuid,
+   created_at timestamptz not null default now()
+ );
+
+ create index if not exists ingredient_purchases_restaurant_id_idx on public.ingredient_purchases(restaurant_id);
+ create index if not exists ingredient_purchases_ingredient_id_idx on public.ingredient_purchases(ingredient_id);
+ create index if not exists ingredient_purchases_purchased_at_idx on public.ingredient_purchases(purchased_at desc);
+
+ create table if not exists public.ingredient_counts (
+   id uuid primary key default gen_random_uuid(),
+   restaurant_id uuid not null references public.restaurants(id) on delete cascade,
+   ingredient_id uuid not null references public.ingredients(id) on delete cascade,
+   counted_at timestamptz not null,
+   qty numeric not null default 0,
+   created_by_user_id uuid,
+   created_at timestamptz not null default now()
+ );
+
+ create index if not exists ingredient_counts_restaurant_id_idx on public.ingredient_counts(restaurant_id);
+ create index if not exists ingredient_counts_ingredient_id_idx on public.ingredient_counts(ingredient_id);
+ create index if not exists ingredient_counts_counted_at_idx on public.ingredient_counts(counted_at desc);
