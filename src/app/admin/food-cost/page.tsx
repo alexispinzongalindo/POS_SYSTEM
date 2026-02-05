@@ -471,12 +471,14 @@ export default function AdminFoodCostPage() {
               <div className="rounded-2xl border border-[var(--mp-border)] bg-white p-4">
                 <div className="text-xs font-semibold text-[var(--mp-muted)]">Ingredient</div>
                 <div className="mt-2 grid gap-2">
+                  <div className="text-xs text-[var(--mp-muted)]">Ingredient name</div>
                   <input
                     value={newIngredientName}
                     onChange={(e) => setNewIngredientName(e.target.value)}
                     placeholder="Beef"
                     className="h-10 w-full rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)]"
                   />
+                  <div className="text-xs text-[var(--mp-muted)]">Unit (lb, oz, each)</div>
                   <input
                     value={newIngredientUnit}
                     onChange={(e) => setNewIngredientUnit(e.target.value)}
@@ -496,6 +498,7 @@ export default function AdminFoodCostPage() {
               <div className="rounded-2xl border border-[var(--mp-border)] bg-white p-4">
                 <div className="text-xs font-semibold text-[var(--mp-muted)]">Purchase</div>
                 <div className="mt-2 grid gap-2">
+                  <div className="text-xs text-[var(--mp-muted)]">Ingredient</div>
                   <select
                     value={purchaseIngredientId}
                     onChange={(e) => setPurchaseIngredientId(e.target.value)}
@@ -510,6 +513,7 @@ export default function AdminFoodCostPage() {
                         </option>
                       ))}
                   </select>
+                  <div className="text-xs text-[var(--mp-muted)]">Qty purchased</div>
                   <input
                     inputMode="decimal"
                     value={purchaseQty}
@@ -517,6 +521,7 @@ export default function AdminFoodCostPage() {
                     placeholder="Qty"
                     className="h-10 w-full rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)]"
                   />
+                  <div className="text-xs text-[var(--mp-muted)]">Total cost ($)</div>
                   <input
                     inputMode="decimal"
                     value={purchaseTotalCost}
@@ -524,6 +529,7 @@ export default function AdminFoodCostPage() {
                     placeholder="Total cost"
                     className="h-10 w-full rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)]"
                   />
+                  <div className="text-xs text-[var(--mp-muted)]">Vendor (optional)</div>
                   <input
                     value={purchaseVendor}
                     onChange={(e) => setPurchaseVendor(e.target.value)}
@@ -543,6 +549,7 @@ export default function AdminFoodCostPage() {
               <div className="rounded-2xl border border-[var(--mp-border)] bg-white p-4">
                 <div className="text-xs font-semibold text-[var(--mp-muted)]">Inventory count</div>
                 <div className="mt-2 grid gap-2">
+                  <div className="text-xs text-[var(--mp-muted)]">Ingredient</div>
                   <select
                     value={countIngredientId}
                     onChange={(e) => setCountIngredientId(e.target.value)}
@@ -557,6 +564,7 @@ export default function AdminFoodCostPage() {
                         </option>
                       ))}
                   </select>
+                  <div className="text-xs text-[var(--mp-muted)]">Qty on hand (count)</div>
                   <input
                     inputMode="decimal"
                     value={countQty}
@@ -632,6 +640,7 @@ export default function AdminFoodCostPage() {
                   </div>
 
                   <div className="mt-3 grid gap-2">
+                    <div className="text-xs text-[var(--mp-muted)]">Ingredient</div>
                     <select
                       value={recipeIngredientId}
                       onChange={(e) => setRecipeIngredientId(e.target.value)}
@@ -646,6 +655,7 @@ export default function AdminFoodCostPage() {
                           </option>
                         ))}
                     </select>
+                    <div className="text-xs text-[var(--mp-muted)]">Qty per menu item sold</div>
                     <input
                       inputMode="decimal"
                       value={recipeQty}
