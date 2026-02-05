@@ -1,5 +1,8 @@
 [build]
   command = "npm run build"
 
+  [build.environment]
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
