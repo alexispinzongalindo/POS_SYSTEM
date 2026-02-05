@@ -291,13 +291,21 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="islapos-marketing min-h-screen bg-[var(--mp-bg)] text-[var(--mp-fg)]">
-      <div className="mx-auto w-full max-w-5xl px-6 py-10">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight">Admin</h1>
-          <p className="text-sm text-[var(--mp-muted)]">
-            Signed in as {email ?? "(unknown)"}
-          </p>
+    <div className="islapos-marketing min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/30 to-teal-50/40 text-slate-900">
+      <div className="mx-auto w-full max-w-6xl px-6 py-12">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Admin</h1>
+            <p className="text-base text-slate-500 font-medium">
+              Signed in as {email ?? "(unknown)"}
+            </p>
+          </div>
+          <button
+            onClick={signOut}
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white/80 backdrop-blur px-5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-white hover:shadow-md"
+          >
+            Sign out
+          </button>
         </div>
 
         {/* {error ? (
@@ -307,15 +315,15 @@ export default function AdminPage() {
         ) : null} */}
 
         {inviteStatus ? (
-          <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          <div className="mt-6 rounded-2xl border border-emerald-200/60 bg-gradient-to-r from-emerald-50/80 to-teal-50/80 px-5 py-4 text-sm font-medium text-emerald-800 shadow-sm backdrop-blur">
             {inviteStatus}
           </div>
         ) : null}
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
                   <path d="M9 5a2 2 0 002 2h2a2 2 0 002-2" />
@@ -323,60 +331,60 @@ export default function AdminPage() {
                   <path d="M9 14l2 2 4-4" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Orders</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">Orders</h2>
+                <p className="mt-1 text-sm text-slate-600">
                   View and manage all orders.
                 </p>
               </div>
             </div>
 
-            <div className="mt-4 flex gap-2">
+            <div className="mt-6 flex gap-3">
               <button
                 onClick={() => router.push("/admin/orders")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
                 View orders
               </button>
               <button
                 onClick={() => router.push("/admin/kds")}
-                className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-zinc-50"
+                className="inline-flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white/80 backdrop-blur px-6 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-white hover:shadow-md"
               >
                 KDS QR Codes
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 21h18" />
                   <path d="M5 21V7l7-4 7 4v14" />
                   <path d="M9 21v-8h6v8" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Restaurants</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">Restaurants</h2>
+                <p className="mt-1 text-sm text-slate-600">
                   Create and switch between restaurants.
                 </p>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={() => router.push("/admin/restaurants")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
                 Manage restaurants
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 6h16" />
                   <path d="M4 12h16" />
@@ -385,25 +393,25 @@ export default function AdminPage() {
                   <path d="M16 6v12" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Floor Plan</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">Configure areas, tables, doors, and bar.</p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">Floor Plan</h2>
+                <p className="mt-1 text-sm text-slate-600">Configure areas, tables, doors, and bar.</p>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={() => router.push("/admin/floor")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
                 Edit floor plan
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                   <circle cx="9" cy="7" r="4" />
@@ -411,25 +419,25 @@ export default function AdminPage() {
                   <path d="M18 3.13a4 4 0 0 1 0 7.75" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Staff</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">Manage staff access and roles.</p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">Staff</h2>
+                <p className="mt-1 text-sm text-slate-600">Manage staff access and roles.</p>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={() => router.push("/admin/staff")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
                 Manage staff
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 7h18" />
                   <path d="M7 3v18" />
@@ -438,25 +446,25 @@ export default function AdminPage() {
                   <path d="M7 15h10" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Payroll</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">Create staff schedules and compare vs time clock.</p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">Payroll</h2>
+                <p className="mt-1 text-sm text-slate-600">Create staff schedules and compare vs time clock.</p>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={() => router.push("/admin/payroll")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
                 Open payroll
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 3v18h18" />
                   <path d="M7 15v-4" />
@@ -465,25 +473,25 @@ export default function AdminPage() {
                   <path d="M19 15v-2" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Reports</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">Sales totals, taxes, and payment methods.</p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">Reports</h2>
+                <p className="mt-1 text-sm text-slate-600">Sales totals, taxes, and payment methods.</p>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={() => router.push("/admin/reports")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
                 View reports
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 12h18" />
                   <path d="M3 6h18" />
@@ -492,25 +500,25 @@ export default function AdminPage() {
                   <path d="M17 6v12" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Food Cost</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">Actual vs theoretical usage and cost.</p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">Food Cost</h2>
+                <p className="mt-1 text-sm text-slate-600">Actual vs theoretical usage and cost.</p>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={() => router.push("/admin/food-cost")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
                 Open food cost
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M8 2v4" />
                   <path d="M16 2v4" />
@@ -519,76 +527,74 @@ export default function AdminPage() {
                   <path d="m9 16 2 2 4-4" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Reservations</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">Create and manage reservations.</p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">Reservations</h2>
+                <p className="mt-1 text-sm text-slate-600">Create and manage reservations.</p>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={() => router.push("/admin/reservations")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
                 Manage reservations
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z" />
                   <path d="M12 22V12" />
                   <path d="m3.3 7 8.7 5 8.7-5" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Inventory</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">Track stock for products.</p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">Inventory</h2>
+                <p className="mt-1 text-sm text-slate-600">Track stock for products.</p>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={() => router.push("/admin/inventory")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
                 Manage inventory
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" />
                   <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-1.42 3.42h-.1a1.65 1.65 0 0 0-1.81 1.17 1.65 1.65 0 0 0-.05.42V22a2 2 0 0 1-4 0v-.1a1.65 1.65 0 0 0-1.18-1.81 1.65 1.65 0 0 0-.42-.05H9.1A2 2 0 0 1 7 18.6l.06-.06A1.65 1.65 0 0 0 7.4 15a1.65 1.65 0 0 0-1.57-1.15H5.7A2 2 0 0 1 4 10.4v-.1A2 2 0 0 1 5.7 8.6h.1A1.65 1.65 0 0 0 7.4 7a1.65 1.65 0 0 0-.34-1.82L7 5.12A2 2 0 0 1 8.4 2h.1A2 2 0 0 1 10.4 3.7v.1A1.65 1.65 0 0 0 12 5.4a1.65 1.65 0 0 0 1.6-1.6V3.7A2 2 0 0 1 15.6 2h.1A2 2 0 0 1 17 3.12l-.06.06A1.65 1.65 0 0 0 16.6 7a1.65 1.65 0 0 0 1.57 1.15h.1A2 2 0 0 1 22 10.4v.1a2 2 0 0 1-1.7 1.95h-.1A1.65 1.65 0 0 0 19.4 15Z" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Settings</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">
-                  Update business info, location, taxes, and products.
-                </p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">Settings</h2>
+                <p className="mt-1 text-sm text-slate-600">Update business info, location, taxes, and products.</p>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={() => router.push("/setup")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
                 Edit setup
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 7h-9" />
                   <path d="M14 17H5" />
@@ -596,25 +602,25 @@ export default function AdminPage() {
                   <circle cx="7" cy="7" r="3" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Integrations</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">Configure delivery providers for your business.</p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">Integrations</h2>
+                <p className="mt-1 text-sm text-slate-600">Configure delivery providers for your business.</p>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={() => router.push("/admin/integrations/delivery")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
                 Delivery integrations
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="3" width="18" height="18" rx="2" />
                   <path d="M7 7h.01" />
@@ -625,25 +631,25 @@ export default function AdminPage() {
                   <path d="M12 7v10" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">QR Code Menu</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">Generate QR codes for customers to view your menu.</p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">QR Code Menu</h2>
+                <p className="mt-1 text-sm text-slate-600">Generate QR codes for customers to view your menu.</p>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={() => router.push("/admin/qr-menu")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
                 Generate QR code
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M7 2h10" />
                   <path d="M12 2v20" />
@@ -651,74 +657,49 @@ export default function AdminPage() {
                   <path d="M7 17h10" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">POS</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">Create orders using your menu.</p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">POS</h2>
+                <p className="mt-1 text-sm text-slate-600">Create orders using your menu.</p>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={() => router.push("/pos")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
                 Open POS
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
-                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 9V2h12v7" />
-                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                  <path d="M6 14h12v8H6z" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Edge Gateway</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">Pair your Windows Print Hub for offline printing + KDS.</p>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <button
-                onClick={() => router.push("/admin/edge-gateway")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
-              >
-                Pair gateway
-              </button>
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Profile</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">Account details and subscription.</p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">Profile</h2>
+                <p className="mt-1 text-sm text-slate-600">Account details and subscription.</p>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={() => router.push("/admin/profile")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
                 Open profile
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                   <circle cx="9" cy="7" r="4" />
@@ -726,9 +707,9 @@ export default function AdminPage() {
                   <line x1="22" y1="11" x2="16" y2="11" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Invite user</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">Invite staff to your restaurant.</p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">Invite user</h2>
+                <p className="mt-1 text-sm text-slate-600">Invite staff to your restaurant.</p>
               </div>
             </div>
 
@@ -770,57 +751,57 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                   <path d="M16 17l5-5-5-5" />
                   <path d="M21 12H9" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Account</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">Sign out of this device.</p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">Account</h2>
+                <p className="mt-1 text-sm text-slate-600">Sign out of this device.</p>
               </div>
             </div>
 
             <button
               onClick={signOut}
-              className="mt-4 inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-white"
+              className="mt-6 inline-flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white/80 backdrop-blur px-6 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-white hover:shadow-md"
             >
               Sign out
             </button>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15a4 4 0 0 1-4 4H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
                   <path d="M7 8h10" />
                   <path d="M7 12h6" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Support Station</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">Create and track support cases.</p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">Support Station</h2>
+                <p className="mt-1 text-sm text-slate-600">Create and track support cases.</p>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={() => router.push("/admin/support")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
                 Open support
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[var(--mp-border)] bg-gradient-to-b from-emerald-50/60 to-white p-7 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--mp-primary)]/10 text-[var(--mp-primary)]">
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
                   <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
@@ -829,16 +810,16 @@ export default function AdminPage() {
                   <path d="M8 14h6" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-semibold text-[var(--mp-fg)]">Training</h2>
-                <p className="mt-1 text-sm text-[var(--mp-muted)]">Step-by-step guides for staff and setup.</p>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">Training</h2>
+                <p className="mt-1 text-sm text-slate-600">Step-by-step guides for staff and setup.</p>
               </div>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={() => router.push("/admin/training")}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
                 Open training
               </button>
@@ -851,15 +832,15 @@ export default function AdminPage() {
         <button
           type="button"
           onClick={() => router.push("/see-app-in-action")}
-          className="group flex items-center gap-2 rounded-2xl border border-[var(--mp-border)] bg-white px-3 py-2 shadow-sm"
+          className="group flex items-center gap-3 rounded-2xl border border-emerald-200/60 bg-white/90 backdrop-blur px-4 py-3 shadow-lg transition hover:bg-white hover:shadow-xl hover:border-emerald-300/60"
         >
-          <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--mp-primary)] text-white">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 6v6l4 2" />
               <circle cx="12" cy="12" r="10" />
             </svg>
           </span>
-          <span className="text-xs font-semibold text-[var(--mp-fg)] [writing-mode:vertical-rl] [text-orientation:mixed]">
+          <span className="text-xs font-semibold text-slate-700 [writing-mode:vertical-rl] [text-orientation:mixed]">
             View Tutorial
           </span>
         </button>
@@ -885,31 +866,31 @@ export default function AdminPage() {
             className="absolute inset-0 bg-black/30"
             aria-label="Close"
           />
-          <div className="absolute right-0 top-0 h-full w-full max-w-md border-l border-[var(--mp-border)] bg-white shadow-xl">
-            <div className="flex items-center justify-between gap-3 border-b border-[var(--mp-border)] px-5 py-4">
+          <div className="absolute right-0 top-0 h-full w-full max-w-md border-l border-emerald-200/60 bg-gradient-to-br from-white via-emerald-50/20 to-teal-50/20 shadow-2xl backdrop-blur">
+            <div className="flex items-center justify-between gap-4 border-b border-emerald-200/60 bg-white/80 backdrop-blur px-6 py-5">
               <div>
-                <div className="text-sm font-semibold text-[var(--mp-fg)]">AI Assistant</div>
-                <div className="mt-1 text-xs text-[var(--mp-muted)]">Ask for help configuring your restaurant.</div>
+                <div className="text-base font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">AI Assistant</div>
+                <div className="mt-1 text-sm text-slate-600">Ask for help configuring your restaurant.</div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowAiPanel(false)}
-                className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-xs font-semibold hover:bg-white"
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white/90 backdrop-blur px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-white hover:shadow-md"
               >
                 Close
               </button>
             </div>
 
-            <div className="p-5">
-              <div className="flex h-[calc(100vh-110px)] flex-col">
-                <div className="mb-3 rounded-2xl border border-[var(--mp-border)] bg-white p-3">
-                  <div className="text-xs font-semibold text-[var(--mp-muted)]">EDGE GATEWAY URL (optional)</div>
-                  <div className="mt-2 flex gap-2">
+            <div className="p-6">
+              <div className="flex h-[calc(100vh-120px)] flex-col">
+                <div className="mb-4 rounded-2xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-4 shadow-sm">
+                  <div className="text-xs font-bold text-emerald-700 uppercase tracking-wide">Edge Gateway URL (optional)</div>
+                  <div className="mt-3 flex gap-3">
                     <input
                       value={aiGatewayUrl}
                       onChange={(e) => setAiGatewayUrl(e.target.value)}
                       placeholder="http://192.168.0.50:9123"
-                      className="h-10 flex-1 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)]"
+                      className="h-11 flex-1 rounded-xl border border-emerald-200/60 bg-white/90 backdrop-blur px-4 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition"
                       disabled={aiSending}
                     />
                     <button
@@ -923,18 +904,18 @@ export default function AdminPage() {
                           // ignore
                         }
                       }}
-                      className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-zinc-50"
+                      className="inline-flex h-11 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 text-xs font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg disabled:opacity-50"
                       disabled={aiSending}
                     >
                       Save
                     </button>
                   </div>
 
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => void runGatewayAction("health")}
-                      className="inline-flex h-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-zinc-50"
+                      className="inline-flex h-9 items-center justify-center rounded-xl border border-emerald-200/60 bg-white/80 backdrop-blur px-3 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-white hover:shadow-md disabled:opacity-50"
                       disabled={aiSending}
                     >
                       Health
@@ -942,7 +923,7 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={() => void runGatewayAction("printers")}
-                      className="inline-flex h-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-zinc-50"
+                      className="inline-flex h-9 items-center justify-center rounded-xl border border-emerald-200/60 bg-white/80 backdrop-blur px-3 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-white hover:shadow-md disabled:opacity-50"
                       disabled={aiSending}
                     >
                       Printers
@@ -950,7 +931,7 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={() => void runGatewayAction("queue_test")}
-                      className="inline-flex h-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-zinc-50"
+                      className="inline-flex h-9 items-center justify-center rounded-xl border border-emerald-200/60 bg-white/80 backdrop-blur px-3 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-white hover:shadow-md disabled:opacity-50"
                       disabled={aiSending}
                     >
                       Queue test print
@@ -958,7 +939,7 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={() => void runGatewayAction("queue")}
-                      className="inline-flex h-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-zinc-50"
+                      className="inline-flex h-9 items-center justify-center rounded-xl border border-emerald-200/60 bg-white/80 backdrop-blur px-3 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-white hover:shadow-md disabled:opacity-50"
                       disabled={aiSending}
                     >
                       View queue
@@ -966,15 +947,15 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-auto rounded-2xl border border-[var(--mp-border)] bg-white p-4">
+                <div className="flex-1 overflow-auto rounded-2xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/40 via-white to-teal-50/30 p-4 shadow-sm">
                   <div className="flex flex-col gap-3">
                     {aiMessages.map((m) => (
                       <div
                         key={m.id}
-                        className={`max-w-[90%] rounded-2xl px-4 py-3 text-sm ${
+                        className={`max-w-[90%] rounded-2xl px-4 py-3 text-sm transition-all ${
                           m.role === "user"
-                            ? "ml-auto bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]"
-                            : "mr-auto bg-[var(--mp-bg)] text-[var(--mp-fg)]"
+                            ? "ml-auto bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md"
+                            : "mr-auto bg-white/90 backdrop-blur text-slate-800 border border-emerald-200/40"
                         }`}
                       >
                         {m.content}
@@ -982,7 +963,7 @@ export default function AdminPage() {
                     ))}
 
                     {aiSending ? (
-                      <div className="mr-auto max-w-[90%] rounded-2xl bg-[var(--mp-bg)] px-4 py-3 text-sm text-[var(--mp-muted)]">
+                      <div className="mr-auto max-w-[90%] rounded-2xl bg-white/90 backdrop-blur px-4 py-3 text-sm text-slate-500 border border-emerald-200/40">
                         Thinking...
                       </div>
                     ) : null}
@@ -990,12 +971,12 @@ export default function AdminPage() {
                 </div>
 
                 {aiError ? (
-                  <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+                  <div className="mt-3 rounded-2xl border border-rose-200/60 bg-gradient-to-r from-rose-50/80 to-pink-50/80 px-4 py-3 text-xs font-medium text-rose-800 shadow-sm backdrop-blur">
                     {aiError}
                   </div>
                 ) : null}
 
-                <div className="mt-3 flex gap-2">
+                <div className="mt-3 flex gap-3">
                   <input
                     value={aiInput}
                     onChange={(e) => setAiInput(e.target.value)}
@@ -1006,13 +987,13 @@ export default function AdminPage() {
                       }
                     }}
                     placeholder="Ask a question…"
-                    className="h-11 flex-1 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)]"
+                    className="h-12 flex-1 rounded-xl border border-emerald-200/60 bg-white/90 backdrop-blur px-4 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition"
                     disabled={aiSending}
                   />
                   <button
                     type="button"
                     onClick={() => void sendAiMessage()}
-                    className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-50"
+                    className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg disabled:opacity-50"
                     disabled={aiSending || !aiInput.trim()}
                   >
                     Send
