@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { loadAiFeatureRegistryText } from "@/lib/aiFeatureRegistry";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -73,6 +74,11 @@ export async function POST(req: Request) {
     if (gatewayUrl || restaurantId) {
       const ctxLine = `Context: gatewayUrl=${gatewayUrl || "(unknown)"} restaurantId=${restaurantId || "(unknown)"}`;
       messages.push({ role: "system", content: ctxLine });
+    }
+
+    const featureRegistry = await loadAiFeatureRegistryText({ restaurantId: restaurantId || null });
+    if (featureRegistry.text) {
+      messages.push({ role: "system", content: featureRegistry.text });
     }
 
     for (const m of history) {

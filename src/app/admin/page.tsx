@@ -16,6 +16,7 @@ export default function AdminPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
+  const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security">("cashier");
@@ -71,6 +72,7 @@ export default function AdminPage() {
         return;
       }
 
+      setRestaurantId(cfg.data.restaurant_id ?? null);
       setEmail(data.session.user.email ?? null);
       setLoading(false);
     }
@@ -255,7 +257,11 @@ export default function AdminPage() {
           "content-type": "application/json",
           authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ message: text, history, context: { gatewayUrl: normalizeGatewayUrl(aiGatewayUrl) } }),
+        body: JSON.stringify({
+          message: text,
+          history,
+          context: { gatewayUrl: normalizeGatewayUrl(aiGatewayUrl), restaurantId: restaurantId ?? undefined },
+        }),
       });
 
       const json = (await res.json().catch(() => null)) as

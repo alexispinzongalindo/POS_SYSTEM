@@ -219,3 +219,22 @@ create index if not exists order_item_modifiers_order_item_id_idx on public.orde
  create index if not exists ingredient_counts_restaurant_id_idx on public.ingredient_counts(restaurant_id);
  create index if not exists ingredient_counts_ingredient_id_idx on public.ingredient_counts(ingredient_id);
  create index if not exists ingredient_counts_counted_at_idx on public.ingredient_counts(counted_at desc);
+
+ create table if not exists public.ai_feature_registry_entries (
+   id uuid primary key default gen_random_uuid(),
+   restaurant_id uuid references public.restaurants(id) on delete cascade,
+   key text not null,
+   title text not null,
+   body text not null,
+   tags text[] not null default '{}',
+   is_active boolean not null default true,
+   created_by_user_id uuid,
+   updated_by_user_id uuid,
+   created_at timestamptz not null default now(),
+   updated_at timestamptz not null default now(),
+   unique (restaurant_id, key)
+ );
+
+ create index if not exists ai_feature_registry_entries_restaurant_id_idx on public.ai_feature_registry_entries(restaurant_id);
+ create index if not exists ai_feature_registry_entries_is_active_idx on public.ai_feature_registry_entries(is_active);
+ create index if not exists ai_feature_registry_entries_updated_at_idx on public.ai_feature_registry_entries(updated_at desc);
