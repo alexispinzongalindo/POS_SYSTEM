@@ -867,11 +867,14 @@ export default function AdminPage() {
         <button
           type="button"
           onClick={() => setShowAiPanel(true)}
-          className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-b from-violet-500 to-indigo-600 text-white shadow-lg"
+          aria-label="Open AI Assistant"
+          className="group grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg ring-1 ring-emerald-900/10 transition hover:from-emerald-400 hover:to-emerald-700 hover:shadow-xl active:translate-y-[1px]"
         >
           <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z" />
-            <path d="M4 14l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z" />
+            <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.12 0-2.2-.21-3.2-.6L3 21l1.6-6.3c-.39-1-.6-2.08-.6-3.2A8.5 8.5 0 0 1 12.5 3a8.5 8.5 0 0 1 8.5 8.5Z" />
+            <path d="M9.5 10.5h.01" />
+            <path d="M12.5 10.5h.01" />
+            <path d="M15.5 10.5h.01" />
           </svg>
         </button>
       </div>
