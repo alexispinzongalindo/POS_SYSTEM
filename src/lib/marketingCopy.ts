@@ -11,6 +11,18 @@ type Copy = {
     startTrial: string;
     signIn: string;
   };
+  appTour: {
+    buttonText: string;
+    close: string;
+    next: string;
+    back: string;
+    play: string;
+    pause: string;
+    slides: {
+      text: string;
+      voice: string;
+    }[];
+  };
   home: {
     heroTitle: string;
     heroSubtitle: string;
@@ -155,6 +167,52 @@ const ES: Copy = {
     contact: "Contacto",
     startTrial: "Empieza gratis",
     signIn: "Entrar",
+  },
+  appTour: {
+    buttonText: "Ver recorrido del sistema",
+    close: "Cerrar",
+    next: "Siguiente",
+    back: "Atrás",
+    play: "Reproducir",
+    pause: "Pausar",
+    slides: [
+      {
+        text: "Bienvenido a IslaPOS — El sistema POS moderno para restaurantes.",
+        voice: "Bienvenido a IslaPOS, un sistema de punto de venta moderno diseñado específicamente para restaurantes.",
+      },
+      {
+        text: "Ventas rápidas. Pantallas simples. Diseñado para cocinas y mostradores ocupados.",
+        voice: "Procesa ventas rápidamente con pantallas simples e intuitivas, diseñadas para cocinas y mostradores con alto movimiento.",
+      },
+      {
+        text: "Administra tu menú fácilmente. Productos, precios y categorías en un solo lugar.",
+        voice: "Administra tu menú, productos, precios y categorías de forma sencilla desde un solo lugar.",
+      },
+      {
+        text: "Controla tu inventario. Evita faltantes y exceso de productos.",
+        voice: "Controla tu inventario en tiempo real para evitar faltantes, desperdicio y exceso de productos.",
+      },
+      {
+        text: "Conoce tu costo de alimentos. Toma mejores decisiones.",
+        voice: "Conoce tu costo de alimentos y entiende cómo los ingredientes afectan la rentabilidad de tu negocio.",
+      },
+      {
+        text: "Reportes claros. Información real para dueños y gerentes.",
+        voice: "Accede a reportes claros que ayudan a dueños y gerentes a tomar mejores decisiones.",
+      },
+      {
+        text: "Accede a tu negocio desde cualquier lugar. Seguro y siempre actualizado.",
+        voice: "IslaPOS es un sistema en la nube, seguro y siempre disponible cuando lo necesites.",
+      },
+      {
+        text: "De un local a muchos. IslaPOS crece con tu restaurante.",
+        voice: "Ya sea que tengas un solo local o varios, IslaPOS está diseñado para crecer junto a tu restaurante.",
+      },
+      {
+        text: "¿Listo para tomar control de tu restaurante? Empieza hoy con IslaPOS.",
+        voice: "Toma control de las operaciones de tu restaurante y empieza hoy con IslaPOS.",
+      },
+    ],
   },
   home: {
     heroTitle: "El POS todo‑en‑uno hecho para restaurantes en Puerto Rico.",
@@ -303,6 +361,52 @@ const EN: Copy = {
     contact: "Contact",
     startTrial: "Start free trial",
     signIn: "Sign in",
+  },
+  appTour: {
+    buttonText: "Start App Tour",
+    close: "Close",
+    next: "Next",
+    back: "Back",
+    play: "Play",
+    pause: "Pause",
+    slides: [
+      {
+        text: "Welcome to IslaPOS — The modern POS SaaS for restaurants.",
+        voice: "Welcome to IslaPOS, a modern point of sale system designed specifically for restaurants.",
+      },
+      {
+        text: "Fast sales. Simple screens. Built for busy kitchens and counters.",
+        voice: "Process sales quickly with simple, intuitive screens built for busy kitchens and fast-paced counters.",
+      },
+      {
+        text: "Manage your menu with ease. Products, prices, and categories in one place.",
+        voice: "Easily manage your menu, products, prices, and categories from a single place.",
+      },
+      {
+        text: "Know what you have. Avoid shortages and overstock.",
+        voice: "Keep track of your inventory in real time to avoid shortages, waste, and overstock.",
+      },
+      {
+        text: "Understand your food cost. Make better decisions.",
+        voice: "Understand your food cost and gain visibility into how your ingredients impact your profitability.",
+      },
+      {
+        text: "Clear reports. Real insights for restaurant owners.",
+        voice: "Access clear reports that help restaurant owners and managers make informed decisions.",
+      },
+      {
+        text: "Access your business anywhere. Secure and always up to date.",
+        voice: "IslaPOS is cloud-based, secure, and always available wherever you need it.",
+      },
+      {
+        text: "From one location to many. IslaPOS grows with your restaurant.",
+        voice: "Whether you run one location or many, IslaPOS is built to grow with your restaurant.",
+      },
+      {
+        text: "Ready to take control of your restaurant? Get started with IslaPOS today.",
+        voice: "Take control of your restaurant operations and get started with IslaPOS today.",
+      },
+    ],
   },
   home: {
     heroTitle: "The all‑in‑one POS built for Puerto Rico restaurants.",

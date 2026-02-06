@@ -1,15 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import MarketingHeader from "@/components/MarketingHeader";
 import MarketingCard from "@/components/MarketingCard";
 import MarketingFooter from "@/components/MarketingFooter";
 import MarketingSection from "@/components/MarketingSection";
+import AppTourModal from "@/components/AppTourModal";
 import { marketingCopy } from "@/lib/marketingCopy";
 import { useMarketingLang } from "@/lib/useMarketingLang";
 
 export default function Home() {
   const { lang } = useMarketingLang();
   const t = marketingCopy(lang);
+  const [isTourOpen, setIsTourOpen] = useState(false);
 
   return (
     <div className="islapos-marketing min-h-screen bg-[var(--mp-bg)] text-[var(--mp-fg)]">
@@ -50,6 +53,13 @@ export default function Home() {
               >
                 {lang === "es" ? "Entrar" : "Sign in"}
               </a>
+
+              <button
+                onClick={() => setIsTourOpen(true)}
+                className="inline-flex h-11 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-[var(--mp-surface)] px-6 text-sm font-medium text-[var(--mp-muted)] hover:bg-white hover:text-[var(--mp-fg)] focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
+              >
+                {t.appTour.buttonText}
+              </button>
             </div>
 
             <p className="mt-5 text-sm font-semibold tracking-tight">{t.tagline}</p>
@@ -428,6 +438,8 @@ export default function Home() {
 
         <MarketingFooter />
       </div>
+
+      <AppTourModal isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
     </div>
   );
 }
