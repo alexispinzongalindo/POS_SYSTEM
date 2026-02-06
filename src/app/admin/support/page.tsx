@@ -62,6 +62,34 @@ export default function AdminSupportPage() {
     });
   }, [rows, search]);
 
+  const whatsappNumber = (process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP ?? "").trim();
+  const whatsappDigits = whatsappNumber.replace(/\D/g, "");
+
+  const waText = useMemo(() => {
+    const mostRecent = rows[0] ?? null;
+    const lines: string[] = [];
+    lines.push("IslaPOS Support");
+    if (restaurantId) lines.push(`Restaurant: ${restaurantId}`);
+    if (mostRecent) {
+      lines.push(`Case ID: ${mostRecent.id}`);
+      lines.push(`Subject: ${mostRecent.subject}`);
+      if (mostRecent.customer_name) lines.push(`Customer: ${mostRecent.customer_name}`);
+      if (mostRecent.customer_phone) lines.push(`Phone: ${mostRecent.customer_phone}`);
+    } else {
+      const subject = newSubject.trim();
+      const customer = newCustomerName.trim();
+      const phone = newCustomerPhone.trim();
+      const desc = newDescription.trim();
+      if (subject) lines.push(`Subject: ${subject}`);
+      if (customer) lines.push(`Customer: ${customer}`);
+      if (phone) lines.push(`Phone: ${phone}`);
+      if (desc) lines.push(`Details: ${desc}`);
+    }
+    return lines.join("\n");
+  }, [newCustomerName, newCustomerPhone, newDescription, newSubject, restaurantId, rows]);
+
+  const waHref = whatsappDigits ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(waText)}` : "https://wa.me/";
+
   async function authedFetch(path: string, init?: RequestInit) {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
@@ -238,36 +266,6 @@ export default function AdminSupportPage() {
       </div>
     );
   }
-
-  const whatsappNumber = (process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP ?? "").trim();
-  const whatsappDigits = whatsappNumber.replace(/\D/g, "");
-
-  const waText = useMemo(() => {
-    const mostRecent = rows[0] ?? null;
-    const lines: string[] = [];
-    lines.push("IslaPOS Support");
-    if (restaurantId) lines.push(`Restaurant: ${restaurantId}`);
-    if (mostRecent) {
-      lines.push(`Case ID: ${mostRecent.id}`);
-      lines.push(`Subject: ${mostRecent.subject}`);
-      if (mostRecent.customer_name) lines.push(`Customer: ${mostRecent.customer_name}`);
-      if (mostRecent.customer_phone) lines.push(`Phone: ${mostRecent.customer_phone}`);
-    } else {
-      const subject = newSubject.trim();
-      const customer = newCustomerName.trim();
-      const phone = newCustomerPhone.trim();
-      const desc = newDescription.trim();
-      if (subject) lines.push(`Subject: ${subject}`);
-      if (customer) lines.push(`Customer: ${customer}`);
-      if (phone) lines.push(`Phone: ${phone}`);
-      if (desc) lines.push(`Details: ${desc}`);
-    }
-    return lines.join("\n");
-  }, [newCustomerName, newCustomerPhone, newDescription, newSubject, restaurantId, rows]);
-
-  const waHref = whatsappDigits
-    ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(waText)}`
-    : "https://wa.me/";
 
   return (
     <div className="islapos-marketing min-h-screen bg-[var(--mp-bg)] text-[var(--mp-fg)]">

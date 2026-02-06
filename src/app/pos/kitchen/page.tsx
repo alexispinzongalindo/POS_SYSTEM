@@ -34,7 +34,7 @@ export default function KitchenDisplayPage() {
   const [error, setError] = useState<string | null>(null);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
-  const [, setNow] = useState(Date.now());
+  const [, setNow] = useState(0);
   const [statusStartedAt, setStatusStartedAt] = useState<Record<string, string>>({});
 
   const loadOrders = useCallback(async (restId: string) => {
@@ -200,12 +200,22 @@ export default function KitchenDisplayPage() {
       // We keep them in storage (harmless), but the UI always reads the current status key.
     }
 
-    setStatusStartedAt(next);
-    try {
-      if (typeof window !== "undefined") window.localStorage.setItem(storageKey, JSON.stringify(next));
-    } catch {
-      // ignore storage errors
-    }
+    const t = setTimeout(() => {
+      setStatusStartedAt((prev) => {
+        const prevKeys = Object.keys(prev);
+        const nextKeys = Object.keys(next);
+        if (prevKeys.length === nextKeys.length && prevKeys.every((k) => prev[k] === next[k])) return prev;
+        return next;
+      });
+
+      try {
+        if (typeof window !== "undefined") window.localStorage.setItem(storageKey, JSON.stringify(next));
+      } catch {
+        // ignore storage errors
+      }
+    }, 0);
+
+    return () => clearTimeout(t);
   }, [orders, restaurantId]);
 
   // Update elapsed time every second

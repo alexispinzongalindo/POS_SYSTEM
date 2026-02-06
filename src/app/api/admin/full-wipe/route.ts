@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-type Role = "owner" | "manager" | "cashier" | null;
+type Role = "owner" | "manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security" | null;
 
 type WipeBody =
   | {
@@ -83,9 +83,24 @@ export async function POST(req: Request) {
 
   const requesterRoleRaw = (user.app_metadata as { role?: string } | undefined)?.role ?? null;
   const requesterRole: Role =
-    requesterRoleRaw === "owner" || requesterRoleRaw === "manager" || requesterRoleRaw === "cashier" ? requesterRoleRaw : null;
+    requesterRoleRaw === "owner" ||
+    requesterRoleRaw === "manager" ||
+    requesterRoleRaw === "cashier" ||
+    requesterRoleRaw === "kitchen" ||
+    requesterRoleRaw === "maintenance" ||
+    requesterRoleRaw === "driver" ||
+    requesterRoleRaw === "security"
+      ? requesterRoleRaw
+      : null;
 
-  if (requesterRole === "cashier" || requesterRole === "manager") {
+  if (
+    requesterRole === "cashier" ||
+    requesterRole === "manager" ||
+    requesterRole === "kitchen" ||
+    requesterRole === "maintenance" ||
+    requesterRole === "driver" ||
+    requesterRole === "security"
+  ) {
     return NextResponse.json({ error: "Only the restaurant owner can perform a full wipe" }, { status: 403 });
   }
 

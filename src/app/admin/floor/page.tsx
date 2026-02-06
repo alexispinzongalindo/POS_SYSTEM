@@ -24,7 +24,7 @@ import {
 } from "@/lib/floorPlan";
 import { getRestaurant, getSetupContext } from "@/lib/setupData";
 
-type Role = "owner" | "manager" | "cashier" | null;
+type Role = "owner" | "manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security" | null;
 
 type Selected =
   | { kind: "table"; row: FloorTable }
@@ -135,10 +135,19 @@ export default function AdminFloorPlanPage() {
       }
 
       const rawRole = (ctx.session.user.app_metadata as { role?: string } | undefined)?.role ?? null;
-      const resolvedRole: Role = rawRole === "owner" || rawRole === "manager" || rawRole === "cashier" ? rawRole : null;
+      const resolvedRole: Role =
+        rawRole === "owner" ||
+        rawRole === "manager" ||
+        rawRole === "cashier" ||
+        rawRole === "kitchen" ||
+        rawRole === "maintenance" ||
+        rawRole === "driver" ||
+        rawRole === "security"
+          ? rawRole
+          : null;
       setRole(resolvedRole);
 
-      if (resolvedRole === "cashier") {
+      if (resolvedRole === "cashier" || resolvedRole === "kitchen" || resolvedRole === "maintenance" || resolvedRole === "driver" || resolvedRole === "security") {
         router.replace("/pos");
         return;
       }

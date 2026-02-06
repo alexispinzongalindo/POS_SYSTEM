@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-type StaffRole = "manager" | "cashier";
+type StaffRole = "manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security";
 
 type StaffRow = {
   id: string;
@@ -42,7 +42,7 @@ async function getActiveRestaurantId(userId: string) {
 }
 
 async function requireRestaurantOwnerOrManager(userId: string, userRole: string | null, restaurantId: string) {
-  if (userRole === "cashier") {
+  if (userRole === "cashier" || userRole === "kitchen" || userRole === "maintenance" || userRole === "driver" || userRole === "security") {
     return { ok: false, error: new Error("Cashiers cannot manage staff") };
   }
 
@@ -99,7 +99,10 @@ async function listUsersForRestaurant(restaurantId: string): Promise<{ data: Sta
       rows.push({
         id: u.id,
         email: u.email ?? null,
-        role: role === "manager" ? "manager" : "cashier",
+        role:
+          role === "manager" || role === "cashier" || role === "kitchen" || role === "maintenance" || role === "driver" || role === "security"
+            ? role
+            : "cashier",
         name,
         pin,
       });
@@ -160,7 +163,9 @@ export async function PATCH(req: Request) {
   const pin = typeof body?.pin === "string" ? body?.pin.trim() : body?.pin === null ? null : undefined;
 
   if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
-  if (role && role !== "cashier" && role !== "manager") return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+  if (role && role !== "cashier" && role !== "manager" && role !== "kitchen" && role !== "maintenance" && role !== "driver" && role !== "security") {
+    return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+  }
   if (name !== undefined && name !== null && name.length > 60) {
     return NextResponse.json({ error: "Name is too long" }, { status: 400 });
   }

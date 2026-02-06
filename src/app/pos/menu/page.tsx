@@ -19,7 +19,7 @@ import {
   type MenuItem,
 } from "@/lib/setupData";
 
-type Role = "owner" | "manager" | "cashier" | null;
+type Role = "owner" | "manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security" | null;
 
 export default function PosMenuManagerPage() {
   const router = useRouter();
@@ -114,7 +114,16 @@ export default function PosMenuManagerPage() {
       }
 
       const rawRole = (ctx.session.user.app_metadata as { role?: string } | undefined)?.role ?? null;
-      const resolvedRole: Role = rawRole === "owner" || rawRole === "manager" || rawRole === "cashier" ? rawRole : null;
+      const resolvedRole: Role =
+        rawRole === "owner" ||
+        rawRole === "manager" ||
+        rawRole === "cashier" ||
+        rawRole === "kitchen" ||
+        rawRole === "maintenance" ||
+        rawRole === "driver" ||
+        rawRole === "security"
+          ? rawRole
+          : null;
       setRole(resolvedRole);
 
       const rid = (ctx.config?.restaurant_id as string | null) ?? null;

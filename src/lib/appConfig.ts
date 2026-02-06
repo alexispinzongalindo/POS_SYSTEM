@@ -74,7 +74,7 @@ export async function setRestaurantId(restaurantId: string) {
   const role = meta.role ?? null;
   const assignedRestaurantId = typeof meta.restaurant_id === "string" ? meta.restaurant_id : null;
 
-  if (role === "cashier" || role === "manager") {
+  if (role === "cashier" || role === "manager" || role === "kitchen" || role === "maintenance" || role === "driver" || role === "security") {
     if (!assignedRestaurantId) {
       return { data: null as AppConfig | null, error: new Error("No restaurant assigned") };
     }
