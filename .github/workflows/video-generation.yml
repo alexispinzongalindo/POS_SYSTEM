@@ -1,0 +1,162 @@
+name: Video Generation
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only validate scripts without generating videos'
+        required: false
+        type: boolean
+        default: false
+      run_with_video_url:
+        description: 'Optional video URL (overrides VIDEO_SOURCE_URL secret)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install system tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg jq
+
+      - name: Verify tools
+        run: |
+          node --version
+          npm --version
+          ffmpeg -version
+          jq --version
+
+  lint-check:
+    runs-on: ubuntu-latest
+    needs: setup
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Validate scripts with dry-run
+        run: node scripts/video/generate_videos.mjs --dry-run
+
+  generate-tour:
+    runs-on: ubuntu-latest
+    needs: lint-check
+    if: ${{ inputs.dry_run == false }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install system tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg jq
+
+      - name: Create workspace directories
+        run: |
+          mkdir -p workspace
+          mkdir -p out/videos
+
+      - name: Download source video
+        if: ${{ inputs.run_with_video_url != '' || secrets.VIDEO_SOURCE_URL != '' }}
+        run: |
+          VIDEO_URL="${{ inputs.run_with_video_url }}"
+          if [ -z "$VIDEO_URL" ]; then
+            VIDEO_URL="${{ secrets.VIDEO_SOURCE_URL }}"
+          fi
+
+          if [ -n "$VIDEO_URL" ]; then
+            echo "Downloading source video..."
+            curl --fail --silent --show-error -L "$VIDEO_URL" -o ./workspace/source.mp4
+            echo "Video downloaded successfully"
+            ls -lh ./workspace/source.mp4
+          else
+            echo "No video URL provided, skipping download"
+          fi
+
+      - name: Generate English tour video
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          TTS_PROVIDER: elevenlabs
+        run: |
+          if [ -f ./workspace/source.mp4 ]; then
+            node scripts/video/generate_videos.mjs --source ./workspace/source.mp4 --lang en --out ./out/videos/tour_en.mp4
+          else
+            echo "Generating tour video without source (slides only)"
+            node scripts/video/generate_videos.mjs --lang en --out ./out/videos/tour_en.mp4
+          fi
+
+      - name: Generate Spanish tour video
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          TTS_PROVIDER: elevenlabs
+        run: |
+          if [ -f ./workspace/source.mp4 ]; then
+            node scripts/video/generate_videos.mjs --source ./workspace/source.mp4 --lang es --out ./out/videos/tour_es.mp4
+          else
+            echo "Generating tour video without source (slides only)"
+            node scripts/video/generate_videos.mjs --lang es --out ./out/videos/tour_es.mp4
+          fi
+
+      - name: Upload video artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tour-videos
+          path: |
+            out/videos/tour_en.mp4
+            out/videos/tour_es.mp4
+            out/videos/tour_en.srt
+            out/videos/tour_es.srt
+          retention-days: 30
+
+      - name: Upload scripts used
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-scripts
+          path: |
+            scripts/video/
+          retention-days: 30
