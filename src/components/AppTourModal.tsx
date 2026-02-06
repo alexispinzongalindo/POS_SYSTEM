@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { marketingCopy } from "@/lib/marketingCopy";
 import { useMarketingLang } from "@/lib/useMarketingLang";
 
@@ -34,8 +34,9 @@ export default function AppTourModal({ isOpen, onClose }: AppTourModalProps) {
   }, []);
 
   // Play voice narration
-  const playVoiceNarration = (slideIndex: number) => {
+  const playVoiceNarration = useCallback((slideIndex: number) => {
     if (!synthRef.current) return;
+    if (slideIndex < 0 || slideIndex >= t.slides.length) return; // Bounds check
 
     // Cancel any ongoing speech
     synthRef.current.cancel();
@@ -45,34 +46,50 @@ export default function AppTourModal({ isOpen, onClose }: AppTourModalProps) {
     
     // Try to select a female voice
     const voices = synthRef.current.getVoices();
-    const femaleVoice = voices.find(
-      v => v.name.toLowerCase().includes("female") || 
-           v.name.toLowerCase().includes("mujer") ||
-           v.name.toLowerCase().includes("woman")
+    const targetLang = lang === "es" ? "es" : "en";
+    
+    // First try to find a female voice for the target language
+    let selectedVoice = voices.find(
+      v => (v.name.toLowerCase().includes("female") || 
+            v.name.toLowerCase().includes("mujer") ||
+            v.name.toLowerCase().includes("woman")) &&
+           v.lang.startsWith(targetLang)
     );
     
-    if (femaleVoice) {
-      utterance.voice = femaleVoice;
+    // Fallback to any voice for the target language
+    if (!selectedVoice) {
+      selectedVoice = voices.find(v => v.lang.startsWith(targetLang));
+    }
+    
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
     }
     
     utterance.rate = 0.9; // Slightly slower for clarity
-    utterance.lang = lang === "es" ? "es-ES" : "en-US";
+    utterance.lang = lang === "es" ? "es-US" : "en-US"; // Use US variants for Puerto Rico
     
     utteranceRef.current = utterance;
     synthRef.current.speak(utterance);
-  };
+  }, [lang, t.slides]);
 
   // Auto-advance to next slide
-  const advanceSlide = () => {
+  const advanceSlide = useCallback(() => {
     setCurrentSlide((prev) => {
       const next = prev + 1;
       if (next >= t.slides.length) {
-        handleClose();
+        // Reset state and close
+        setCurrentSlide(0);
+        setProgress(0);
+        setIsPlaying(true);
+        if (synthRef.current) {
+          synthRef.current.cancel();
+        }
+        onClose();
         return prev;
       }
       return next;
     });
-  };
+  }, [t.slides.length, onClose]);
 
   // Handle slide change
   useEffect(() => {
@@ -104,7 +121,7 @@ export default function AppTourModal({ isOpen, onClose }: AppTourModalProps) {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     };
-  }, [currentSlide, isOpen, isPlaying]);
+  }, [currentSlide, isOpen, isPlaying, t.slides.length, playVoiceNarration, advanceSlide]);
 
   // Handle play/pause
   useEffect(() => {
