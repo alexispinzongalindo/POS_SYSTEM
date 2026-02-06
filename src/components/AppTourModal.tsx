@@ -153,6 +153,9 @@ export default function AppTourModal({ isOpen, onClose }: AppTourModalProps) {
 
   const handleNext = () => {
     if (currentSlide < t.slides.length - 1) {
+      // Clear existing timers before navigating
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
       setCurrentSlide(currentSlide + 1);
       setProgress(0);
     }
@@ -160,6 +163,9 @@ export default function AppTourModal({ isOpen, onClose }: AppTourModalProps) {
 
   const handleBack = () => {
     if (currentSlide > 0) {
+      // Clear existing timers before navigating
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
       setCurrentSlide(currentSlide - 1);
       setProgress(0);
     }
