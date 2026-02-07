@@ -43,6 +43,7 @@ export default function SeeAppInActionPage() {
   const [voiceReady, setVoiceReady] = useState(false);
 
   const slide = slides.length ? slides[Math.min(Math.max(0, index), slides.length - 1)] : null;
+  const slideSrc = slide ? `${slide.img}?v=20260207` : "";
 
   useEffect(() => {
     let cancelled = false;
@@ -185,7 +186,7 @@ export default function SeeAppInActionPage() {
           <div className="overflow-hidden rounded-3xl border border-[var(--mp-border)] bg-white shadow-sm">
             <div className="aspect-[16/9] w-full bg-zinc-100">
               {slide ? (
-                <img src={slide.img} alt={slide.title[langKey]} className="h-full w-full object-cover" />
+                <img src={slideSrc} alt={slide.title[langKey]} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center px-8 text-center text-sm text-[var(--mp-muted)]">
                   {!slidesLoaded
