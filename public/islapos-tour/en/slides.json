@@ -65,28 +65,28 @@
   {
     "id": "offline-ready",
     "img": "/islapos-tour/en/slide_v2_08.png",
-    "title": { "en": "Offline ready", "es": "Listo sin internet" },
+    "title": { "en": "Training + support", "es": "Entrenamiento y soporte" },
     "body": {
-      "en": "Operate even with outages.",
-      "es": "Opera aún con cortes."
+      "en": "Onboard your team fast with guided training and support.",
+      "es": "Entrena a tu equipo rápido con onboarding y soporte guiado."
     }
   },
   {
     "id": "reports-quick",
     "img": "/islapos-tour/en/slide_v2_09.png",
-    "title": { "en": "Reports", "es": "Reportes" },
+    "title": { "en": "Inventory", "es": "Inventario" },
     "body": {
-      "en": "Review sales quickly.",
-      "es": "Revisa ventas rápido."
+      "en": "Track stock and avoid shortages.",
+      "es": "Controla el inventario y evita faltantes."
     }
   },
   {
     "id": "pos-cta",
     "img": "/islapos-tour/en/slide_v2_10.png",
-    "title": { "en": "IslaPOS", "es": "IslaPOS" },
+    "title": { "en": "Start free trial", "es": "Empieza la prueba" },
     "body": {
-      "en": "IslaPOS keeps service moving.",
-      "es": "IslaPOS mantiene el servicio en marcha."
+      "en": "Create your account today.",
+      "es": "Crea tu cuenta hoy."
     }
   }
 ]
