@@ -1,0 +1,76 @@
+{
+  "entries": [
+    {
+      "id": "pricing",
+      "keywords": ["pricing", "price", "plan", "plans", "cost", "subscription", "billing", "factura", "precio", "plan", "planes", "costo", "suscripcion", "suscripción", "facturacion", "facturación"],
+      "title": { "en": "Pricing and plans", "es": "Precios y planes" },
+      "answer": {
+        "en": "We offer flexible plans for restaurants. You can review pricing on the Pricing page. If you need a custom plan, contact sales.",
+        "es": "Ofrecemos planes flexibles para restaurantes. Puedes ver precios en la página de Precios. Si necesitas un plan a medida, contacta ventas."
+      }
+    },
+    {
+      "id": "trial",
+      "keywords": ["trial", "free trial", "start", "demo", "prueba", "gratis", "comenzar", "demo"],
+      "title": { "en": "Free trial", "es": "Prueba gratis" },
+      "answer": {
+        "en": "You can start a free trial from the Sign In page. We can help with IVU setup, menu, and training.",
+        "es": "Puedes iniciar una prueba gratis desde la página de Ingreso. Te ayudamos con IVU, menú y entrenamiento."
+      }
+    },
+    {
+      "id": "pos",
+      "keywords": ["pos", "register", "cashier", "caja", "ventas", "orders", "ordenes", "órdenes"],
+      "title": { "en": "POS basics", "es": "POS básico" },
+      "answer": {
+        "en": "IslaPOS lets you create orders, take payments, and manage tables. For training, use Admin → Training.",
+        "es": "IslaPOS permite crear órdenes, cobrar y administrar mesas. Para entrenamiento, usa Admin → Training."
+      }
+    },
+    {
+      "id": "menu",
+      "keywords": ["menu", "category", "product", "producto", "categoria", "categoría", "modifier", "modificador"],
+      "title": { "en": "Menu setup", "es": "Configuración del menú" },
+      "answer": {
+        "en": "Create categories and products in Admin → Menu. Add modifiers for sizes or extras.",
+        "es": "Crea categorías y productos en Admin → Menú. Agrega modificadores para tamaños o extras."
+      }
+    },
+    {
+      "id": "kds",
+      "keywords": ["kds", "kitchen", "cocina", "display", "pantalla"],
+      "title": { "en": "Kitchen Display (KDS)", "es": "Pantalla de cocina (KDS)" },
+      "answer": {
+        "en": "Generate KDS links in Admin → KDS QR Codes. Each station can scan a QR to view orders.",
+        "es": "Genera links KDS en Admin → KDS QR Codes. Cada estación puede escanear un QR para ver órdenes."
+      }
+    },
+    {
+      "id": "offline",
+      "keywords": ["offline", "hurricane", "sin internet", "sync", "sincronizar"],
+      "title": { "en": "Offline mode", "es": "Modo offline" },
+      "answer": {
+        "en": "If there is no internet, POS keeps tickets locally. Sync later from POS → Offline.",
+        "es": "Si no hay internet, el POS guarda tickets localmente. Sincroniza luego desde POS → Offline."
+      }
+    },
+    {
+      "id": "qr",
+      "keywords": ["qr", "menu qr", "codigo", "código", "scan"],
+      "title": { "en": "QR menu", "es": "Menú QR" },
+      "answer": {
+        "en": "Create a QR menu in Admin → QR Code Menu so customers can scan and view the menu.",
+        "es": "Crea un menú QR en Admin → QR Code Menu para que los clientes escaneen y vean el menú."
+      }
+    },
+    {
+      "id": "sales",
+      "keywords": ["sales", "quote", "proposal", "enterprise", "demo", "ventas", "cotizacion", "cotización", "propuesta", "empresarial"],
+      "title": { "en": "Sales inquiry", "es": "Consulta de ventas" },
+      "answer": {
+        "en": "We can provide a demo and a tailored proposal. Use the Contact page and we will respond promptly.",
+        "es": "Podemos brindar demo y propuesta a medida. Usa la página de Contacto y te respondemos pronto."
+      }
+    }
+  ]
+}

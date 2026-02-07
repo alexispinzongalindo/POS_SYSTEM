@@ -3,6 +3,7 @@
 import { marketingCopy } from "@/lib/marketingCopy";
 import { useMarketingLang } from "@/lib/useMarketingLang";
 import MarketingLogo from "@/components/MarketingLogo";
+import MarketingSupportAssistant from "@/components/MarketingSupportAssistant";
 
 type MarketingFooterProps = {
   showCta?: boolean;
@@ -42,6 +43,8 @@ export default function MarketingFooter({ showCta = true }: MarketingFooterProps
           </div>
         </div>
       ) : null}
+
+      <MarketingSupportAssistant />
 
       <div className="mt-10 flex flex-col gap-3 text-xs text-[var(--mp-muted)] sm:flex-row sm:items-center sm:justify-between">
         <div className="inline-flex items-center gap-3">
