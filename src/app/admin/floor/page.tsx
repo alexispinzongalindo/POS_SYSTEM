@@ -923,6 +923,117 @@ export default function AdminFloorPlanPage() {
           )}
         </div>
       </div>
+
+      {selected && canEdit ? (
+        <div className="fixed bottom-6 right-6 z-40 w-[min(360px,calc(100vw-24px))] rounded-3xl border border-[var(--mp-border)] bg-white p-5 shadow-xl">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-xs font-semibold text-[var(--mp-muted)]">{t.selected}</div>
+              <div className="text-base font-semibold">
+                {selected.kind === "table" ? `${t.tableNumber} ${selected.row.table_number}` : selected.row.kind.toUpperCase()}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--mp-border)] bg-white text-sm font-semibold hover:bg-white"
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
+
+          {selected.kind === "table" ? (
+            <div className="mt-4 grid gap-3">
+              <label className="flex flex-col gap-1 text-xs font-semibold text-[var(--mp-muted)]">
+                {t.seats}
+                <input
+                  type="number"
+                  value={selected.row.seats}
+                  onChange={(e) => setSelected({ kind: "table", row: { ...selected.row, seats: Number(e.target.value) } })}
+                  onBlur={() => void persistSelected(selected)}
+                  className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm font-medium outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                />
+              </label>
+
+              <label className="flex flex-col gap-1 text-xs font-semibold text-[var(--mp-muted)]">
+                {t.shape}
+                <select
+                  value={selected.row.shape}
+                  onChange={(e) =>
+                    setSelected({
+                      kind: "table",
+                      row: { ...selected.row, shape: e.target.value as FloorTableShape },
+                    })
+                  }
+                  onBlur={() => void persistSelected(selected)}
+                  className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm font-medium outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                >
+                  <option value="round">{t.shapeRound}</option>
+                  <option value="square">{t.shapeSquare}</option>
+                  <option value="rectangle">{t.shapeRectangle}</option>
+                </select>
+              </label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex flex-col gap-1 text-xs font-semibold text-[var(--mp-muted)]">
+                  {t.width}
+                  <input
+                    type="number"
+                    value={selected.row.width}
+                    onChange={(e) =>
+                      setSelected({ kind: "table", row: { ...selected.row, width: Number(e.target.value) } })
+                    }
+                    onBlur={() => void persistSelected(selected)}
+                    className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm font-medium outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-xs font-semibold text-[var(--mp-muted)]">
+                  {t.height}
+                  <input
+                    type="number"
+                    value={selected.row.height}
+                    onChange={(e) =>
+                      setSelected({ kind: "table", row: { ...selected.row, height: Number(e.target.value) } })
+                    }
+                    onBlur={() => void persistSelected(selected)}
+                    className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm font-medium outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                  />
+                </label>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void onDeleteSelected()}
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white"
+              >
+                {t.deleteTable}
+              </button>
+            </div>
+          ) : (
+            <div className="mt-4 grid gap-3">
+              <label className="flex flex-col gap-1 text-xs font-semibold text-[var(--mp-muted)]">
+                {t.label}
+                <input
+                  value={selected.row.label ?? ""}
+                  onChange={(e) =>
+                    setSelected({ kind: "object", row: { ...selected.row, label: e.target.value } })
+                  }
+                  onBlur={() => void persistSelected(selected)}
+                  className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm font-medium outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => void onDeleteSelected()}
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white"
+              >
+                {t.deleteObject}
+              </button>
+            </div>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }
