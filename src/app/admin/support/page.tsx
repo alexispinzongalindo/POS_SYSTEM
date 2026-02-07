@@ -75,7 +75,70 @@ export default function AdminSupportPage() {
     waCustomer: isEs ? "Cliente" : "Customer",
     waPhone: isEs ? "Teléfono" : "Phone",
     waDetails: isEs ? "Detalles" : "Details",
+    aiTitle: isEs ? "Asistente de soporte" : "Support Assistant",
+    aiSubtitle: isEs ? "Describe tu problema y te daré pasos rápidos." : "Describe your issue and I’ll suggest next steps.",
+    aiPlaceholder: isEs ? "Escribe tu problema (ej. impresora no imprime)" : "Describe your issue (e.g., printer not printing)",
+    aiSend: isEs ? "Enviar" : "Send",
+    aiNoAnswer: isEs
+      ? "No encontré una guía exacta. Puedo crear un caso para soporte."
+      : "I couldn’t find an exact guide. I can create a support case.",
+    aiCreateCase: isEs ? "Crear caso desde el chat" : "Create case from chat",
+    aiSuggested: isEs ? "Sugerencia" : "Suggestion",
+    aiUser: isEs ? "Tú" : "You",
+    aiAssistant: isEs ? "Asistente" : "Assistant",
   };
+
+  const faq = [
+    {
+      id: "printer",
+      keywords: ["printer", "imprimir", "print", "impresora", "receipt", "ticket", "hub"],
+      title: { en: "Printer not printing", es: "La impresora no imprime" },
+      answer: {
+        en: "Check power, USB/network, then open the Windows Print Hub and confirm it shows as connected. Reprint from POS.",
+        es: "Revisa energía, USB/red, luego abre Windows Print Hub y confirma conexión. Reimprime desde POS.",
+      },
+    },
+    {
+      id: "login",
+      keywords: ["login", "sign in", "password", "contraseña", "ingresar", "session"],
+      title: { en: "Login issues", es: "Problemas de inicio de sesión" },
+      answer: {
+        en: "Verify email/password, reset password if needed, and check if your role has access.",
+        es: "Verifica email/contraseña, restablece si es necesario y confirma que tu rol tiene acceso.",
+      },
+    },
+    {
+      id: "menu",
+      keywords: ["menu", "category", "product", "producto", "categoría", "modifier", "modificador"],
+      title: { en: "Menu setup", es: "Configuración del menú" },
+      answer: {
+        en: "Go to Admin → Menu. Create categories, then add products and assign modifiers.",
+        es: "Ve a Admin → Menú. Crea categorías, luego agrega productos y asigna modificadores.",
+      },
+    },
+    {
+      id: "kds",
+      keywords: ["kds", "kitchen", "cocina", "display", "pantalla"],
+      title: { en: "KDS not updating", es: "KDS no actualiza" },
+      answer: {
+        en: "Confirm KDS link is active and refresh the KDS screen. Orders update every few seconds.",
+        es: "Confirma que el link KDS está activo y refresca la pantalla. Las órdenes actualizan cada pocos segundos.",
+      },
+    },
+    {
+      id: "offline",
+      keywords: ["offline", "sin internet", "hurricane", "modo", "sync", "sincronizar"],
+      title: { en: "Offline mode", es: "Modo offline" },
+      answer: {
+        en: "Use POS → Offline to sync tickets when connection returns.",
+        es: "Usa POS → Offline para sincronizar tickets cuando vuelva la conexión.",
+      },
+    },
+  ];
+
+  type ChatMsg = { role: "user" | "assistant"; text: string };
+  const [aiInput, setAiInput] = useState("");
+  const [aiMessages, setAiMessages] = useState<ChatMsg[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -180,12 +243,12 @@ export default function AdminSupportPage() {
     setRows(json?.cases ?? []);
   }
 
-  async function createCase() {
+  async function createCaseWith(subject: string, description: string) {
     setError(null);
     setSuccess(null);
 
-    const subject = newSubject.trim();
-    if (!subject) {
+    const subjectValue = subject.trim();
+    if (!subjectValue) {
       setError(t.subjectRequired);
       return;
     }
@@ -196,8 +259,8 @@ export default function AdminSupportPage() {
       body: JSON.stringify({
         customerName: newCustomerName.trim() ? newCustomerName.trim() : null,
         customerPhone: newCustomerPhone.trim() ? newCustomerPhone.trim() : null,
-        subject,
-        description: newDescription.trim() ? newDescription.trim() : null,
+        subject: subjectValue,
+        description: description.trim() ? description.trim() : null,
         priority: newPriority,
       }),
     });
@@ -218,6 +281,37 @@ export default function AdminSupportPage() {
     setSuccess(t.caseCreated);
   }
 
+  async function createCase() {
+    return createCaseWith(newSubject, newDescription);
+  }
+
+  function respondWithFaq(message: string) {
+    const text = message.toLowerCase();
+    let best: { score: number; item: (typeof faq)[number] | null } = { score: 0, item: null };
+    for (const item of faq) {
+      const score = item.keywords.reduce((acc, k) => (text.includes(k) ? acc + 1 : acc), 0);
+      if (score > best.score) best = { score, item };
+    }
+    if (!best.item || best.score === 0) {
+      return t.aiNoAnswer;
+    }
+    return `${t.aiSuggested}: ${isEs ? best.item.title.es : best.item.title.en}\n${isEs ? best.item.answer.es : best.item.answer.en}`;
+  }
+
+  function onAiSend() {
+    const msg = aiInput.trim();
+    if (!msg) return;
+    setAiMessages((prev) => [...prev, { role: "user", text: msg }, { role: "assistant", text: respondWithFaq(msg) }]);
+    setAiInput("");
+  }
+
+  async function onAiCreateCase() {
+    const lastUser = [...aiMessages].reverse().find((m) => m.role === "user")?.text ?? "";
+    const lastAssistant = [...aiMessages].reverse().find((m) => m.role === "assistant")?.text ?? "";
+    const subject = lastUser || (isEs ? "Soporte" : "Support");
+    const description = `${lastUser}\n\n${lastAssistant}`.trim();
+    await createCaseWith(subject, description);
+  }
   async function updateCase(id: string, patch: Partial<SupportCaseRow> & { internal_notes?: string | null }) {
     setError(null);
     setSuccess(null);
@@ -425,6 +519,52 @@ export default function AdminSupportPage() {
               >
                 {t.refresh}
               </button>
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-4">
+              <div className="text-sm font-semibold">{t.aiTitle}</div>
+              <div className="mt-1 text-xs text-[var(--mp-muted)]">{t.aiSubtitle}</div>
+
+              <div className="mt-3 grid gap-2">
+                <div className="max-h-52 overflow-auto rounded-xl border border-[var(--mp-border)] bg-[#fffdf7] p-3 text-sm">
+                  {aiMessages.length === 0 ? (
+                    <div className="text-[var(--mp-muted)]">{t.aiNoAnswer}</div>
+                  ) : (
+                    aiMessages.map((m, i) => (
+                      <div key={`${m.role}-${i}`} className="mb-2">
+                        <div className="text-xs font-semibold text-[var(--mp-muted)]">
+                          {m.role === "user" ? t.aiUser : t.aiAssistant}
+                        </div>
+                        <div className="whitespace-pre-line">{m.text}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="grid grid-cols-[1fr_auto] gap-2">
+                  <input
+                    value={aiInput}
+                    onChange={(e) => setAiInput(e.target.value)}
+                    placeholder={t.aiPlaceholder}
+                    className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                  />
+                  <button
+                    type="button"
+                    onClick={onAiSend}
+                    className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-4 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+                  >
+                    {t.aiSend}
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => void onAiCreateCase()}
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm font-semibold hover:bg-zinc-50"
+                >
+                  {t.aiCreateCase}
+                </button>
+              </div>
             </div>
           </div>
 
