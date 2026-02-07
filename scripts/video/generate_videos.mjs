@@ -2,6 +2,7 @@
 
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { readdir } from 'node:fs/promises';
 import { 
   runShell, 
   readFile, 
@@ -145,6 +146,19 @@ async function prepareSlides(processedVideo, lang, workspaceDir) {
     const count = await runShell(countCmd);
     console.log(`Extracted ${count} keyframes`);
   } else {
+    // Use existing marketing tour slides if available
+    const publicSlidesDir = join(process.cwd(), 'public', 'islapos-tour', lang);
+    try {
+      const files = await readdir(publicSlidesDir);
+      const hasSlides = files.some((f) => /^slide_.*\.(png|jpg|jpeg)$/i.test(f));
+      if (hasSlides) {
+        console.log(`Using existing slides from ${publicSlidesDir}`);
+        return publicSlidesDir;
+      }
+    } catch {
+      // ignore and fallback to placeholders
+    }
+
     // Generate placeholder slides
     console.log('Generating placeholder slides...');
     
@@ -182,7 +196,7 @@ async function generateVideo(slidesDir, audioPath, outputPath, scriptLines) {
   console.log('=== Generating video ===');
   
   // Get list of slides
-  const slidesListCmd = `ls -1 "${slidesDir}"/slide_*.png | sort`;
+  const slidesListCmd = `ls -1 "${slidesDir}"/slide_*.png "${slidesDir}"/slide_*.jpg "${slidesDir}"/slide_*.jpeg 2>/dev/null | sort`;
   const slidesList = await runShell(slidesListCmd);
   const slides = slidesList.split('\n').filter(s => s);
   

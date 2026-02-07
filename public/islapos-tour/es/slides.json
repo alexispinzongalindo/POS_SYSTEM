@@ -1,0 +1,92 @@
+[
+  {
+    "id": "welcome",
+    "img": "/islapos-tour/es/slide_01.png",
+    "title": { "en": "Welcome to IslaPOS", "es": "Bienvenido a IslaPOS" },
+    "body": {
+      "en": "The modern POS built for restaurants in Puerto Rico.",
+      "es": "El POS moderno para restaurantes en Puerto Rico."
+    }
+  },
+  {
+    "id": "admin",
+    "img": "/islapos-tour/es/slide_02.png",
+    "title": { "en": "Admin setup", "es": "Admin setup" },
+    "body": {
+      "en": "Set up your business, users, and IVU from one dashboard.",
+      "es": "Configura negocio, usuarios e IVU desde un solo panel."
+    }
+  },
+  {
+    "id": "menu",
+    "img": "/islapos-tour/es/slide_03.png",
+    "title": { "en": "Menu builder", "es": "Menu builder" },
+    "body": {
+      "en": "Create categories, items, and barcode or SKU lookup.",
+      "es": "Crea categorías, artículos y búsqueda por código o SKU."
+    }
+  },
+  {
+    "id": "pos",
+    "img": "/islapos-tour/es/slide_04.png",
+    "title": { "en": "Fast POS", "es": "POS rápido" },
+    "body": {
+      "en": "Take orders fast with tables, open tickets, and quick search.",
+      "es": "Toma órdenes rápido con mesas, tickets abiertos y búsqueda ágil."
+    }
+  },
+  {
+    "id": "kitchen",
+    "img": "/islapos-tour/es/slide_05.png",
+    "title": { "en": "Kitchen display", "es": "Pantalla de cocina" },
+    "body": {
+      "en": "Keep the kitchen synchronized with a live ticket view.",
+      "es": "Mantén la cocina sincronizada con tickets en vivo."
+    }
+  },
+  {
+    "id": "reports",
+    "img": "/islapos-tour/es/slide_06.png",
+    "title": { "en": "Reports", "es": "Reportes" },
+    "body": {
+      "en": "Track sales and trends with reports you can trust.",
+      "es": "Revisa ventas y tendencias con reportes confiables."
+    }
+  },
+  {
+    "id": "offline",
+    "img": "/islapos-tour/es/slide_07.jpg",
+    "title": { "en": "Offline mode", "es": "Modo offline" },
+    "body": {
+      "en": "Keep working even when the internet goes down.",
+      "es": "Sigue operando aunque se vaya el internet."
+    }
+  },
+  {
+    "id": "training",
+    "img": "/islapos-tour/es/slide_08.jpg",
+    "title": { "en": "Training + support", "es": "Entrenamiento y soporte" },
+    "body": {
+      "en": "Onboard your team with guided training and support.",
+      "es": "Entrena tu equipo con onboarding guiado y soporte real."
+    }
+  },
+  {
+    "id": "scale",
+    "img": "/islapos-tour/es/slide_09.jpg",
+    "title": { "en": "Scale up", "es": "Escala" },
+    "body": {
+      "en": "Add locations and grow when you are ready.",
+      "es": "Agrega locales y crece cuando estés listo."
+    }
+  },
+  {
+    "id": "cta",
+    "img": "/islapos-tour/es/slide_10.jpg",
+    "title": { "en": "Start free trial", "es": "Empieza la prueba" },
+    "body": {
+      "en": "That is the IslaPOS tour. Start your free trial today.",
+      "es": "Ese fue el tour de IslaPOS. Empieza tu prueba gratis hoy."
+    }
+  }
+]

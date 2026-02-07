@@ -1,29 +1,19 @@
-Welcome to IslaPOS, the modern point of sale system for restaurants.
+Welcome to IslaPOS, the modern POS built for restaurants in Puerto Rico.
 
-Start at the Admin dashboard to manage your entire business from one central hub.
+Start in the Admin dashboard to set up your business, users, and IVU.
 
-Use the Floor Plan to arrange tables and seating for optimal service.
+Build your menu with categories, items, and barcode or SKU lookup.
 
-View and manage Orders in real time, keeping your kitchen and service staff synchronized.
+Take orders fast in the POS with tables, open tickets, and quick search.
 
-Check Reports to track sales trends and business performance metrics.
+Run the kitchen with a live display that keeps tickets organized.
 
-Manage Inventory to keep stock levels accurate and prevent shortages.
+Track sales and trends with reports you can trust.
 
-Set up Reservations and accept bookings to maximize table utilization.
+Stay resilient with offline mode when internet goes down.
 
-Manage Staff roles and permissions to ensure secure access across your team.
+Train your team with guided onboarding and support resources.
 
-Access Support resources when you need help or have questions.
+Add locations and scale when you are ready.
 
-Use Training materials to onboard new team members quickly and effectively.
-
-The POS screen lets you take orders quickly with an intuitive interface.
-
-View Tables and manage seating status at a glance.
-
-The Kitchen Display shows active orders prioritized for efficient preparation.
-
-Review Order History anytime to track customer preferences and resolve issues.
-
-Thank you for touring IslaPOS. We're here to help your restaurant succeed.
+That is the IslaPOS tour. Start your free trial today.

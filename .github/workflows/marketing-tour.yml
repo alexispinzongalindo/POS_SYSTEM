@@ -1,0 +1,61 @@
+name: Marketing Tour Video
+
+on:
+  workflow_dispatch:
+    inputs:
+      total_seconds:
+        description: "Total duration in seconds (default 60)"
+        required: false
+        type: string
+        default: "60"
+
+permissions:
+  contents: read
+
+jobs:
+  build-tour:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Build English tour
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          TOUR_TOTAL_SECONDS: ${{ inputs.total_seconds }}
+        run: |
+          npm run build:tour:en
+
+      - name: Build Spanish tour
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          TOUR_TOTAL_SECONDS: ${{ inputs.total_seconds }}
+        run: |
+          npm run build:tour:es
+
+      - name: Upload tour videos
+        uses: actions/upload-artifact@v4
+        with:
+          name: islapos-tour-videos
+          path: |
+            public/videos/islapos-en.mp4
+            public/videos/islapos-es.mp4
+            public/videos/islapos-en.mp3
+            public/videos/islapos-es.mp3
+          retention-days: 30

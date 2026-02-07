@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { chromium } from "playwright";
+import { chromium, firefox } from "playwright";
 import {
   getCredentials,
   getRecordingBaseUrl,
@@ -52,7 +52,8 @@ async function hasFatalUi(page) {
 
 async function launchSlidesContext({ lang, storageState }) {
   const headless = (process.env.RECORD_HEADLESS ?? "true").toLowerCase().trim() !== "false";
-  const browser = await chromium.launch({ headless });
+  const browserType = (process.env.RECORD_BROWSER ?? "chromium").toLowerCase() === "firefox" ? firefox : chromium;
+  const browser = await browserType.launch({ headless });
   const context = await browser.newContext({
     viewport: { width: 1920, height: 1080 },
     ...(storageState ? { storageState } : {}),

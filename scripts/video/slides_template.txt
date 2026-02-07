@@ -5,81 +5,56 @@ This file describes the suggested slides for the tour video. Each slide should b
 ## Slide 1: Welcome
 **Heading:** Welcome to IslaPOS
 **Description:** Show the IslaPOS logo with tagline "Modern POS for Restaurants"
-**Duration:** 4 seconds
+**Duration:** 6 seconds
 
-## Slide 2: Admin Dashboard
+## Slide 2: Admin Setup
 **Heading:** Admin Dashboard
-**Description:** Screenshot or mockup of the admin dashboard showing key metrics
+**Description:** Admin overview: business setup, users, IVU
 **Duration:** 6 seconds
 
-## Slide 3: Floor Plan
-**Heading:** Floor Plan Management
-**Description:** Visual of table arrangement and seating layout interface
-**Duration:** 5 seconds
-
-## Slide 4: Orders
-**Heading:** Real-Time Orders
-**Description:** Order management screen with active orders
+## Slide 3: Menu Builder
+**Heading:** Menu + Products
+**Description:** Categories, items, barcodes/SKU
 **Duration:** 6 seconds
 
-## Slide 5: Reports
-**Heading:** Business Reports
-**Description:** Charts and graphs showing sales analytics
-**Duration:** 5 seconds
-
-## Slide 6: Inventory
-**Heading:** Inventory Management
-**Description:** Stock levels and inventory tracking interface
-**Duration:** 5 seconds
-
-## Slide 7: Reservations
-**Heading:** Reservation System
-**Description:** Calendar view with booking management
-**Duration:** 5 seconds
-
-## Slide 8: Staff Management
-**Heading:** Staff & Permissions
-**Description:** User roles and access control interface
-**Duration:** 5 seconds
-
-## Slide 9: Support
-**Heading:** Support Resources
-**Description:** Help center and documentation access
-**Duration:** 4 seconds
-
-## Slide 10: Training
-**Heading:** Training Materials
-**Description:** Onboarding and training resource library
-**Duration:** 5 seconds
-
-## Slide 11: POS Screen
+## Slide 4: POS Workflow
 **Heading:** Point of Sale
-**Description:** Main POS interface for taking orders
-**Duration:** 5 seconds
+**Description:** Orders, open tickets, fast search
+**Duration:** 6 seconds
 
-## Slide 12: Tables View
-**Heading:** Table Management
-**Description:** Real-time table status and seating
-**Duration:** 4 seconds
+## Slide 5: Kitchen Display
+**Heading:** Kitchen Display
+**Description:** Live ticket flow and kitchen status
+**Duration:** 6 seconds
 
-## Slide 13: Kitchen Display
-**Heading:** Kitchen Display System
-**Description:** Order queue for kitchen staff
-**Duration:** 5 seconds
+## Slide 6: Reports
+**Heading:** Reports
+**Description:** Sales trends and performance metrics
+**Duration:** 6 seconds
 
-## Slide 14: Order History
-**Heading:** Order History
-**Description:** Historical order lookup and tracking
-**Duration:** 5 seconds
+## Slide 7: Offline Mode
+**Heading:** Offline Mode
+**Description:** Continue working without internet
+**Duration:** 6 seconds
 
-## Slide 15: Thank You
-**Heading:** Thank You
-**Description:** IslaPOS logo with contact information
-**Duration:** 4 seconds
+## Slide 8: Training + Support
+**Heading:** Training & Support
+**Description:** Guided onboarding and help resources
+**Duration:** 6 seconds
+
+## Slide 9: Scale
+**Heading:** Multi-location
+**Description:** Add locations and users as you grow
+**Duration:** 6 seconds
+
+## Slide 10: Thank You
+**Heading:** Start Free Trial
+**Description:** IslaPOS logo with CTA
+**Duration:** 6 seconds
 
 ---
 
-**Total Duration:** ~73 seconds
+**Total Duration:** ~60 seconds
 **Format:** 1920x1080 PNG or JPEG
 **Location:** public/slides/tour/
 **Naming:** slide_01.png, slide_02.png, etc.
