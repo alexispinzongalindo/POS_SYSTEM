@@ -96,7 +96,7 @@ export default function AdminReportsPage() {
           ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
           : new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    const t = window.setTimeout(() => {
+    const timerId = window.setTimeout(() => {
       void (async () => {
         setRowsLoading(true);
         setError(null);
@@ -113,7 +113,7 @@ export default function AdminReportsPage() {
       })();
     }, 150);
 
-    return () => window.clearTimeout(t);
+    return () => window.clearTimeout(timerId);
   }, [loading, range, restaurantId]);
 
   const summary = useMemo(() => {
