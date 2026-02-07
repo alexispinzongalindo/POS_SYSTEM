@@ -6,9 +6,30 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getSetupContext, listMenuItems, type MenuItem } from "@/lib/setupData";
 import { loadInventory, saveInventory, type InventoryState } from "@/lib/inventory";
+import { useMarketingLang } from "@/lib/useMarketingLang";
 
 export default function AdminInventoryPage() {
   const router = useRouter();
+  const { lang } = useMarketingLang();
+  const isEs = lang === "es";
+  const t = {
+    loading: isEs ? "Cargando…" : "Loading…",
+    title: isEs ? "Inventario" : "Inventory",
+    subtitle: isEs
+      ? "Controla el stock por artículo (guardado en este dispositivo). El stock baja cuando el ticket se marca como pagado."
+      : "Track stock per item (stored on this device). Stock will decrement when tickets are marked paid.",
+    back: isEs ? "Volver" : "Back",
+    items: isEs ? "Artículos" : "Items",
+    activeRestaurant: isEs ? "Restaurante activo" : "Active restaurant",
+    search: isEs ? "Buscar artículos" : "Search items",
+    noneFound: isEs ? "No se encontraron artículos." : "No items found.",
+    sku: isEs ? "SKU" : "SKU",
+    barcode: isEs ? "Código de barras" : "Barcode",
+    track: isEs ? "Rastrear" : "Track",
+    outOfStock: isEs ? "Sin stock" : "Out of stock",
+    inStock: isEs ? "En stock" : "In stock",
+    notTracked: isEs ? "No rastreado" : "Not tracked",
+  };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -123,7 +144,7 @@ export default function AdminInventoryPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</div>
+        <div className="text-sm text-zinc-600 dark:text-zinc-400">{t.loading}</div>
       </div>
     );
   }
@@ -133,16 +154,16 @@ export default function AdminInventoryPage() {
       <div className="mx-auto w-full max-w-5xl px-6 py-10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Inventory</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t.title}</h1>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              Track stock per item (stored on this device). Stock will decrement when tickets are marked paid.
+              {t.subtitle}
             </p>
           </div>
           <button
             onClick={() => router.push("/admin")}
             className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
           >
-            Back
+            {t.back}
           </button>
         </div>
 
@@ -161,13 +182,15 @@ export default function AdminInventoryPage() {
         <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-base font-semibold">Items</h2>
-              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Active restaurant: {restaurantId ?? "-"}</p>
+              <h2 className="text-base font-semibold">{t.items}</h2>
+              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                {t.activeRestaurant}: {restaurantId ?? "-"}
+              </p>
             </div>
 
             <input
               className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 sm:w-72 dark:border-zinc-800 dark:bg-black"
-              placeholder="Search items"
+              placeholder={t.search}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -175,7 +198,7 @@ export default function AdminInventoryPage() {
 
           <div className="mt-4 flex flex-col gap-2">
             {filteredItems.length === 0 ? (
-              <div className="text-sm text-zinc-600 dark:text-zinc-400">No items found.</div>
+              <div className="text-sm text-zinc-600 dark:text-zinc-400">{t.noneFound}</div>
             ) : (
               filteredItems.map((it) => {
                 const state = inv[it.id] ?? { tracked: false, stock: 0, updatedAt: new Date(0).toISOString() };
@@ -191,8 +214,8 @@ export default function AdminInventoryPage() {
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">{it.name}</div>
                       <div className="text-xs text-zinc-600 dark:text-zinc-400">
-                        {it.sku ? `SKU: ${it.sku}` : ""}
-                        {it.barcode ? ` • Barcode: ${it.barcode}` : ""}
+                        {it.sku ? `${t.sku}: ${it.sku}` : ""}
+                        {it.barcode ? ` • ${t.barcode}: ${it.barcode}` : ""}
                       </div>
                     </div>
 
@@ -203,7 +226,7 @@ export default function AdminInventoryPage() {
                           checked={state.tracked}
                           onChange={(e) => setTracked(it.id, e.target.checked)}
                         />
-                        Track
+                        {t.track}
                       </label>
 
                       <input
@@ -215,7 +238,7 @@ export default function AdminInventoryPage() {
                       />
 
                       <div className="text-xs text-zinc-600 dark:text-zinc-400">
-                        {state.tracked ? (low ? "Out of stock" : "In stock") : "Not tracked"}
+                        {state.tracked ? (low ? t.outOfStock : t.inStock) : t.notTracked}
                       </div>
                     </div>
                   </div>
