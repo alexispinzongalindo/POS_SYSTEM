@@ -1,15 +1,32 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import MarketingHeader from "@/components/MarketingHeader";
 import MarketingCard from "@/components/MarketingCard";
 import MarketingFooter from "@/components/MarketingFooter";
 import MarketingSection from "@/components/MarketingSection";
+import { AppTourModal } from "@/components/AppTourModal";
 import { marketingCopy } from "@/lib/marketingCopy";
 import { useMarketingLang } from "@/lib/useMarketingLang";
 
 export default function Home() {
   const { lang } = useMarketingLang();
   const t = marketingCopy(lang);
+  const [showTour, setShowTour] = useState(false);
+
+  // Handle ESC key to close tour
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showTour) {
+        setShowTour(false);
+      }
+    };
+
+    if (showTour) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [showTour]);
 
   return (
     <div className="islapos-marketing min-h-screen bg-[var(--mp-bg)] text-[var(--mp-fg)]">
@@ -50,6 +67,17 @@ export default function Home() {
               >
                 {lang === "es" ? "Entrar" : "Sign in"}
               </a>
+
+              <button
+                onClick={() => setShowTour(true)}
+                className="inline-flex h-11 items-center justify-center rounded-lg border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 px-6 text-sm font-medium text-emerald-700 hover:from-emerald-100 hover:to-teal-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all duration-200"
+              >
+                <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {lang === "es" ? "Iniciar Tour" : "Start Tour"}
+              </button>
             </div>
 
             <p className="mt-5 text-sm font-semibold tracking-tight">{t.tagline}</p>
@@ -428,6 +456,9 @@ export default function Home() {
 
         <MarketingFooter />
       </div>
+
+      {/* App Tour Modal */}
+      <AppTourModal isOpen={showTour} onClose={() => setShowTour(false)} />
     </div>
   );
 }
