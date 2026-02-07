@@ -14,6 +14,7 @@ import {
   type OrderStatus,
   type OrderType,
 } from "@/lib/posData";
+import { useMarketingLang } from "@/lib/useMarketingLang";
 
 const STATUS_COLORS: Record<string, string> = {
   open: "bg-blue-100 text-blue-800",
@@ -22,13 +23,6 @@ const STATUS_COLORS: Record<string, string> = {
   paid: "bg-emerald-100 text-emerald-800",
   canceled: "bg-zinc-100 text-zinc-600",
   refunded: "bg-red-100 text-red-800",
-};
-
-const ORDER_TYPE_LABELS: Record<string, string> = {
-  counter: "Counter",
-  pickup: "Pickup",
-  delivery: "Delivery",
-  dine_in: "Dine In",
 };
 
 function toDateInputValue(d: Date) {
@@ -50,6 +44,59 @@ function endOfLocalDayIso(dateInput: string) {
 
 export default function AdminOrdersPage() {
   const router = useRouter();
+  const { lang } = useMarketingLang();
+  const isEs = lang === "es";
+  const t = {
+    loading: isEs ? "Cargando…" : "Loading…",
+    title: isEs ? "Órdenes" : "Orders",
+    subtitle: isEs ? "Ver y administrar todas las órdenes" : "View and manage all orders",
+    kitchen: isEs ? "Pantalla de cocina" : "Kitchen Display",
+    back: isEs ? "← Volver" : "← Back",
+    allStatuses: isEs ? "Todos los estados" : "All statuses",
+    allTypes: isEs ? "Todos los tipos" : "All types",
+    from: isEs ? "Desde:" : "From:",
+    to: isEs ? "Hasta:" : "To:",
+    deleteSelected: isEs ? "Eliminar seleccionados" : "Delete selected",
+    deleting: isEs ? "Eliminando…" : "Deleting...",
+    liveUpdates: isEs ? "Actualizaciones en vivo" : "Live updates",
+    ordersCount: (count: number) => (isEs ? `Órdenes (${count})` : `Orders (${count})`),
+    noOrders: isEs ? "No se encontraron órdenes" : "No orders found",
+    orderDetails: isEs ? "Detalles de la orden" : "Order Details",
+    selectOrder: isEs ? "Selecciona una orden para ver detalles" : "Select an order to view details",
+    type: isEs ? "Tipo" : "Type",
+    customer: isEs ? "Cliente" : "Customer",
+    total: isEs ? "Total" : "Total",
+    created: isEs ? "Creada" : "Created",
+    payment: isEs ? "Pago" : "Payment",
+    items: isEs ? "Artículos" : "Items",
+    loadingItems: isEs ? "Cargando…" : "Loading...",
+    noItems: isEs ? "Sin artículos" : "No items",
+    updateStatus: isEs ? "Actualizar estado" : "Update Status",
+    startPreparing: isEs ? "Iniciar preparación" : "Start Preparing",
+    markReady: isEs ? "Marcar listo" : "Mark Ready",
+    cancel: isEs ? "Cancelar" : "Cancel",
+    walkIn: isEs ? "Sin nombre" : "Walk-in",
+    confirmDelete: (count: number) =>
+      isEs
+        ? `¿Eliminar ${count} transacción(es)? Esto no se puede deshacer.`
+        : `Delete ${count} transaction(s)? This cannot be undone.`,
+    deleteFailed: isEs ? "No se pudieron eliminar las transacciones" : "Failed to delete transactions",
+    noRestaurant: isEs ? "No hay restaurante seleccionado" : "No restaurant selected",
+  };
+  const statusLabels: Record<string, string> = {
+    open: isEs ? "Abierta" : "Open",
+    preparing: isEs ? "Preparando" : "Preparing",
+    ready: isEs ? "Lista" : "Ready",
+    paid: isEs ? "Pagada" : "Paid",
+    canceled: isEs ? "Cancelada" : "Canceled",
+    refunded: isEs ? "Reembolsada" : "Refunded",
+  };
+  const orderTypeLabels: Record<string, string> = {
+    counter: isEs ? "Mostrador" : "Counter",
+    pickup: isEs ? "Pickup" : "Pickup",
+    delivery: isEs ? "Delivery" : "Delivery",
+    dine_in: isEs ? "Mesa" : "Dine In",
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
@@ -108,7 +155,7 @@ export default function AdminOrdersPage() {
 
       const restId = cfg.data.restaurant_id;
       if (!restId) {
-        setError("No restaurant selected");
+        setError(t.noRestaurant);
         setLoading(false);
         return;
       }
@@ -168,7 +215,7 @@ export default function AdminOrdersPage() {
 
     if (ids.length === 0) return;
 
-    const ok = typeof window !== "undefined" ? window.confirm(`Delete ${ids.length} transaction(s)? This cannot be undone.`) : false;
+    const ok = typeof window !== "undefined" ? window.confirm(t.confirmDelete(ids.length)) : false;
     if (!ok) return;
 
     setDeleting(true);
@@ -192,7 +239,7 @@ export default function AdminOrdersPage() {
 
       const payload = (await r.json().catch(() => null)) as { error?: string } | null;
       if (!r.ok) {
-        setError(payload?.error ?? "Failed to delete transactions");
+        setError(payload?.error ?? t.deleteFailed);
         return;
       }
 
@@ -253,7 +300,7 @@ export default function AdminOrdersPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--mp-bg)] flex items-center justify-center">
-        <div className="text-[var(--mp-muted)]">Loading...</div>
+        <div className="text-[var(--mp-muted)]">{t.loading}</div>
       </div>
     );
   }
@@ -264,9 +311,9 @@ export default function AdminOrdersPage() {
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Orders</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t.title}</h1>
             <p className="mt-1 text-sm text-[var(--mp-muted)]">
-              View and manage all orders
+              {t.subtitle}
             </p>
           </div>
           <div className="flex gap-2">
@@ -274,13 +321,13 @@ export default function AdminOrdersPage() {
               href="/pos/kitchen"
               className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-4 text-sm font-medium text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
             >
-              Kitchen Display
+              {t.kitchen}
             </a>
             <a
               href="/admin"
               className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm font-medium hover:bg-zinc-50"
             >
-              ← Back
+              {t.back}
             </a>
           </div>
         </div>
@@ -298,13 +345,13 @@ export default function AdminOrdersPage() {
             onChange={(e) => setFilterStatus(e.target.value as OrderStatus | "")}
             className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm"
           >
-            <option value="">All statuses</option>
-            <option value="open">Open</option>
-            <option value="preparing">Preparing</option>
-            <option value="ready">Ready</option>
-            <option value="paid">Paid</option>
-            <option value="canceled">Canceled</option>
-            <option value="refunded">Refunded</option>
+            <option value="">{t.allStatuses}</option>
+            <option value="open">{statusLabels.open}</option>
+            <option value="preparing">{statusLabels.preparing}</option>
+            <option value="ready">{statusLabels.ready}</option>
+            <option value="paid">{statusLabels.paid}</option>
+            <option value="canceled">{statusLabels.canceled}</option>
+            <option value="refunded">{statusLabels.refunded}</option>
           </select>
 
           <select
@@ -312,15 +359,15 @@ export default function AdminOrdersPage() {
             onChange={(e) => setFilterType(e.target.value as OrderType | "")}
             className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm"
           >
-            <option value="">All types</option>
-            <option value="counter">Counter</option>
-            <option value="pickup">Pickup</option>
-            <option value="delivery">Delivery</option>
-            <option value="dine_in">Dine In</option>
+            <option value="">{t.allTypes}</option>
+            <option value="counter">{orderTypeLabels.counter}</option>
+            <option value="pickup">{orderTypeLabels.pickup}</option>
+            <option value="delivery">{orderTypeLabels.delivery}</option>
+            <option value="dine_in">{orderTypeLabels.dine_in}</option>
           </select>
 
           <label className="flex items-center gap-2 text-sm text-[var(--mp-muted)]">
-            <span>From:</span>
+            <span>{t.from}</span>
             <input
               type="date"
               value={filterFrom}
@@ -330,7 +377,7 @@ export default function AdminOrdersPage() {
           </label>
 
           <label className="flex items-center gap-2 text-sm text-[var(--mp-muted)]">
-            <span>To:</span>
+            <span>{t.to}</span>
             <input
               type="date"
               value={filterTo}
@@ -345,12 +392,12 @@ export default function AdminOrdersPage() {
             disabled={deleting || Object.values(selectedIds).every((v) => !v)}
             className="h-10 rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
           >
-            {deleting ? "Deleting..." : "Delete selected"}
+            {deleting ? t.deleting : t.deleteSelected}
           </button>
 
           <span className="flex items-center gap-2 text-xs text-[var(--mp-muted)]">
             <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-            Live updates
+            {t.liveUpdates}
           </span>
         </div>
 
@@ -359,12 +406,12 @@ export default function AdminOrdersPage() {
           <div className="lg:col-span-2">
             <div className="rounded-2xl border border-[var(--mp-border)] bg-white shadow-sm">
               <div className="border-b border-[var(--mp-border)] px-4 py-3">
-                <h2 className="text-sm font-semibold">Orders ({orders.length})</h2>
+                <h2 className="text-sm font-semibold">{t.ordersCount(orders.length)}</h2>
               </div>
 
               {orders.length === 0 ? (
                 <div className="px-4 py-8 text-center text-sm text-[var(--mp-muted)]">
-                  No orders found
+                  {t.noOrders}
                 </div>
               ) : (
                 <div className="divide-y divide-[var(--mp-border)]">
@@ -398,10 +445,10 @@ export default function AdminOrdersPage() {
                                 STATUS_COLORS[order.status] ?? "bg-zinc-100"
                               }`}
                             >
-                              {order.status}
+                              {statusLabels[order.status] ?? order.status}
                             </span>
                             <span className="text-xs text-[var(--mp-muted)]">
-                              {ORDER_TYPE_LABELS[order.order_type ?? "counter"] ?? order.order_type}
+                              {orderTypeLabels[order.order_type ?? "counter"] ?? order.order_type}
                             </span>
                           </div>
                           <span className="text-sm font-medium tabular-nums">
@@ -409,7 +456,7 @@ export default function AdminOrdersPage() {
                           </span>
                         </div>
                         <div className="mt-1 flex items-center justify-between text-xs text-[var(--mp-muted)]">
-                          <span>{order.customer_name || "Walk-in"}</span>
+                          <span>{order.customer_name || t.walkIn}</span>
                           <span>{new Date(order.created_at).toLocaleString()}</span>
                         </div>
                       </button>
@@ -424,12 +471,12 @@ export default function AdminOrdersPage() {
           <div>
             <div className="rounded-2xl border border-[var(--mp-border)] bg-white shadow-sm">
               <div className="border-b border-[var(--mp-border)] px-4 py-3">
-                <h2 className="text-sm font-semibold">Order Details</h2>
+                <h2 className="text-sm font-semibold">{t.orderDetails}</h2>
               </div>
 
               {!selectedOrder ? (
                 <div className="px-4 py-8 text-center text-sm text-[var(--mp-muted)]">
-                  Select an order to view details
+                  {t.selectOrder}
                 </div>
               ) : (
                 <div className="p-4">
@@ -442,30 +489,30 @@ export default function AdminOrdersPage() {
                         STATUS_COLORS[selectedOrder.status] ?? "bg-zinc-100"
                       }`}
                     >
-                      {selectedOrder.status}
+                      {statusLabels[selectedOrder.status] ?? selectedOrder.status}
                     </span>
                   </div>
 
                   <div className="mt-3 space-y-1 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-[var(--mp-muted)]">Type</span>
-                      <span>{ORDER_TYPE_LABELS[selectedOrder.order_type ?? "counter"]}</span>
+                      <span className="text-[var(--mp-muted)]">{t.type}</span>
+                      <span>{orderTypeLabels[selectedOrder.order_type ?? "counter"]}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[var(--mp-muted)]">Customer</span>
-                      <span>{selectedOrder.customer_name || "Walk-in"}</span>
+                      <span className="text-[var(--mp-muted)]">{t.customer}</span>
+                      <span>{selectedOrder.customer_name || t.walkIn}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[var(--mp-muted)]">Total</span>
+                      <span className="text-[var(--mp-muted)]">{t.total}</span>
                       <span className="font-semibold">${selectedOrder.total.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[var(--mp-muted)]">Created</span>
+                      <span className="text-[var(--mp-muted)]">{t.created}</span>
                       <span>{new Date(selectedOrder.created_at).toLocaleString()}</span>
                     </div>
                     {selectedOrder.payment_method ? (
                       <div className="flex justify-between">
-                        <span className="text-[var(--mp-muted)]">Payment</span>
+                        <span className="text-[var(--mp-muted)]">{t.payment}</span>
                         <span>{selectedOrder.payment_method}</span>
                       </div>
                     ) : null}
@@ -473,11 +520,11 @@ export default function AdminOrdersPage() {
 
                   {/* Items */}
                   <div className="mt-4 border-t border-[var(--mp-border)] pt-4">
-                    <h3 className="text-sm font-semibold">Items</h3>
+                    <h3 className="text-sm font-semibold">{t.items}</h3>
                     {loadingItems ? (
-                      <div className="mt-2 text-sm text-[var(--mp-muted)]">Loading...</div>
+                      <div className="mt-2 text-sm text-[var(--mp-muted)]">{t.loadingItems}</div>
                     ) : orderItems.length === 0 ? (
-                      <div className="mt-2 text-sm text-[var(--mp-muted)]">No items</div>
+                      <div className="mt-2 text-sm text-[var(--mp-muted)]">{t.noItems}</div>
                     ) : (
                       <div className="mt-2 space-y-2">
                         {orderItems.map((item) => (
@@ -493,18 +540,18 @@ export default function AdminOrdersPage() {
                   </div>
 
                   {/* Status Actions */}
-                  {selectedOrder.status !== "paid" &&
+                    {selectedOrder.status !== "paid" &&
                     selectedOrder.status !== "canceled" &&
                     selectedOrder.status !== "refunded" ? (
                     <div className="mt-4 border-t border-[var(--mp-border)] pt-4">
-                      <h3 className="text-sm font-semibold mb-2">Update Status</h3>
+                      <h3 className="text-sm font-semibold mb-2">{t.updateStatus}</h3>
                       <div className="flex flex-wrap gap-2">
                         {selectedOrder.status === "open" ? (
                           <button
                             onClick={() => changeStatus(selectedOrder.id, "preparing")}
                             className="rounded-lg bg-yellow-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-yellow-600"
                           >
-                            Start Preparing
+                            {t.startPreparing}
                           </button>
                         ) : null}
                         {selectedOrder.status === "preparing" ? (
@@ -512,7 +559,7 @@ export default function AdminOrdersPage() {
                             onClick={() => changeStatus(selectedOrder.id, "ready")}
                             className="rounded-lg bg-green-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-600"
                           >
-                            Mark Ready
+                            {t.markReady}
                           </button>
                         ) : null}
                         {selectedOrder.status !== "canceled" ? (
@@ -520,7 +567,7 @@ export default function AdminOrdersPage() {
                             onClick={() => changeStatus(selectedOrder.id, "canceled")}
                             className="rounded-lg bg-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-300"
                           >
-                            Cancel
+                            {t.cancel}
                           </button>
                         ) : null}
                       </div>
