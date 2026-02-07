@@ -74,16 +74,11 @@ export default function Home() {
             >
               <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
                 <div className="overflow-hidden rounded-3xl border border-[var(--mp-border)] bg-white shadow-sm">
-                  <video
-                    className="aspect-video w-full bg-black"
-                    controls
-                    playsInline
-                    preload="metadata"
-                    poster="/hero/PART2.png"
-                  >
-                    <source src={lang === "es" ? "/videos/islapos-es.mp4" : "/videos/islapos-en.mp4"} type="video/mp4" />
-                    {lang === "es" ? "Tu navegador no soporta video HTML5." : "Your browser does not support HTML5 video."}
-                  </video>
+                  <img
+                    alt={lang === "es" ? "Vista del POS" : "POS preview"}
+                    src="/hero/PART2.png"
+                    className="aspect-video w-full object-cover"
+                  />
                 </div>
 
                 <div className="rounded-3xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6 shadow-sm">
