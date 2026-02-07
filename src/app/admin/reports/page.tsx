@@ -6,9 +6,32 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getSetupContext } from "@/lib/setupData";
 import { listPaidOrdersForSummary, type SalesSummaryRow } from "@/lib/posData";
+import { useMarketingLang } from "@/lib/useMarketingLang";
 
 export default function AdminReportsPage() {
   const router = useRouter();
+  const { lang } = useMarketingLang();
+  const isEs = lang === "es";
+  const t = {
+    loading: isEs ? "Cargando…" : "Loading…",
+    title: isEs ? "Reportes" : "Reports",
+    subtitle: isEs ? "Resumen de ventas del restaurante activo." : "Sales summary for the active restaurant.",
+    back: isEs ? "Volver" : "Back",
+    range: isEs ? "Rango" : "Range",
+    today: isEs ? "Hoy" : "Today",
+    days7: isEs ? "7 días" : "7 days",
+    days30: isEs ? "30 días" : "30 days",
+    loadingSales: isEs ? "Cargando ventas…" : "Loading sales…",
+    totals: isEs ? "Totales" : "Totals",
+    gross: isEs ? "Ventas brutas" : "Gross sales",
+    tickets: isEs ? "Tickets" : "Tickets",
+    net: isEs ? "Ventas netas" : "Net sales",
+    tax: isEs ? "IVU" : "Tax",
+    byPayment: isEs ? "Por método de pago" : "By payment method",
+    empty: isEs ? "No hay tickets pagados en este rango." : "No paid tickets in this range.",
+    ticketsCount: isEs ? "tickets" : "tickets",
+    failed: isEs ? "No se pudo cargar el reporte" : "Failed to load report",
+  };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +105,7 @@ export default function AdminReportsPage() {
           if (res.error) throw res.error;
           setRows(res.data ?? []);
         } catch (e) {
-          const msg = e instanceof Error ? e.message : "Failed to load report";
+          const msg = e instanceof Error ? e.message : t.failed;
           setError(msg);
         } finally {
           setRowsLoading(false);
@@ -115,7 +138,7 @@ export default function AdminReportsPage() {
   if (loading) {
     return (
       <div className="islapos-marketing flex min-h-screen items-center justify-center bg-[var(--mp-bg)] text-[var(--mp-fg)]">
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</div>
+        <div className="text-sm text-zinc-600 dark:text-zinc-400">{t.loading}</div>
       </div>
     );
   }
@@ -125,14 +148,14 @@ export default function AdminReportsPage() {
       <div className="mx-auto w-full max-w-5xl px-6 py-10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-semibold tracking-tight">Reports</h1>
-            <p className="text-sm text-[var(--mp-muted)]">Sales summary for the active restaurant.</p>
+            <h1 className="text-3xl font-semibold tracking-tight">{t.title}</h1>
+            <p className="text-sm text-[var(--mp-muted)]">{t.subtitle}</p>
           </div>
           <button
             onClick={() => router.push("/admin")}
             className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
           >
-            Back
+            {t.back}
           </button>
         </div>
 
@@ -144,7 +167,7 @@ export default function AdminReportsPage() {
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
-            <h2 className="text-base font-semibold">Range</h2>
+            <h2 className="text-base font-semibold">{t.range}</h2>
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 onClick={() => setRange("today")}
@@ -154,7 +177,7 @@ export default function AdminReportsPage() {
                     : "border-[var(--mp-border)] bg-white hover:bg-white"
                 }`}
               >
-                Today
+                {t.today}
               </button>
               <button
                 onClick={() => setRange("7d")}
@@ -164,7 +187,7 @@ export default function AdminReportsPage() {
                     : "border-[var(--mp-border)] bg-white hover:bg-white"
                 }`}
               >
-                7 days
+                {t.days7}
               </button>
               <button
                 onClick={() => setRange("30d")}
@@ -174,32 +197,32 @@ export default function AdminReportsPage() {
                     : "border-[var(--mp-border)] bg-white hover:bg-white"
                 }`}
               >
-                30 days
+                {t.days30}
               </button>
             </div>
 
             {rowsLoading ? (
-              <div className="mt-4 text-sm text-[var(--mp-muted)]">Loading sales...</div>
+              <div className="mt-4 text-sm text-[var(--mp-muted)]">{t.loadingSales}</div>
             ) : null}
           </div>
 
           <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
-            <h2 className="text-base font-semibold">Totals</h2>
+            <h2 className="text-base font-semibold">{t.totals}</h2>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
-                <div className="text-xs text-[var(--mp-muted)]">Gross sales</div>
+                <div className="text-xs text-[var(--mp-muted)]">{t.gross}</div>
                 <div className="mt-1 text-lg font-semibold tabular-nums">${summary.gross.toFixed(2)}</div>
               </div>
               <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
-                <div className="text-xs text-[var(--mp-muted)]">Tickets</div>
+                <div className="text-xs text-[var(--mp-muted)]">{t.tickets}</div>
                 <div className="mt-1 text-lg font-semibold tabular-nums">{summary.ticketCount}</div>
               </div>
               <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
-                <div className="text-xs text-[var(--mp-muted)]">Net sales</div>
+                <div className="text-xs text-[var(--mp-muted)]">{t.net}</div>
                 <div className="mt-1 text-lg font-semibold tabular-nums">${summary.net.toFixed(2)}</div>
               </div>
               <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3">
-                <div className="text-xs text-[var(--mp-muted)]">Tax</div>
+                <div className="text-xs text-[var(--mp-muted)]">{t.tax}</div>
                 <div className="mt-1 text-lg font-semibold tabular-nums">${summary.tax.toFixed(2)}</div>
               </div>
             </div>
@@ -207,10 +230,10 @@ export default function AdminReportsPage() {
         </div>
 
         <div className="mt-8 rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
-          <h2 className="text-base font-semibold">By payment method</h2>
+          <h2 className="text-base font-semibold">{t.byPayment}</h2>
           <div className="mt-4 flex flex-col gap-2">
             {summary.methods.length === 0 ? (
-              <div className="text-sm text-[var(--mp-muted)]">No paid tickets in this range.</div>
+              <div className="text-sm text-[var(--mp-muted)]">{t.empty}</div>
             ) : (
               summary.methods.map(([method, v]) => (
                 <div
@@ -219,7 +242,7 @@ export default function AdminReportsPage() {
                 >
                   <div className="text-sm font-medium">{method.replaceAll("_", " ")}</div>
                   <div className="flex items-center gap-4">
-                    <div className="text-xs text-[var(--mp-muted)] tabular-nums">{v.count} tickets</div>
+                    <div className="text-xs text-[var(--mp-muted)] tabular-nums">{v.count} {t.ticketsCount}</div>
                     <div className="text-sm font-semibold tabular-nums">${v.gross.toFixed(2)}</div>
                   </div>
                 </div>
