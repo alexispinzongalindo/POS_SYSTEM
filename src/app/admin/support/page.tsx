@@ -63,6 +63,10 @@ export default function AdminSupportPage() {
     caseCreated: isEs ? "Caso creado." : "Case created.",
     failedUpdateCase: isEs ? "No se pudo actualizar el caso" : "Failed to update case",
     updated: isEs ? "Actualizado." : "Updated.",
+    delete: isEs ? "Eliminar" : "Delete",
+    deleteClosed: isEs ? "Eliminar cerrado" : "Delete closed",
+    confirmDelete: isEs ? "¿Eliminar este caso?" : "Delete this case?",
+    failedDelete: isEs ? "No se pudo eliminar el caso" : "Failed to delete case",
     failedLoad: isEs ? "No se pudo cargar" : "Failed to load",
     waTitle: isEs ? "Soporte IslaPOS" : "IslaPOS Support",
     waRestaurant: isEs ? "Restaurante" : "Restaurant",
@@ -237,6 +241,29 @@ export default function AdminSupportPage() {
     const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
     if (!res.ok || json?.error) {
       setError(json?.error ?? t.failedUpdateCase);
+      return;
+    }
+
+    await loadCases();
+    setSuccess(t.updated);
+  }
+
+  async function deleteCase(id: string) {
+    setError(null);
+    setSuccess(null);
+
+    const confirmed = window.confirm(t.confirmDelete);
+    if (!confirmed) return;
+
+    const res = await authedFetch("/api/admin/support-cases", {
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+    if (!res.ok || json?.error) {
+      setError(json?.error ?? t.failedDelete);
       return;
     }
 
@@ -476,6 +503,17 @@ export default function AdminSupportPage() {
                         }}
                         className="min-h-24 rounded-xl border border-[var(--mp-border)] bg-white px-4 py-3 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                       />
+                    </div>
+
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => void deleteCase(c.id)}
+                        disabled={c.status !== "closed"}
+                        className="inline-flex h-9 items-center justify-center rounded-xl border border-red-200 bg-white px-3 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+                      >
+                        {t.deleteClosed}
+                      </button>
                     </div>
                   </div>
                 ))

@@ -24,6 +24,10 @@ type UpdateCaseBody = {
   resolution?: string;
 } | null;
 
+type DeleteCaseBody = {
+  id?: string;
+} | null;
+
 async function requireRequester(req: Request) {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
@@ -243,6 +247,43 @@ export async function PATCH(req: Request) {
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Failed to update case";
     console.error("[admin/support-cases] PATCH error:", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const { user, error } = await requireRequester(req);
+    if (error || !user) return NextResponse.json({ error: error?.message ?? "Unauthorized" }, { status: 401 });
+
+    const requesterRoleRaw = (user.app_metadata as { role?: string } | undefined)?.role ?? null;
+    const requesterRole: Role =
+      requesterRoleRaw === "owner" || requesterRoleRaw === "manager" || requesterRoleRaw === "cashier" ? requesterRoleRaw : null;
+
+    const userMeta = (user.app_metadata ?? {}) as Record<string, unknown>;
+    const active = await resolveRestaurantId(user.id, requesterRole, userMeta);
+    if (active.error) return NextResponse.json({ error: active.error.message }, { status: 400 });
+    if (!active.restaurantId) return NextResponse.json({ error: "No active restaurant selected" }, { status: 400 });
+
+    const perm = await requireRestaurantOwnerOrManager(user.id, requesterRole, active.restaurantId);
+    if (!perm.ok) return NextResponse.json({ error: perm.error?.message ?? "Forbidden" }, { status: 403 });
+
+    const body = (await req.json().catch(() => null)) as DeleteCaseBody;
+    const id = typeof body?.id === "string" ? body.id.trim() : "";
+    if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+    const del = await supabaseAdmin
+      .from("support_cases")
+      .delete()
+      .eq("id", id)
+      .eq("restaurant_id", active.restaurantId);
+
+    if (del.error) return NextResponse.json({ error: del.error.message }, { status: 400 });
+
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Failed to delete case";
+    console.error("[admin/support-cases] DELETE error:", msg);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
