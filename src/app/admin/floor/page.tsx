@@ -462,10 +462,13 @@ export default function AdminFloorPlanPage() {
 
     let latestX = startX;
     let latestY = startY;
+    let moved = false;
 
     function onMove(ev: MouseEvent) {
       const dx = ev.clientX - startClientX;
       const dy = ev.clientY - startClientY;
+
+      if (!moved && Math.hypot(dx, dy) > 3) moved = true;
 
       latestX = clamp(Math.round(startX + dx), 0, areaWidth - 10);
       latestY = clamp(Math.round(startY + dy), 0, areaHeight - 10);
@@ -500,6 +503,8 @@ export default function AdminFloorPlanPage() {
     async function onUp() {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
+
+      if (!moved) return;
 
       if (kind === "table") {
         const res = await updateFloorTable({ id, x: latestX, y: latestY });
