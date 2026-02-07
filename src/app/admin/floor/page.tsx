@@ -1014,6 +1014,14 @@ export default function AdminFloorPlanPage() {
               >
                 {t.deleteTable}
               </button>
+
+              <button
+                type="button"
+                onClick={() => void persistSelected(selected)}
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-4 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+              >
+                {isEs ? "Guardar cambios" : "Save changes"}
+              </button>
             </div>
           ) : (
             <div className="mt-4 grid gap-3">
@@ -1034,6 +1042,14 @@ export default function AdminFloorPlanPage() {
                 className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white"
               >
                 {t.deleteObject}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void persistSelected(selected)}
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-4 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+              >
+                {isEs ? "Guardar cambios" : "Save changes"}
               </button>
             </div>
           )}
