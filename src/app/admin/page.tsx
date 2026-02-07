@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
 import { getOrCreateAppConfig } from "@/lib/appConfig";
+import { useMarketingLang } from "@/lib/useMarketingLang";
+import { adminCopy } from "@/lib/adminCopy";
 
 type AiChatMsg = {
   id: string;
@@ -14,6 +16,8 @@ type AiChatMsg = {
 
 export default function AdminPage() {
   const router = useRouter();
+  const { lang } = useMarketingLang();
+  const t = adminCopy(lang === "es" ? "es" : "en");
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
@@ -130,7 +134,7 @@ export default function AdminPage() {
 
     setInviteEmail("");
     setInviteRole("cashier");
-    setInviteStatus("Invite sent.");
+    setInviteStatus(t.inviteSent);
   }
 
   useEffect(() => {
@@ -148,8 +152,7 @@ export default function AdminPage() {
       {
         id: makeAiId(),
         role: "assistant",
-        content:
-          "Hi — I’m your IslaPOS Support AI. Tell me what you’re trying to do (printing, Edge Gateway, KDS), and what’s not working.",
+        content: t.ai.welcome,
       },
     ]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -165,7 +168,7 @@ export default function AdminPage() {
   async function runGatewayAction(action: "health" | "printers" | "queue_test" | "queue") {
     const base = normalizeGatewayUrl(aiGatewayUrl);
     if (!base) {
-      setAiError("Missing Gateway URL. Example: http://192.168.0.50:9123");
+      setAiError(t.ai.missingGateway);
       return;
     }
 
@@ -190,11 +193,11 @@ export default function AdminPage() {
             kind: "receipt",
             protocol: "escpos",
             template: {
-              title: "ISLAPOS",
-              subtitle: "AI QUEUED TEST",
+              title: t.ai.queuedTitle,
+              subtitle: t.ai.queuedSubtitle,
               lines: [
-                "Queued from Admin AI panel",
-                `Time: ${new Date().toISOString()}`,
+                t.ai.queuedLine,
+                `${t.ai.queuedTime} ${new Date().toISOString()}`,
               ],
             },
           }),
@@ -208,12 +211,12 @@ export default function AdminPage() {
           role: "assistant",
           content:
             action === "health"
-              ? `Running gateway health check at ${base}...`
+              ? `${t.ai.health}: ${base}...`
               : action === "printers"
-                ? `Loading printers from ${base}...`
+                ? `${t.ai.printers}: ${base}...`
                 : action === "queue"
-                  ? `Loading print queue from ${base}...`
-                  : `Queueing a test print job on ${base}...`,
+                  ? `${t.ai.viewQueue}: ${base}...`
+                  : `${t.ai.queueTest}: ${base}...`,
         },
       ]);
 
@@ -225,7 +228,7 @@ export default function AdminPage() {
 
       setAiMessages((prev) => [...prev, { id: makeAiId(), role: "assistant", content }]);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Gateway request failed";
+      const msg = e instanceof Error ? e.message : t.ai.aiRequestFailed;
       setAiError(msg);
     }
   }
@@ -269,7 +272,7 @@ export default function AdminPage() {
         | null;
 
       if (!res.ok || json?.error) {
-        setAiError(json?.error ?? `AI request failed (${res.status})`);
+        setAiError(json?.error ?? `${t.ai.aiRequestFailed} (${res.status})`);
         return;
       }
 
@@ -285,7 +288,7 @@ export default function AdminPage() {
   if (loading) {
     return (
       <div className="islapos-marketing flex min-h-screen items-center justify-center bg-[var(--mp-bg)] text-[var(--mp-fg)]">
-        <div className="text-sm text-[var(--mp-muted)]">Loading...</div>
+        <div className="text-sm text-[var(--mp-muted)]">{t.loading}</div>
       </div>
     );
   }
@@ -297,14 +300,14 @@ export default function AdminPage() {
           <div className="flex flex-col gap-1">
             <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Admin</h1>
             <p className="text-base text-slate-500 font-medium">
-              Signed in as {email ?? "(unknown)"}
+              {t.signedInAs} {email ?? t.unknown}
             </p>
           </div>
           <button
             onClick={signOut}
             className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white/80 backdrop-blur px-5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-white hover:shadow-md"
           >
-            Sign out
+            {t.signOut}
           </button>
         </div>
 
@@ -332,9 +335,9 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">Orders</h2>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.orders.title}</h2>
                 <p className="mt-1 text-sm text-slate-600">
-                  View and manage all orders.
+                  {t.cards.orders.body}
                 </p>
               </div>
             </div>
@@ -344,13 +347,13 @@ export default function AdminPage() {
                 onClick={() => router.push("/admin/orders")}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
-                View orders
+                {t.cards.orders.view}
               </button>
               <button
                 onClick={() => router.push("/admin/kds")}
                 className="inline-flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white/80 backdrop-blur px-6 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-white hover:shadow-md"
               >
-                KDS QR Codes
+                {t.cards.orders.kds}
               </button>
             </div>
           </div>
@@ -365,9 +368,9 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">Restaurants</h2>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.restaurants.title}</h2>
                 <p className="mt-1 text-sm text-slate-600">
-                  Create and switch between restaurants.
+                  {t.cards.restaurants.body}
                 </p>
               </div>
             </div>
@@ -377,7 +380,7 @@ export default function AdminPage() {
                 onClick={() => router.push("/admin/restaurants")}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
-                Manage restaurants
+                {t.cards.restaurants.action}
               </button>
             </div>
           </div>
@@ -394,8 +397,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">Floor Plan</h2>
-                <p className="mt-1 text-sm text-slate-600">Configure areas, tables, doors, and bar.</p>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.floor.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.floor.body}</p>
               </div>
             </div>
 
@@ -404,7 +407,7 @@ export default function AdminPage() {
                 onClick={() => router.push("/admin/floor")}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
-                Edit floor plan
+                {t.cards.floor.action}
               </button>
             </div>
           </div>
@@ -420,8 +423,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">Staff</h2>
-                <p className="mt-1 text-sm text-slate-600">Manage staff access and roles.</p>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.staff.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.staff.body}</p>
               </div>
             </div>
 
@@ -430,7 +433,7 @@ export default function AdminPage() {
                 onClick={() => router.push("/admin/staff")}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
-                Manage staff
+                {t.cards.staff.action}
               </button>
             </div>
           </div>
@@ -447,8 +450,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">Payroll</h2>
-                <p className="mt-1 text-sm text-slate-600">Create staff schedules and compare vs time clock.</p>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.payroll.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.payroll.body}</p>
               </div>
             </div>
 
@@ -457,7 +460,7 @@ export default function AdminPage() {
                 onClick={() => router.push("/admin/payroll")}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
-                Open payroll
+                {t.cards.payroll.action}
               </button>
             </div>
           </div>
@@ -474,8 +477,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">Reports</h2>
-                <p className="mt-1 text-sm text-slate-600">Sales totals, taxes, and payment methods.</p>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.reports.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.reports.body}</p>
               </div>
             </div>
 
@@ -484,7 +487,7 @@ export default function AdminPage() {
                 onClick={() => router.push("/admin/reports")}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
-                View reports
+                {t.cards.reports.action}
               </button>
             </div>
           </div>
@@ -501,8 +504,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">Food Cost</h2>
-                <p className="mt-1 text-sm text-slate-600">Actual vs theoretical usage and cost.</p>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.foodCost.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.foodCost.body}</p>
               </div>
             </div>
 
@@ -511,7 +514,7 @@ export default function AdminPage() {
                 onClick={() => router.push("/admin/food-cost")}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
-                Open food cost
+                {t.cards.foodCost.action}
               </button>
             </div>
           </div>
@@ -528,8 +531,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">Reservations</h2>
-                <p className="mt-1 text-sm text-slate-600">Create and manage reservations.</p>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.reservations.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.reservations.body}</p>
               </div>
             </div>
 
@@ -538,7 +541,7 @@ export default function AdminPage() {
                 onClick={() => router.push("/admin/reservations")}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
-                Manage reservations
+                {t.cards.reservations.action}
               </button>
             </div>
           </div>
@@ -553,8 +556,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">Inventory</h2>
-                <p className="mt-1 text-sm text-slate-600">Track stock for products.</p>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.inventory.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.inventory.body}</p>
               </div>
             </div>
 
@@ -563,7 +566,7 @@ export default function AdminPage() {
                 onClick={() => router.push("/admin/inventory")}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
-                Manage inventory
+                {t.cards.inventory.action}
               </button>
             </div>
           </div>
@@ -577,8 +580,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">Settings</h2>
-                <p className="mt-1 text-sm text-slate-600">Update business info, location, taxes, and products.</p>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.settings.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.settings.body}</p>
               </div>
             </div>
 
@@ -587,7 +590,7 @@ export default function AdminPage() {
                 onClick={() => router.push("/setup")}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
-                Edit setup
+                {t.cards.settings.action}
               </button>
             </div>
           </div>
@@ -603,8 +606,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">Integrations</h2>
-                <p className="mt-1 text-sm text-slate-600">Configure delivery providers for your business.</p>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.integrations.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.integrations.body}</p>
               </div>
             </div>
 
@@ -613,7 +616,7 @@ export default function AdminPage() {
                 onClick={() => router.push("/admin/integrations/delivery")}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
-                Delivery integrations
+                {t.cards.integrations.action}
               </button>
             </div>
           </div>
@@ -632,8 +635,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">QR Code Menu</h2>
-                <p className="mt-1 text-sm text-slate-600">Generate QR codes for customers to view your menu.</p>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.qrMenu.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.qrMenu.body}</p>
               </div>
             </div>
 
@@ -642,7 +645,7 @@ export default function AdminPage() {
                 onClick={() => router.push("/admin/qr-menu")}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
-                Generate QR code
+                {t.cards.qrMenu.action}
               </button>
             </div>
           </div>
@@ -658,8 +661,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">POS</h2>
-                <p className="mt-1 text-sm text-slate-600">Create orders using your menu.</p>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.pos.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.pos.body}</p>
               </div>
             </div>
 
@@ -668,7 +671,7 @@ export default function AdminPage() {
                 onClick={() => router.push("/pos")}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
-                Open POS
+                {t.cards.pos.action}
               </button>
             </div>
           </div>
@@ -682,8 +685,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">Profile</h2>
-                <p className="mt-1 text-sm text-slate-600">Account details and subscription.</p>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.profile.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.profile.body}</p>
               </div>
             </div>
 
@@ -692,7 +695,7 @@ export default function AdminPage() {
                 onClick={() => router.push("/admin/profile")}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
-                Open profile
+                {t.cards.profile.action}
               </button>
             </div>
           </div>
@@ -708,8 +711,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">Invite user</h2>
-                <p className="mt-1 text-sm text-slate-600">Invite staff to your restaurant.</p>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.invite.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.invite.body}</p>
               </div>
             </div>
 
@@ -719,18 +722,18 @@ export default function AdminPage() {
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as "manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security")}
               >
-                <option value="cashier">Cashier (POS only)</option>
-                <option value="kitchen">Kitchen (POS only)</option>
-                <option value="maintenance">Maintenance (POS only)</option>
-                <option value="driver">Driver (POS only)</option>
-                <option value="security">Security (POS only)</option>
-                <option value="manager">Manager (Admin + POS)</option>
+                <option value="cashier">{t.cards.invite.roleCashier}</option>
+                <option value="kitchen">{t.cards.invite.roleKitchen}</option>
+                <option value="maintenance">{t.cards.invite.roleMaintenance}</option>
+                <option value="driver">{t.cards.invite.roleDriver}</option>
+                <option value="security">{t.cards.invite.roleSecurity}</option>
+                <option value="manager">{t.cards.invite.roleManager}</option>
               </select>
 
               <input
                 className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                 type="email"
-                placeholder="user@email.com"
+                placeholder={t.cards.invite.emailPlaceholder}
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
               />
@@ -740,7 +743,7 @@ export default function AdminPage() {
                 disabled={!inviteEmail}
                 className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
               >
-                Send invite
+                {t.cards.invite.sendInvite}
               </button>
 
               {inviteStatus ? (
@@ -761,8 +764,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">Account</h2>
-                <p className="mt-1 text-sm text-slate-600">Sign out of this device.</p>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.account.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.account.body}</p>
               </div>
             </div>
 
@@ -770,7 +773,7 @@ export default function AdminPage() {
               onClick={signOut}
               className="mt-6 inline-flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white/80 backdrop-blur px-6 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-white hover:shadow-md"
             >
-              Sign out
+              {t.cards.account.action}
             </button>
           </div>
 
@@ -784,8 +787,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">Support Station</h2>
-                <p className="mt-1 text-sm text-slate-600">Create and track support cases.</p>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.support.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.support.body}</p>
               </div>
             </div>
 
@@ -794,7 +797,7 @@ export default function AdminPage() {
                 onClick={() => router.push("/admin/support")}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
-                Open support
+                {t.cards.support.action}
               </button>
             </div>
           </div>
@@ -811,8 +814,8 @@ export default function AdminPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">Training</h2>
-                <p className="mt-1 text-sm text-slate-600">Step-by-step guides for staff and setup.</p>
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.training.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.training.body}</p>
               </div>
             </div>
 
@@ -821,7 +824,7 @@ export default function AdminPage() {
                 onClick={() => router.push("/admin/training")}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
               >
-                Open training
+                {t.cards.training.action}
               </button>
             </div>
           </div>
@@ -841,14 +844,14 @@ export default function AdminPage() {
             </svg>
           </span>
           <span className="text-xs font-semibold text-slate-700 [writing-mode:vertical-rl] [text-orientation:mixed]">
-            View Tutorial
+            {t.sidebar.viewTutorial}
           </span>
         </button>
 
         <button
           type="button"
           onClick={() => setShowAiPanel(true)}
-          aria-label="Open AI Assistant"
+          aria-label={t.ai.buttonLabel}
           className="group relative grid h-14 w-14 place-items-center rounded-full bg-gradient-to-tr from-teal-400 via-emerald-500 to-green-600 text-white shadow-2xl ring-2 ring-emerald-300/20 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] active:scale-95 before:absolute before:inset-0 before:rounded-full before:bg-gradient-to-tr before:from-teal-400/20 before:via-emerald-500/20 before:to-green-600/20 before:blur-md"
         >
           <svg viewBox="0 0 24 24" className="relative z-10 h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -869,27 +872,27 @@ export default function AdminPage() {
           <div className="absolute right-0 top-0 h-full w-full max-w-md border-l border-emerald-200/60 bg-gradient-to-br from-white via-emerald-50/20 to-teal-50/20 shadow-2xl backdrop-blur">
             <div className="flex items-center justify-between gap-4 border-b border-emerald-200/60 bg-white/80 backdrop-blur px-6 py-5">
               <div>
-                <div className="text-base font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">AI Assistant</div>
-                <div className="mt-1 text-sm text-slate-600">Ask for help configuring your restaurant.</div>
+                <div className="text-base font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">{t.ai.title}</div>
+                <div className="mt-1 text-sm text-slate-600">{t.ai.subtitle}</div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowAiPanel(false)}
                 className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white/90 backdrop-blur px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-white hover:shadow-md"
               >
-                Close
+                {t.ai.close}
               </button>
             </div>
 
             <div className="p-6">
               <div className="flex h-[calc(100vh-120px)] flex-col">
                 <div className="mb-4 rounded-2xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-4 shadow-sm">
-                  <div className="text-xs font-bold text-emerald-700 uppercase tracking-wide">Edge Gateway URL (optional)</div>
+                  <div className="text-xs font-bold text-emerald-700 uppercase tracking-wide">{t.ai.edgeGatewayLabel}</div>
                   <div className="mt-3 flex gap-3">
                     <input
                       value={aiGatewayUrl}
                       onChange={(e) => setAiGatewayUrl(e.target.value)}
-                      placeholder="http://192.168.0.50:9123"
+                      placeholder={t.ai.edgeGatewayPlaceholder}
                       className="h-11 flex-1 rounded-xl border border-emerald-200/60 bg-white/90 backdrop-blur px-4 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition"
                       disabled={aiSending}
                     />
@@ -907,7 +910,7 @@ export default function AdminPage() {
                       className="inline-flex h-11 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 text-xs font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg disabled:opacity-50"
                       disabled={aiSending}
                     >
-                      Save
+                      {t.ai.save}
                     </button>
                   </div>
 
@@ -918,7 +921,7 @@ export default function AdminPage() {
                       className="inline-flex h-9 items-center justify-center rounded-xl border border-emerald-200/60 bg-white/80 backdrop-blur px-3 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-white hover:shadow-md disabled:opacity-50"
                       disabled={aiSending}
                     >
-                      Health
+                      {t.ai.health}
                     </button>
                     <button
                       type="button"
@@ -926,7 +929,7 @@ export default function AdminPage() {
                       className="inline-flex h-9 items-center justify-center rounded-xl border border-emerald-200/60 bg-white/80 backdrop-blur px-3 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-white hover:shadow-md disabled:opacity-50"
                       disabled={aiSending}
                     >
-                      Printers
+                      {t.ai.printers}
                     </button>
                     <button
                       type="button"
@@ -934,7 +937,7 @@ export default function AdminPage() {
                       className="inline-flex h-9 items-center justify-center rounded-xl border border-emerald-200/60 bg-white/80 backdrop-blur px-3 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-white hover:shadow-md disabled:opacity-50"
                       disabled={aiSending}
                     >
-                      Queue test print
+                      {t.ai.queueTest}
                     </button>
                     <button
                       type="button"
@@ -942,7 +945,7 @@ export default function AdminPage() {
                       className="inline-flex h-9 items-center justify-center rounded-xl border border-emerald-200/60 bg-white/80 backdrop-blur px-3 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-white hover:shadow-md disabled:opacity-50"
                       disabled={aiSending}
                     >
-                      View queue
+                      {t.ai.viewQueue}
                     </button>
                   </div>
                 </div>
@@ -964,7 +967,7 @@ export default function AdminPage() {
 
                     {aiSending ? (
                       <div className="mr-auto max-w-[90%] rounded-2xl bg-white/90 backdrop-blur px-4 py-3 text-sm text-slate-500 border border-emerald-200/40">
-                        Thinking...
+                        {t.ai.thinking}
                       </div>
                     ) : null}
                   </div>
@@ -986,7 +989,7 @@ export default function AdminPage() {
                         void sendAiMessage();
                       }
                     }}
-                    placeholder="Ask a question…"
+                    placeholder={t.ai.askQuestion}
                     className="h-12 flex-1 rounded-xl border border-emerald-200/60 bg-white/90 backdrop-blur px-4 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition"
                     disabled={aiSending}
                   />
@@ -996,7 +999,7 @@ export default function AdminPage() {
                     className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg disabled:opacity-50"
                     disabled={aiSending || !aiInput.trim()}
                   >
-                    Send
+                    {t.ai.send}
                   </button>
                 </div>
               </div>
