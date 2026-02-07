@@ -46,6 +46,13 @@ export default function Home() {
 
               <a
                 className="inline-flex h-11 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-white px-6 text-sm font-medium text-[var(--mp-fg)] hover:bg-black/[0.03] focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
+                href="/see-app-in-action"
+              >
+                {lang === "es" ? "Iniciar tour" : "Start tour"}
+              </a>
+
+              <a
+                className="inline-flex h-11 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-white px-6 text-sm font-medium text-[var(--mp-fg)] hover:bg-black/[0.03] focus:outline-none focus:ring-2 focus:ring-[var(--mp-ring)]"
                 href="/login?mode=signin"
               >
                 {lang === "es" ? "Entrar" : "Sign in"}
@@ -53,6 +60,50 @@ export default function Home() {
             </div>
 
             <p className="mt-5 text-sm font-semibold tracking-tight">{t.tagline}</p>
+          </div>
+
+          <div className="mt-10">
+            <MarketingSection
+              eyebrow={lang === "es" ? "Tour de la app" : "Product tour"}
+              title={lang === "es" ? "Mira IslaPOS en 60 segundos" : "See IslaPOS in 60 seconds"}
+              subtitle={
+                lang === "es"
+                  ? "Video con voz femenina y resumen rápido de las funciones clave."
+                  : "A narrated, quick walkthrough of the key features."
+              }
+            >
+              <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
+                <div className="overflow-hidden rounded-3xl border border-[var(--mp-border)] bg-white shadow-sm">
+                  <video
+                    className="aspect-video w-full bg-black"
+                    controls
+                    playsInline
+                    preload="metadata"
+                    poster="/hero/PART2.png"
+                  >
+                    <source src={lang === "es" ? "/videos/islapos-es.mp4" : "/videos/islapos-en.mp4"} type="video/mp4" />
+                    {lang === "es" ? "Tu navegador no soporta video HTML5." : "Your browser does not support HTML5 video."}
+                  </video>
+                </div>
+
+                <div className="rounded-3xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6 shadow-sm">
+                  <h3 className="text-lg font-semibold">
+                    {lang === "es" ? "Prefieres ver el slideshow interactivo?" : "Prefer the interactive slideshow?"}
+                  </h3>
+                  <p className="mt-2 text-sm text-[var(--mp-muted)]">
+                    {lang === "es"
+                      ? "Abre el tour con slides y textos sincronizados."
+                      : "Open the slide-based tour with synced narration text."}
+                  </p>
+                  <a
+                    href="/see-app-in-action"
+                    className="mt-4 inline-flex h-10 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-white px-4 text-sm font-medium hover:bg-black/[0.03]"
+                  >
+                    {lang === "es" ? "Ver tour" : "View tour"}
+                  </a>
+                </div>
+              </div>
+            </MarketingSection>
           </div>
 
           <div className="mt-8">
@@ -134,50 +185,6 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="mt-14">
-            <MarketingSection
-              eyebrow={lang === "es" ? "Tour de la app" : "Product tour"}
-              title={lang === "es" ? "Mira IslaPOS en 60 segundos" : "See IslaPOS in 60 seconds"}
-              subtitle={
-                lang === "es"
-                  ? "Video con voz femenina y resumen rápido de las funciones clave."
-                  : "A narrated, quick walkthrough of the key features."
-              }
-            >
-              <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
-                <div className="overflow-hidden rounded-3xl border border-[var(--mp-border)] bg-white shadow-sm">
-                  <video
-                    className="aspect-video w-full bg-black"
-                    controls
-                    playsInline
-                    preload="metadata"
-                    poster="/hero/PART2.png"
-                  >
-                    <source src={lang === "es" ? "/videos/islapos-es.mp4" : "/videos/islapos-en.mp4"} type="video/mp4" />
-                    {lang === "es" ? "Tu navegador no soporta video HTML5." : "Your browser does not support HTML5 video."}
-                  </video>
-                </div>
-
-                <div className="rounded-3xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6 shadow-sm">
-                  <h3 className="text-lg font-semibold">
-                    {lang === "es" ? "Prefieres ver el slideshow interactivo?" : "Prefer the interactive slideshow?"}
-                  </h3>
-                  <p className="mt-2 text-sm text-[var(--mp-muted)]">
-                    {lang === "es"
-                      ? "Abre el tour con slides y textos sincronizados."
-                      : "Open the slide-based tour with synced narration text."}
-                  </p>
-                  <a
-                    href="/see-app-in-action"
-                    className="mt-4 inline-flex h-10 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-white px-4 text-sm font-medium hover:bg-black/[0.03]"
-                  >
-                    {lang === "es" ? "Ver tour" : "View tour"}
-                  </a>
-                </div>
-              </div>
-            </MarketingSection>
           </div>
 
           <div className="mt-10 grid gap-3 sm:grid-cols-3">
