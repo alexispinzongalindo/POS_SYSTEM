@@ -6,9 +6,42 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getOrCreateAppConfig, setRestaurantId } from "@/lib/appConfig";
 import { listRestaurantsByOwner, upsertRestaurant, type Restaurant } from "@/lib/setupData";
+import { useMarketingLang } from "@/lib/useMarketingLang";
 
 export default function AdminRestaurantsPage() {
   const router = useRouter();
+  const { lang } = useMarketingLang();
+  const isEs = lang === "es";
+  const t = {
+    loading: isEs ? "Cargando…" : "Loading…",
+    title: isEs ? "Restaurantes" : "Restaurants",
+    subtitle: isEs ? "Crea y cambia entre restaurantes." : "Create and switch between restaurants.",
+    back: isEs ? "Volver" : "Back",
+    loadFailed: isEs ? "No se pudieron cargar los restaurantes" : "Failed to load restaurants",
+    createdActive: isEs ? "Restaurante creado y activado." : "Restaurant created and set as active.",
+    created: isEs ? "Restaurante creado." : "Restaurant created.",
+    activeUpdated: isEs ? "Restaurante activo actualizado." : "Active restaurant updated.",
+    createTitle: isEs ? "Crear restaurante" : "Create restaurant",
+    createBody: isEs ? "Agrega un nuevo restaurante a tu cuenta." : "Add a new restaurant under your account.",
+    namePlaceholder: isEs ? "Nombre del restaurante" : "Restaurant name",
+    createBtn: isEs ? "Crear" : "Create",
+    activeTitle: isEs ? "Restaurante activo" : "Active restaurant",
+    activeBody: isEs
+      ? "Define cuál restaurante usan POS, setup y Admin."
+      : "This controls which restaurant the POS, setup, and admin pages operate on.",
+    noneActive: isEs ? "No hay restaurante activo aún." : "No active restaurant selected yet.",
+    publicMenu: isEs ? "Enlace público del menú" : "Public menu link",
+    openMenu: isEs ? "Abrir menú" : "Open menu",
+    copyLink: isEs ? "Copiar enlace" : "Copy link",
+    linkCopied: isEs ? "Enlace copiado." : "Menu link copied.",
+    copyFailed: isEs ? "No se pudo copiar. Copia manualmente." : "Failed to copy. Please copy manually.",
+    yourRestaurants: isEs ? "Tus restaurantes" : "Your restaurants",
+    chooseActive: isEs ? "Elige cuál restaurante está activo." : "Choose which restaurant is active.",
+    noneYet: isEs ? "No hay restaurantes todavía." : "No restaurants yet.",
+    active: isEs ? "Activo" : "Active",
+    setActive: isEs ? "Activar" : "Set active",
+    idLabel: isEs ? "ID" : "ID",
+  };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +115,7 @@ export default function AdminRestaurantsPage() {
       try {
         await refresh(uid);
       } catch (e) {
-        const msg = e instanceof Error ? e.message : "Failed to load restaurants";
+        const msg = e instanceof Error ? e.message : t.loadFailed;
         setError(msg);
       } finally {
         setLoading(false);
@@ -126,11 +159,11 @@ export default function AdminRestaurantsPage() {
     const createdId = res.data?.id ?? null;
     if (createdId) {
       setActiveRestaurantId(createdId);
-      setSuccess("Restaurant created and set as active.");
+      setSuccess(t.createdActive);
       return;
     }
 
-    setSuccess("Restaurant created.");
+    setSuccess(t.created);
   }
 
   async function setActive(id: string) {
@@ -144,13 +177,13 @@ export default function AdminRestaurantsPage() {
     }
 
     setActiveRestaurantId(id);
-    setSuccess("Active restaurant updated.");
+    setSuccess(t.activeUpdated);
   }
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</div>
+        <div className="text-sm text-zinc-600 dark:text-zinc-400">{t.loading}</div>
       </div>
     );
   }
@@ -160,14 +193,14 @@ export default function AdminRestaurantsPage() {
       <div className="mx-auto w-full max-w-5xl px-6 py-10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Restaurants</h1>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Create and switch between restaurants.</p>
+            <h1 className="text-2xl font-semibold tracking-tight">{t.title}</h1>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">{t.subtitle}</p>
           </div>
           <button
             onClick={() => router.push("/admin")}
             className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
           >
-            Back
+            {t.back}
           </button>
         </div>
 
@@ -185,15 +218,15 @@ export default function AdminRestaurantsPage() {
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <h2 className="text-base font-semibold">Create restaurant</h2>
+            <h2 className="text-base font-semibold">{t.createTitle}</h2>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Add a new restaurant under your account.
+              {t.createBody}
             </p>
 
             <form onSubmit={onCreateRestaurant} className="mt-4 flex gap-2">
               <input
                 className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
-                placeholder="Restaurant name"
+                placeholder={t.namePlaceholder}
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
               />
@@ -202,33 +235,33 @@ export default function AdminRestaurantsPage() {
                 className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
                 disabled={!newName.trim()}
               >
-                Create
+                {t.createBtn}
               </button>
             </form>
           </div>
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <h2 className="text-base font-semibold">Active restaurant</h2>
+            <h2 className="text-base font-semibold">{t.activeTitle}</h2>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              This controls which restaurant the POS, setup, and admin pages operate on.
+              {t.activeBody}
             </p>
 
             <div className="mt-4 rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-800">
               {activeRestaurant ? (
                 <div className="flex flex-col gap-1">
                   <div className="font-medium">{activeRestaurant.name}</div>
-                  <div className="text-xs text-zinc-600 dark:text-zinc-400">ID: {activeRestaurant.id}</div>
+                  <div className="text-xs text-zinc-600 dark:text-zinc-400">{t.idLabel}: {activeRestaurant.id}</div>
                 </div>
               ) : (
                 <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                  No active restaurant selected yet.
+                  {t.noneActive}
                 </div>
               )}
             </div>
 
             {activeRestaurant ? (
               <div className="mt-4">
-                <div className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Public menu link</div>
+                <div className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{t.publicMenu}</div>
                 <div className="mt-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 dark:border-zinc-800 dark:bg-black dark:text-zinc-200">
                   {`${origin}/menu/${activeRestaurant.id}`}
                 </div>
@@ -238,7 +271,7 @@ export default function AdminRestaurantsPage() {
                     onClick={() => router.push(`/menu/${activeRestaurant.id}`)}
                     className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
                   >
-                    Open menu
+                    {t.openMenu}
                   </button>
 
                   <button
@@ -246,14 +279,14 @@ export default function AdminRestaurantsPage() {
                       const url = `${origin}/menu/${activeRestaurant.id}`;
                       try {
                         await navigator.clipboard.writeText(url);
-                        setSuccess("Menu link copied.");
+                        setSuccess(t.linkCopied);
                       } catch {
-                        setError("Failed to copy. Please copy manually.");
+                        setError(t.copyFailed);
                       }
                     }}
                     className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
                   >
-                    Copy link
+                    {t.copyLink}
                   </button>
                 </div>
               </div>
@@ -262,14 +295,14 @@ export default function AdminRestaurantsPage() {
         </div>
 
         <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-          <h2 className="text-base font-semibold">Your restaurants</h2>
+          <h2 className="text-base font-semibold">{t.yourRestaurants}</h2>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Choose which restaurant is active.
+            {t.chooseActive}
           </p>
 
           <div className="mt-4 flex flex-col gap-2">
             {restaurants.length === 0 ? (
-              <div className="text-sm text-zinc-600 dark:text-zinc-400">No restaurants yet.</div>
+              <div className="text-sm text-zinc-600 dark:text-zinc-400">{t.noneYet}</div>
             ) : (
               restaurants.map((r) => {
                 const isActive = r.id === activeRestaurantId;
@@ -287,7 +320,7 @@ export default function AdminRestaurantsPage() {
                       disabled={isActive}
                       className="inline-flex h-9 items-center justify-center rounded-lg bg-zinc-900 px-3 text-xs font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
                     >
-                      {isActive ? "Active" : "Set active"}
+                      {isActive ? t.active : t.setActive}
                     </button>
                   </div>
                 );
