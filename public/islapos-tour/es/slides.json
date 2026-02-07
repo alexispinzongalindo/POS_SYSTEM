@@ -1,7 +1,7 @@
 [
   {
     "id": "login",
-    "img": "/islapos-tour/es/slide_01.png",
+    "img": "/islapos-tour/es/slide_v2_01.png",
     "title": { "en": "Sign in", "es": "Iniciar sesión" },
     "body": {
       "en": "Access Admin and POS with your account.",
@@ -10,7 +10,7 @@
   },
   {
     "id": "pos",
-    "img": "/islapos-tour/es/slide_02.png",
+    "img": "/islapos-tour/es/slide_v2_02.png",
     "title": { "en": "Point of Sale", "es": "Punto de venta" },
     "body": {
       "en": "Take orders fast with tables and search.",
@@ -19,7 +19,7 @@
   },
   {
     "id": "tables",
-    "img": "/islapos-tour/es/slide_03.png",
+    "img": "/islapos-tour/es/slide_v2_03.png",
     "title": { "en": "Tables", "es": "Mesas" },
     "body": {
       "en": "Manage table service and open tickets.",
@@ -28,7 +28,7 @@
   },
   {
     "id": "offline",
-    "img": "/islapos-tour/es/slide_04.png",
+    "img": "/islapos-tour/es/slide_v2_04.png",
     "title": { "en": "Offline mode", "es": "Modo offline" },
     "body": {
       "en": "Keep selling even without internet.",
@@ -37,7 +37,7 @@
   },
   {
     "id": "reports",
-    "img": "/islapos-tour/es/slide_05.png",
+    "img": "/islapos-tour/es/slide_v2_05.png",
     "title": { "en": "Reports", "es": "Reportes" },
     "body": {
       "en": "Track sales and performance.",
@@ -46,7 +46,7 @@
   },
   {
     "id": "pos-flow",
-    "img": "/islapos-tour/es/slide_06.png",
+    "img": "/islapos-tour/es/slide_v2_06.png",
     "title": { "en": "POS flow", "es": "Flujo POS" },
     "body": {
       "en": "Fast order entry and checkout.",
@@ -55,7 +55,7 @@
   },
   {
     "id": "tables-view",
-    "img": "/islapos-tour/es/slide_07.png",
+    "img": "/islapos-tour/es/slide_v2_07.png",
     "title": { "en": "Tables view", "es": "Vista de mesas" },
     "body": {
       "en": "See open tables at a glance.",
@@ -64,7 +64,7 @@
   },
   {
     "id": "offline-ready",
-    "img": "/islapos-tour/es/slide_08.png",
+    "img": "/islapos-tour/es/slide_v2_08.png",
     "title": { "en": "Offline ready", "es": "Listo sin internet" },
     "body": {
       "en": "Operate even with outages.",
@@ -73,7 +73,7 @@
   },
   {
     "id": "reports-quick",
-    "img": "/islapos-tour/es/slide_09.png",
+    "img": "/islapos-tour/es/slide_v2_09.png",
     "title": { "en": "Reports", "es": "Reportes" },
     "body": {
       "en": "Review sales quickly.",
@@ -82,7 +82,7 @@
   },
   {
     "id": "pos-cta",
-    "img": "/islapos-tour/es/slide_10.png",
+    "img": "/islapos-tour/es/slide_v2_10.png",
     "title": { "en": "IslaPOS", "es": "IslaPOS" },
     "body": {
       "en": "IslaPOS keeps service moving.",
