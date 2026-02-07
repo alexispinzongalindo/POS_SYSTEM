@@ -55,7 +55,7 @@
   },
   {
     "id": "offline",
-    "img": "/islapos-tour/es/slide_07.jpg",
+    "img": "/islapos-tour/es/slide_07.png",
     "title": { "en": "Offline mode", "es": "Modo offline" },
     "body": {
       "en": "Keep working even when the internet goes down.",
@@ -73,7 +73,7 @@
   },
   {
     "id": "scale",
-    "img": "/islapos-tour/es/slide_09.jpg",
+    "img": "/islapos-tour/es/slide_09.png",
     "title": { "en": "Scale up", "es": "Escala" },
     "body": {
       "en": "Add locations and grow when you are ready.",
