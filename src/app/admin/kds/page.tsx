@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
 
 import { getSetupContext } from "@/lib/setupData";
+import { useMarketingLang } from "@/lib/useMarketingLang";
 import {
   listKDSTokens,
   createKDSToken,
@@ -15,6 +16,37 @@ import {
 
 export default function AdminKDSPage() {
   const router = useRouter();
+  const { lang } = useMarketingLang();
+  const isEs = lang === "es";
+  const t = {
+    loading: isEs ? "Cargando…" : "Loading…",
+    failedLoad: isEs ? "No se pudieron cargar los tokens KDS" : "Failed to load KDS tokens",
+    title: isEs ? "Pantalla de cocina (KDS)" : "Kitchen Display (KDS)",
+    subtitle: isEs
+      ? "Genera códigos QR para que el personal de cocina vea y gestione órdenes en tablets/teléfonos."
+      : "Generate QR codes for kitchen staff to view and manage orders on tablets/phones.",
+    back: isEs ? "← Volver" : "Back",
+    createTitle: isEs ? "Crear enlace KDS" : "Create KDS Link",
+    createSubtitle: isEs ? "Crea un nuevo código QR para acceso a órdenes." : "Create a new QR code that kitchen staff can scan to access orders.",
+    namePlaceholder: isEs ? "Nombre (ej. Cocina principal, Barra)" : "Name (e.g. Main Kitchen, Bar)",
+    createButton: isEs ? "Crear código QR" : "Create QR Code",
+    active: isEs ? "Activo" : "Active",
+    inactive: isEs ? "Inactivo" : "Inactive",
+    disable: isEs ? "Desactivar" : "Disable",
+    enable: isEs ? "Activar" : "Enable",
+    delete: isEs ? "Eliminar" : "Delete",
+    tapToEnlarge: isEs ? "Toca para ampliar" : "Tap to enlarge",
+    noLinksTitle: isEs ? "Aún no hay enlaces KDS" : "No KDS links yet",
+    noLinksSubtitle: isEs ? "Crea un código QR arriba para que cocina lo escanee" : "Create a QR code above for kitchen staff to scan",
+    howToUse: isEs ? "Cómo usarlo" : "How to use",
+    step1: isEs ? "Crea un enlace KDS arriba (uno por estación si es necesario)" : "Create a KDS link above (one per kitchen station if needed)",
+    step2: isEs ? "Imprime el código QR o muéstralo en una pantalla" : "Print the QR code or display it on a screen",
+    step3: isEs ? "El personal de cocina escanea el QR con su teléfono/tablet" : "Kitchen staff scan the QR code with their phone/tablet camera",
+    step4: isEs ? "Las órdenes aparecen automáticamente - toca INICIAR → LISTO → HECHO" : "Orders appear automatically - tap START → READY → DONE",
+    step5: isEs ? "La pantalla se actualiza automáticamente cada 10 segundos" : "Display auto-refreshes every 10 seconds",
+    scanHint: isEs ? "Escanea con la cámara del teléfono/tablet" : "Scan with phone/tablet camera",
+    close: isEs ? "Cerrar" : "Close",
+  };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +103,7 @@ export default function AdminKDSPage() {
       try {
         await loadTokens(rid);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load KDS tokens");
+        setError(e instanceof Error ? e.message : t.failedLoad);
       } finally {
         setLoading(false);
       }
@@ -127,7 +159,7 @@ export default function AdminKDSPage() {
   if (loading) {
     return (
       <div className="islapos-marketing flex min-h-screen items-center justify-center bg-[var(--mp-bg)] text-[var(--mp-fg)]">
-        <div className="text-sm text-[var(--mp-muted)]">Loading...</div>
+        <div className="text-sm text-[var(--mp-muted)]">{t.loading}</div>
       </div>
     );
   }
@@ -137,16 +169,14 @@ export default function AdminKDSPage() {
       <div className="mx-auto w-full max-w-4xl px-6 py-10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Kitchen Display (KDS)</h1>
-            <p className="text-sm text-[var(--mp-muted)]">
-              Generate QR codes for kitchen staff to view and manage orders on tablets/phones.
-            </p>
+            <h1 className="text-2xl font-semibold tracking-tight">{t.title}</h1>
+            <p className="text-sm text-[var(--mp-muted)]">{t.subtitle}</p>
           </div>
           <button
             onClick={() => router.push("/admin")}
             className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
           >
-            Back
+            {t.back}
           </button>
         </div>
 
@@ -158,24 +188,22 @@ export default function AdminKDSPage() {
 
         {/* Create new token */}
         <div className="mt-8 rounded-3xl border border-[var(--mp-border)] bg-white/90 p-6 shadow-sm">
-          <h2 className="text-base font-semibold">Create KDS Link</h2>
-          <p className="mt-1 text-sm text-[var(--mp-muted)]">
-            Create a new QR code that kitchen staff can scan to access orders.
-          </p>
+          <h2 className="text-base font-semibold">{t.createTitle}</h2>
+          <p className="mt-1 text-sm text-[var(--mp-muted)]">{t.createSubtitle}</p>
 
           <div className="mt-4 flex gap-3">
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder="Name (e.g. Main Kitchen, Bar)"
+              placeholder={t.namePlaceholder}
               className="h-11 flex-1 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
             />
             <button
               onClick={handleCreate}
               className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
             >
-              Create QR Code
+              {t.createButton}
             </button>
           </div>
         </div>
@@ -195,7 +223,7 @@ export default function AdminKDSPage() {
                 <div>
                   <h3 className="font-semibold">{token.name}</h3>
                   <p className="mt-1 text-xs text-[var(--mp-muted)]">
-                    {token.is_active ? "Active" : "Inactive"}
+                    {token.is_active ? t.active : t.inactive}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -207,13 +235,13 @@ export default function AdminKDSPage() {
                         : "border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                     }`}
                   >
-                    {token.is_active ? "Disable" : "Enable"}
+                    {token.is_active ? t.disable : t.enable}
                   </button>
                   <button
                     onClick={() => handleDelete(token.id)}
                     className="inline-flex h-9 items-center justify-center rounded-lg border border-red-300 bg-red-50 px-3 text-xs font-semibold text-red-700 hover:bg-red-100"
                   >
-                    Delete
+                    {t.delete}
                   </button>
                 </div>
               </div>
@@ -247,9 +275,9 @@ export default function AdminKDSPage() {
           {tokens.length === 0 && (
             <div className="col-span-2 rounded-3xl border border-dashed border-[var(--mp-border)] bg-white/50 p-10 text-center">
               <div className="text-4xl">📱</div>
-              <div className="mt-3 font-semibold">No KDS links yet</div>
+              <div className="mt-3 font-semibold">{t.noLinksTitle}</div>
               <div className="mt-1 text-sm text-[var(--mp-muted)]">
-                Create a QR code above for kitchen staff to scan
+                {t.noLinksSubtitle}
               </div>
             </div>
           )}
@@ -257,13 +285,13 @@ export default function AdminKDSPage() {
 
         {/* Instructions */}
         <div className="mt-8 rounded-3xl border border-[var(--mp-border)] bg-white/90 p-6 shadow-sm">
-          <h2 className="text-base font-semibold">How to use</h2>
+          <h2 className="text-base font-semibold">{t.howToUse}</h2>
           <ol className="mt-3 space-y-2 text-sm text-[var(--mp-muted)]">
-            <li><strong>1.</strong> Create a KDS link above (one per kitchen station if needed)</li>
-            <li><strong>2.</strong> Print the QR code or display it on a screen</li>
-            <li><strong>3.</strong> Kitchen staff scan the QR code with their phone/tablet camera</li>
-            <li><strong>4.</strong> Orders appear automatically - tap START → READY → DONE</li>
-            <li><strong>5.</strong> Display auto-refreshes every 10 seconds</li>
+            <li><strong>1.</strong> {t.step1}</li>
+            <li><strong>2.</strong> {t.step2}</li>
+            <li><strong>3.</strong> {t.step3}</li>
+            <li><strong>4.</strong> {t.step4}</li>
+            <li><strong>5.</strong> {t.step5}</li>
           </ol>
         </div>
       </div>
@@ -273,7 +301,7 @@ export default function AdminKDSPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-xl">
             <h3 className="text-lg font-semibold">{selectedToken.name}</h3>
-            <p className="mt-1 text-sm text-[var(--mp-muted)]">Scan with phone/tablet camera</p>
+            <p className="mt-1 text-sm text-[var(--mp-muted)]">{t.scanHint}</p>
             
             <div className="mt-4 flex justify-center">
               <img
@@ -293,7 +321,7 @@ export default function AdminKDSPage() {
               onClick={() => setSelectedToken(null)}
               className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-zinc-50"
             >
-              Close
+              {t.close}
             </button>
           </div>
         </div>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
+import { useMarketingLang } from "@/lib/useMarketingLang";
 
 type StaffRole = "manager" | "cashier" | "kitchen" | "maintenance" | "driver" | "security";
 
@@ -69,6 +70,58 @@ function minutesToHM(totalMinutes: number) {
 
 export default function AdminPayrollPage() {
   const router = useRouter();
+  const { lang } = useMarketingLang();
+  const isEs = lang === "es";
+  const t = {
+    loading: isEs ? "Cargando…" : "Loading…",
+    title: isEs ? "Nómina" : "Payroll",
+    subtitle: isEs ? "Horarios, correo y programado vs real." : "Schedules, email, and scheduled vs actual.",
+    back: isEs ? "← Volver" : "Back",
+    scheduleTab: isEs ? "Horario" : "Schedule",
+    reportTab: isEs ? "Reporte de diferencias" : "Differential report",
+    weekStarting: isEs ? "Semana inicia" : "Week starting",
+    createShiftTitle: isEs ? "Crear turno" : "Create shift",
+    selectStaff: isEs ? "Selecciona personal" : "Select staff",
+    noName: isEs ? "(sin nombre)" : "(no name)",
+    pinLabel: (pin: string) => (isEs ? `(PIN ${pin})` : `(PIN ${pin})`),
+    breakMinutesPlaceholder: isEs ? "Minutos de descanso" : "Break minutes",
+    addShift: isEs ? "Agregar turno" : "Add shift",
+    emailSchedulesTitle: isEs ? "Enviar horarios" : "Email schedules",
+    emailSchedulesSubtitle: isEs ? "Enviar la semana seleccionada a cada empleado." : "Send the selected week to each staff member.",
+    noStaff: isEs ? "No hay personal." : "No staff found.",
+    noEmail: isEs ? "(sin correo)" : "(no email)",
+    sendEmail: isEs ? "Enviar correo" : "Send email",
+    shiftsTitle: isEs ? "Turnos" : "Shifts",
+    shiftsSubtitle: isEs ? "Vista semanal de turnos programados." : "Week view of scheduled shifts.",
+    refresh: isEs ? "Actualizar" : "Refresh",
+    noShifts: isEs ? "No hay turnos en este rango." : "No shifts in this range.",
+    breakLabel: (mins: number) => (isEs ? ` · Descanso ${mins}m` : ` · Break ${mins}m`),
+    delete: isEs ? "Eliminar" : "Delete",
+    scheduledVsActualTitle: isEs ? "Programado vs real" : "Scheduled vs actual",
+    varianceSubtitle: isEs ? "La variación es real menos programado." : "Variance is actual minus scheduled.",
+    loadingReport: isEs ? "Cargando reporte..." : "Loading report...",
+    noData: isEs ? "No hay datos para este rango." : "No data for this range.",
+    staffFallback: isEs ? "(personal)" : "(staff)",
+    scheduledLabel: isEs ? "Programado" : "Scheduled",
+    actualLabel: isEs ? "Real" : "Actual",
+    varianceLabel: isEs ? "Variación" : "Variance",
+    selectStaffError: isEs ? "Selecciona un empleado" : "Select a staff member",
+    breakMinutesError: isEs ? "Los minutos de descanso deben ser un número" : "Break minutes must be a number",
+    invalidStart: isEs ? "Hora de inicio inválida" : "Invalid start time",
+    invalidEnd: isEs ? "Hora de fin inválida" : "Invalid end time",
+    endAfterStart: isEs ? "La hora de fin debe ser después de la hora de inicio" : "End time must be after start time",
+    failedCreateShift: isEs ? "No se pudo crear el turno" : "Failed to create shift",
+    shiftCreated: isEs ? "Turno creado." : "Shift created.",
+    failedDeleteShift: isEs ? "No se pudo eliminar el turno" : "Failed to delete shift",
+    shiftDeleted: isEs ? "Turno eliminado." : "Shift deleted.",
+    failedSendEmail: isEs ? "No se pudo enviar el correo" : "Failed to send email",
+    emailSent: isEs ? "Correo enviado." : "Email sent.",
+    failedLoadReport: isEs ? "No se pudo cargar el reporte" : "Failed to load report",
+    failedLoadSchedules: isEs ? "No se pudieron cargar los horarios" : "Failed to load schedules",
+    failedLoadStaff: isEs ? "No se pudo cargar el personal" : "Failed to load staff",
+    failedLoadPayroll: isEs ? "No se pudo cargar la nómina" : "Failed to load payroll",
+    notSignedIn: isEs ? "No has iniciado sesión" : "Not signed in",
+  };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +154,7 @@ export default function AdminPayrollPage() {
     const token = data.session?.access_token;
     if (!token) {
       router.replace("/login");
-      throw new Error("Not signed in");
+      throw new Error(t.notSignedIn);
     }
 
     return fetch(path, {
@@ -116,7 +169,7 @@ export default function AdminPayrollPage() {
   async function loadStaff() {
     const res = await authedFetch("/api/admin/staff");
     const json = (await res.json().catch(() => null)) as { staff?: StaffRow[]; error?: string } | null;
-    if (!res.ok || json?.error) throw new Error(json?.error ?? "Failed to load staff");
+    if (!res.ok || json?.error) throw new Error(json?.error ?? t.failedLoadStaff);
     setStaff(json?.staff ?? []);
   }
 
@@ -125,7 +178,7 @@ export default function AdminPayrollPage() {
     const end = weekRange.end.toISOString();
     const res = await authedFetch(`/api/admin/payroll/schedules?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
     const json = (await res.json().catch(() => null)) as { shifts?: ScheduleShift[]; error?: string } | null;
-    if (!res.ok || json?.error) throw new Error(json?.error ?? "Failed to load schedules");
+    if (!res.ok || json?.error) throw new Error(json?.error ?? t.failedLoadSchedules);
     setShifts(Array.isArray(json?.shifts) ? json?.shifts ?? [] : []);
   }
 
@@ -160,7 +213,7 @@ export default function AdminPayrollPage() {
         await loadStaff();
         await loadShifts();
       } catch (e) {
-        const msg = e instanceof Error ? e.message : "Failed to load payroll";
+        const msg = e instanceof Error ? e.message : t.failedLoadPayroll;
         setError(msg);
       } finally {
         setLoading(false);
@@ -185,7 +238,7 @@ export default function AdminPayrollPage() {
       try {
         await loadShifts();
       } catch (e) {
-        const msg = e instanceof Error ? e.message : "Failed to load schedules";
+        const msg = e instanceof Error ? e.message : t.failedLoadSchedules;
         setError(msg);
       }
     })();
@@ -209,29 +262,29 @@ export default function AdminPayrollPage() {
 
     const staffRow = staffById.get(newStaffId) ?? null;
     if (!staffRow) {
-      setError("Select a staff member");
+      setError(t.selectStaffError);
       return;
     }
 
     const breakMinutesNum = Number(newBreakMinutes || "0");
     if (!Number.isFinite(breakMinutesNum) || breakMinutesNum < 0 || breakMinutesNum > 480) {
-      setError("Break minutes must be a number");
+      setError(t.breakMinutesError);
       return;
     }
 
     const startLocal = new Date(`${newDate}T${newStartTime}:00`);
     const endLocal = new Date(`${newDate}T${newEndTime}:00`);
     if (!(startLocal instanceof Date) || Number.isNaN(startLocal.valueOf())) {
-      setError("Invalid start time");
+      setError(t.invalidStart);
       return;
     }
     if (!(endLocal instanceof Date) || Number.isNaN(endLocal.valueOf())) {
-      setError("Invalid end time");
+      setError(t.invalidEnd);
       return;
     }
 
     if (endLocal <= startLocal) {
-      setError("End time must be after start time");
+      setError(t.endAfterStart);
       return;
     }
 
@@ -250,11 +303,11 @@ export default function AdminPayrollPage() {
 
     const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
     if (!res.ok || json?.error) {
-      setError(json?.error ?? "Failed to create shift");
+      setError(json?.error ?? t.failedCreateShift);
       return;
     }
 
-    setSuccess("Shift created.");
+    setSuccess(t.shiftCreated);
     await loadShifts();
   }
 
@@ -270,11 +323,11 @@ export default function AdminPayrollPage() {
 
     const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
     if (!res.ok || json?.error) {
-      setError(json?.error ?? "Failed to delete shift");
+      setError(json?.error ?? t.failedDeleteShift);
       return;
     }
 
-    setSuccess("Shift deleted.");
+    setSuccess(t.shiftDeleted);
     await loadShifts();
   }
 
@@ -293,11 +346,11 @@ export default function AdminPayrollPage() {
 
     const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
     if (!res.ok || json?.error) {
-      setError(json?.error ?? "Failed to send email");
+      setError(json?.error ?? t.failedSendEmail);
       return;
     }
 
-    setSuccess("Email sent.");
+    setSuccess(t.emailSent);
   }
 
   async function loadDifferentialReport() {
@@ -310,10 +363,10 @@ export default function AdminPayrollPage() {
       const end = weekRange.end.toISOString();
       const res = await authedFetch(`/api/admin/payroll/report?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
       const json = (await res.json().catch(() => null)) as { rows?: DifferentialRow[]; error?: string } | null;
-      if (!res.ok || json?.error) throw new Error(json?.error ?? "Failed to load report");
+      if (!res.ok || json?.error) throw new Error(json?.error ?? t.failedLoadReport);
       setReportRows(Array.isArray(json?.rows) ? (json?.rows ?? []) : []);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Failed to load report";
+      const msg = e instanceof Error ? e.message : t.failedLoadReport;
       setError(msg);
       setReportRows([]);
     } finally {
@@ -330,7 +383,7 @@ export default function AdminPayrollPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</div>
+        <div className="text-sm text-zinc-600 dark:text-zinc-400">{t.loading}</div>
       </div>
     );
   }
@@ -340,14 +393,14 @@ export default function AdminPayrollPage() {
       <div className="mx-auto w-full max-w-6xl px-6 py-10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Payroll</h1>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Schedules, email, and scheduled vs actual.</p>
+            <h1 className="text-2xl font-semibold tracking-tight">{t.title}</h1>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">{t.subtitle}</p>
           </div>
           <button
             onClick={() => router.push("/admin")}
             className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
           >
-            Back
+            {t.back}
           </button>
         </div>
 
@@ -362,7 +415,7 @@ export default function AdminPayrollPage() {
                   : "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
               }`}
             >
-              Schedule
+              {t.scheduleTab}
             </button>
             <button
               type="button"
@@ -373,12 +426,12 @@ export default function AdminPayrollPage() {
                   : "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
               }`}
             >
-              Differential report
+              {t.reportTab}
             </button>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="text-sm text-zinc-600 dark:text-zinc-400">Week starting</div>
+            <div className="text-sm text-zinc-600 dark:text-zinc-400">{t.weekStarting}</div>
             <input
               type="date"
               value={weekStart}
@@ -404,17 +457,17 @@ export default function AdminPayrollPage() {
           <>
             <div className="mt-8 grid gap-6 lg:grid-cols-2">
               <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                <h2 className="text-base font-semibold">Create shift</h2>
+                <h2 className="text-base font-semibold">{t.createShiftTitle}</h2>
                 <div className="mt-4 grid gap-3">
                   <select
                     value={newStaffId}
                     onChange={(e) => setNewStaffId(e.target.value)}
                     className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
                   >
-                    <option value="">Select staff</option>
+                    <option value="">{t.selectStaff}</option>
                     {staff.map((s) => (
                       <option key={s.id} value={s.id}>
-                        {(s.name ?? s.email ?? "(no name)") + (s.pin ? ` (PIN ${s.pin})` : "")}
+                        {(s.name ?? s.email ?? t.noName) + (s.pin ? ` ${t.pinLabel(s.pin)}` : "")}
                       </option>
                     ))}
                   </select>
@@ -433,7 +486,7 @@ export default function AdminPayrollPage() {
                       value={newBreakMinutes}
                       onChange={(e) => setNewBreakMinutes(e.target.value)}
                       className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
-                      placeholder="Break minutes"
+                      placeholder={t.breakMinutesPlaceholder}
                     />
                   </div>
 
@@ -457,18 +510,18 @@ export default function AdminPayrollPage() {
                     onClick={() => void createShift()}
                     className="inline-flex h-11 items-center justify-center rounded-lg bg-emerald-600 px-5 text-sm font-semibold text-white hover:bg-emerald-700"
                   >
-                    Add shift
+                    {t.addShift}
                   </button>
                 </div>
               </div>
 
               <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                <h2 className="text-base font-semibold">Email schedules</h2>
-                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Send the selected week to each staff member.</p>
+                <h2 className="text-base font-semibold">{t.emailSchedulesTitle}</h2>
+                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{t.emailSchedulesSubtitle}</p>
 
                 <div className="mt-4 flex flex-col gap-2">
                   {staff.length === 0 ? (
-                    <div className="text-sm text-zinc-600 dark:text-zinc-400">No staff found.</div>
+                    <div className="text-sm text-zinc-600 dark:text-zinc-400">{t.noStaff}</div>
                   ) : (
                     staff.map((s) => (
                       <div
@@ -476,8 +529,8 @@ export default function AdminPayrollPage() {
                         className="flex flex-col gap-2 rounded-lg border border-zinc-200 px-3 py-2 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800"
                       >
                         <div>
-                          <div className="text-sm font-medium">{s.name?.trim() ? s.name : s.email ?? "(no email)"}</div>
-                          <div className="text-xs text-zinc-600 dark:text-zinc-400">{s.email ?? "(no email)"}</div>
+                          <div className="text-sm font-medium">{s.name?.trim() ? s.name : s.email ?? t.noEmail}</div>
+                          <div className="text-xs text-zinc-600 dark:text-zinc-400">{s.email ?? t.noEmail}</div>
                         </div>
                         <button
                           type="button"
@@ -485,7 +538,7 @@ export default function AdminPayrollPage() {
                           disabled={!s.email}
                           className="inline-flex h-9 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-semibold hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
                         >
-                          Send email
+                          {t.sendEmail}
                         </button>
                       </div>
                     ))
@@ -497,24 +550,28 @@ export default function AdminPayrollPage() {
             <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-base font-semibold">Shifts</h2>
-                  <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Week view of scheduled shifts.</p>
+                  <h2 className="text-base font-semibold">{t.shiftsTitle}</h2>
+                  <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{t.shiftsSubtitle}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => void loadShifts()}
                   className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
                 >
-                  Refresh
+                  {t.refresh}
                 </button>
               </div>
 
               <div className="mt-4 flex flex-col gap-2">
                 {shiftsSorted.length === 0 ? (
-                  <div className="text-sm text-zinc-600 dark:text-zinc-400">No shifts in this range.</div>
+                  <div className="text-sm text-zinc-600 dark:text-zinc-400">{t.noShifts}</div>
                 ) : (
                   shiftsSorted.map((sh) => {
-                    const label = sh.staff_label?.trim() ? sh.staff_label : sh.staff_pin ? `PIN ${sh.staff_pin}` : "(staff)";
+                    const label = sh.staff_label?.trim()
+                      ? sh.staff_label
+                      : sh.staff_pin
+                        ? `PIN ${sh.staff_pin}`
+                        : t.staffFallback;
                     const start = new Date(sh.starts_at);
                     const end = new Date(sh.ends_at);
                     return (
@@ -525,7 +582,7 @@ export default function AdminPayrollPage() {
                         <div>
                           <div className="text-sm font-medium">{label}</div>
                           <div className="text-xs text-zinc-600 dark:text-zinc-400">
-                            {start.toLocaleString()} → {end.toLocaleString()} {sh.break_minutes ? ` · Break ${sh.break_minutes}m` : ""}
+                            {start.toLocaleString()} → {end.toLocaleString()} {sh.break_minutes ? t.breakLabel(sh.break_minutes) : ""}
                           </div>
                         </div>
                         <button
@@ -533,7 +590,7 @@ export default function AdminPayrollPage() {
                           onClick={() => void deleteShift(sh.id)}
                           className="inline-flex h-9 items-center justify-center rounded-lg border border-red-200 bg-white px-3 text-xs font-semibold text-red-700 hover:bg-red-50 dark:border-red-900/50 dark:bg-black dark:text-red-200 dark:hover:bg-red-950/30"
                         >
-                          Delete
+                          {t.delete}
                         </button>
                       </div>
                     );
@@ -546,33 +603,36 @@ export default function AdminPayrollPage() {
           <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-base font-semibold">Scheduled vs actual</h2>
-                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Variance is actual minus scheduled.</p>
+                <h2 className="text-base font-semibold">{t.scheduledVsActualTitle}</h2>
+                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{t.varianceSubtitle}</p>
               </div>
               <button
                 type="button"
                 onClick={() => void loadDifferentialReport()}
                 className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
               >
-                Refresh
+                {t.refresh}
               </button>
             </div>
 
             {reportLoading ? (
-              <div className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">Loading report...</div>
+              <div className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">{t.loadingReport}</div>
             ) : (
               <div className="mt-4 flex flex-col gap-2">
                 {reportRows.length === 0 ? (
-                  <div className="text-sm text-zinc-600 dark:text-zinc-400">No data for this range.</div>
+                  <div className="text-sm text-zinc-600 dark:text-zinc-400">{t.noData}</div>
                 ) : (
                   reportRows.map((r) => (
                     <div
                       key={`${r.staffUserId ?? "x"}:${r.staffPin ?? "x"}`}
                       className="rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800"
                     >
-                      <div className="text-sm font-medium">{r.staffLabel?.trim() ? r.staffLabel : r.staffPin ? `PIN ${r.staffPin}` : "(staff)"}</div>
+                      <div className="text-sm font-medium">
+                        {r.staffLabel?.trim() ? r.staffLabel : r.staffPin ? `PIN ${r.staffPin}` : t.staffFallback}
+                      </div>
                       <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                        Scheduled: {minutesToHM(r.scheduledMinutes)} · Actual: {minutesToHM(r.actualMinutes)} · Variance: {minutesToHM(r.varianceMinutes)}
+                        {t.scheduledLabel}: {minutesToHM(r.scheduledMinutes)} · {t.actualLabel}: {minutesToHM(r.actualMinutes)} ·{" "}
+                        {t.varianceLabel}: {minutesToHM(r.varianceMinutes)}
                       </div>
                     </div>
                   ))

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
+import { useMarketingLang } from "@/lib/useMarketingLang";
 import {
   computeFoodCostReport,
   createIngredient,
@@ -34,6 +35,79 @@ function addDays(d: Date, delta: number) {
 
 export default function AdminFoodCostPage() {
   const router = useRouter();
+  const { lang } = useMarketingLang();
+  const isEs = lang === "es";
+  const t = {
+    loading: isEs ? "Cargando…" : "Loading…",
+    failedLoad: isEs ? "No se pudo cargar" : "Failed to load",
+    failedComputeReport: isEs ? "No se pudo calcular el reporte" : "Failed to compute report",
+    ingredientAdded: isEs ? "Ingrediente agregado." : "Ingredient added.",
+    failedAddIngredient: isEs ? "No se pudo agregar el ingrediente" : "Failed to add ingredient",
+    failed: isEs ? "Falló" : "Failed",
+    purchaseAdded: isEs ? "Compra agregada." : "Purchase added.",
+    failedAddPurchase: isEs ? "No se pudo agregar la compra" : "Failed to add purchase",
+    countSaved: isEs ? "Conteo guardado." : "Count saved.",
+    failedSaveCount: isEs ? "No se pudo guardar el conteo" : "Failed to save count",
+    recipeLineSaved: isEs ? "Línea de receta guardada." : "Recipe line saved.",
+    failedSaveRecipe: isEs ? "No se pudo guardar la línea de receta" : "Failed to save recipe line",
+    failedDelete: isEs ? "No se pudo eliminar" : "Failed to delete",
+    title: isEs ? "Costo de alimentos" : "Food Cost",
+    subtitle: isEs
+      ? "Costo promedio ponderado por ingrediente. Uso real = Inicio + Compras − Final. Uso teórico = ventas × recetas."
+      : "Ingredient-level weighted average cost. Actual usage = Begin + Purchases − End. Theoretical usage = sales × recipes.",
+    back: isEs ? "← Volver" : "Back",
+    report: isEs ? "Reporte" : "Report",
+    restaurantLabel: isEs ? "Restaurante" : "Restaurant",
+    today: isEs ? "Hoy" : "Today",
+    days7: isEs ? "7 días" : "7 days",
+    days30: isEs ? "30 días" : "30 days",
+    computing: isEs ? "Calculando..." : "Computing...",
+    noData: isEs
+      ? "Aún no hay datos. Agrega ingredientes, recetas, compras y dos conteos (inicio/fin) para calcular el uso real."
+      : "No data yet. Add ingredients, recipes, purchases, and two counts (begin/end) to compute actual usage.",
+    ingredient: isEs ? "Ingrediente" : "Ingredient",
+    unit: isEs ? "Unidad" : "Unit",
+    avgCost: isEs ? "Costo prom." : "Avg cost",
+    theoUsage: isEs ? "Uso teórico" : "Theo usage",
+    actualUsage: isEs ? "Uso real" : "Actual usage",
+    variance: isEs ? "Variación" : "Variance",
+    theoCost: isEs ? "Costo teórico" : "Theo cost",
+    actualCost: isEs ? "Costo real" : "Actual cost",
+    totals: isEs ? "Totales" : "Totals",
+    quickAdd: isEs ? "Agregar rápido" : "Quick add",
+    ingredientSection: isEs ? "Ingrediente" : "Ingredient",
+    ingredientName: isEs ? "Nombre del ingrediente" : "Ingredient name",
+    unitHint: isEs ? "Unidad (lb, oz, unidad)" : "Unit (lb, oz, each)",
+    addIngredient: isEs ? "Agregar ingrediente" : "Add ingredient",
+    purchase: isEs ? "Compra" : "Purchase",
+    selectIngredient: isEs ? "Selecciona ingrediente" : "Select ingredient",
+    qtyPurchased: isEs ? "Cantidad comprada" : "Qty purchased",
+    totalCost: isEs ? "Costo total ($)" : "Total cost ($)",
+    vendorOptional: isEs ? "Proveedor (opcional)" : "Vendor (optional)",
+    addPurchase: isEs ? "Agregar compra" : "Add purchase",
+    inventoryCount: isEs ? "Conteo de inventario" : "Inventory count",
+    qtyOnHand: isEs ? "Cantidad en mano (conteo)" : "Qty on hand (count)",
+    saveCount: isEs ? "Guardar conteo" : "Save count",
+    ingredientsTitle: isEs ? "Ingredientes" : "Ingredients",
+    noIngredients: isEs ? "Sin ingredientes." : "No ingredients yet.",
+    unitLabel: isEs ? "Unidad" : "Unit",
+    active: isEs ? "Activo" : "Active",
+    recipeBuilder: isEs ? "Constructor de recetas" : "Recipe builder",
+    selectMenuItem: isEs ? "Selecciona un platillo" : "Select menu item",
+    menuItemFallback: isEs ? "Platillo" : "Menu item",
+    recipeLabel: isEs ? "receta" : "recipe",
+    ingredientLabel: isEs ? "Ingrediente" : "Ingredient",
+    qtyPerItem: isEs ? "Cantidad por platillo vendido" : "Qty per menu item sold",
+    qtyPerItemPlaceholder: isEs ? "Cantidad por platillo" : "Qty per item",
+    addUpdateRecipeLine: isEs ? "Agregar / actualizar línea de receta" : "Add / update recipe line",
+    noRecipeLines: isEs ? "Sin líneas de receta." : "No recipe lines yet.",
+    remove: isEs ? "Eliminar" : "Remove",
+    selectMenuItemHint: isEs ? "Selecciona un platillo para agregar ingredientes." : "Select a menu item to add ingredient lines.",
+    recentPurchases: isEs ? "Compras recientes" : "Recent purchases",
+    noPurchases: isEs ? "Sin compras." : "No purchases yet.",
+    recentCounts: isEs ? "Conteos recientes" : "Recent counts",
+    noCounts: isEs ? "Sin conteos." : "No counts yet.",
+  };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -122,7 +196,7 @@ export default function AdminFoodCostPage() {
     }
 
     void load().catch((e) => {
-      setError(e instanceof Error ? e.message : "Failed to load");
+      setError(e instanceof Error ? e.message : t.failedLoad);
       setLoading(false);
     });
 
@@ -158,7 +232,7 @@ export default function AdminFoodCostPage() {
           setReport(r.data ?? null);
         } catch (e) {
           setReport(null);
-          setError(e instanceof Error ? e.message : "Failed to compute report");
+          setError(e instanceof Error ? e.message : t.failedComputeReport);
         } finally {
           setReportLoading(false);
         }
@@ -218,9 +292,9 @@ export default function AdminFoodCostPage() {
       setNewIngredientName("");
       setNewIngredientUnit("each");
       await reloadBaseData(restaurantId);
-      setSuccess("Ingredient added.");
+      setSuccess(t.ingredientAdded);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to add ingredient");
+      setError(e instanceof Error ? e.message : t.failedAddIngredient);
     }
   }
 
@@ -232,7 +306,7 @@ export default function AdminFoodCostPage() {
       if (res.error) throw res.error;
       if (restaurantId) await reloadBaseData(restaurantId);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      setError(e instanceof Error ? e.message : t.failed);
     }
   }
 
@@ -264,9 +338,9 @@ export default function AdminFoodCostPage() {
       setPurchaseTotalCost("0");
       setPurchaseVendor("");
       await reloadBaseData(restaurantId);
-      setSuccess("Purchase added.");
+      setSuccess(t.purchaseAdded);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to add purchase");
+      setError(e instanceof Error ? e.message : t.failedAddPurchase);
     }
   }
 
@@ -292,9 +366,9 @@ export default function AdminFoodCostPage() {
       if (res.error) throw res.error;
       setCountQty("0");
       await reloadBaseData(restaurantId);
-      setSuccess("Count saved.");
+      setSuccess(t.countSaved);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to save count");
+      setError(e instanceof Error ? e.message : t.failedSaveCount);
     }
   }
 
@@ -314,9 +388,9 @@ export default function AdminFoodCostPage() {
       if (res.error) throw res.error;
       setRecipeQty("0");
       await reloadBaseData(restaurantId);
-      setSuccess("Recipe line saved.");
+      setSuccess(t.recipeLineSaved);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to save recipe line");
+      setError(e instanceof Error ? e.message : t.failedSaveRecipe);
     }
   }
 
@@ -330,14 +404,14 @@ export default function AdminFoodCostPage() {
       if (res.error) throw res.error;
       await reloadBaseData(restaurantId);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to delete");
+      setError(e instanceof Error ? e.message : t.failedDelete);
     }
   }
 
   if (loading) {
     return (
       <div className="islapos-marketing flex min-h-screen items-center justify-center bg-[var(--mp-bg)] text-[var(--mp-fg)]">
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</div>
+        <div className="text-sm text-zinc-600 dark:text-zinc-400">{t.loading}</div>
       </div>
     );
   }
@@ -347,16 +421,14 @@ export default function AdminFoodCostPage() {
       <div className="mx-auto w-full max-w-6xl px-6 py-10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-semibold tracking-tight">Food Cost</h1>
-            <p className="text-sm text-[var(--mp-muted)]">
-              Ingredient-level weighted average cost. Actual usage = Begin + Purchases − End. Theoretical usage = sales × recipes.
-            </p>
+            <h1 className="text-3xl font-semibold tracking-tight">{t.title}</h1>
+            <p className="text-sm text-[var(--mp-muted)]">{t.subtitle}</p>
           </div>
           <button
             onClick={() => router.push("/admin")}
             className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
           >
-            Back
+            {t.back}
           </button>
         </div>
 
@@ -376,8 +448,10 @@ export default function AdminFoodCostPage() {
           <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm lg:col-span-2">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-base font-semibold">Report</h2>
-                <div className="mt-1 text-sm text-[var(--mp-muted)]">Restaurant: {restaurantId ?? "-"}</div>
+                <h2 className="text-base font-semibold">{t.report}</h2>
+                <div className="mt-1 text-sm text-[var(--mp-muted)]">
+                  {t.restaurantLabel}: {restaurantId ?? "-"}
+                </div>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -389,7 +463,7 @@ export default function AdminFoodCostPage() {
                       : "border-[var(--mp-border)] bg-white hover:bg-white"
                   }`}
                 >
-                  Today
+                  {t.today}
                 </button>
                 <button
                   onClick={() => setRange("7d")}
@@ -399,7 +473,7 @@ export default function AdminFoodCostPage() {
                       : "border-[var(--mp-border)] bg-white hover:bg-white"
                   }`}
                 >
-                  7 days
+                  {t.days7}
                 </button>
                 <button
                   onClick={() => setRange("30d")}
@@ -409,30 +483,30 @@ export default function AdminFoodCostPage() {
                       : "border-[var(--mp-border)] bg-white hover:bg-white"
                   }`}
                 >
-                  30 days
+                  {t.days30}
                 </button>
               </div>
             </div>
 
-            {reportLoading ? <div className="mt-4 text-sm text-[var(--mp-muted)]">Computing...</div> : null}
+            {reportLoading ? <div className="mt-4 text-sm text-[var(--mp-muted)]">{t.computing}</div> : null}
 
             {!report || report.rows.length === 0 ? (
               <div className="mt-5 rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3 text-sm text-[var(--mp-muted)]">
-                No data yet. Add ingredients, recipes, purchases, and two counts (begin/end) to compute actual usage.
+                {t.noData}
               </div>
             ) : (
               <div className="mt-5 overflow-auto rounded-2xl border border-[var(--mp-border)] bg-white">
                 <table className="min-w-full text-sm">
                   <thead className="border-b border-[var(--mp-border)] bg-white">
                     <tr className="text-left text-xs text-[var(--mp-muted)]">
-                      <th className="px-4 py-3">Ingredient</th>
-                      <th className="px-4 py-3">Unit</th>
-                      <th className="px-4 py-3">Avg cost</th>
-                      <th className="px-4 py-3">Theo usage</th>
-                      <th className="px-4 py-3">Actual usage</th>
-                      <th className="px-4 py-3">Variance</th>
-                      <th className="px-4 py-3">Theo cost</th>
-                      <th className="px-4 py-3">Actual cost</th>
+                      <th className="px-4 py-3">{t.ingredient}</th>
+                      <th className="px-4 py-3">{t.unit}</th>
+                      <th className="px-4 py-3">{t.avgCost}</th>
+                      <th className="px-4 py-3">{t.theoUsage}</th>
+                      <th className="px-4 py-3">{t.actualUsage}</th>
+                      <th className="px-4 py-3">{t.variance}</th>
+                      <th className="px-4 py-3">{t.theoCost}</th>
+                      <th className="px-4 py-3">{t.actualCost}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--mp-border)]">
@@ -452,7 +526,7 @@ export default function AdminFoodCostPage() {
                   <tfoot className="border-t border-[var(--mp-border)] bg-white">
                     <tr>
                       <td className="px-4 py-3 text-xs font-semibold text-[var(--mp-muted)]" colSpan={6}>
-                        Totals
+                        {t.totals}
                       </td>
                       <td className="px-4 py-3 text-sm font-semibold tabular-nums">${report.totals.theoretical_cost.toFixed(2)}</td>
                       <td className="px-4 py-3 text-sm font-semibold tabular-nums">
@@ -466,19 +540,19 @@ export default function AdminFoodCostPage() {
           </div>
 
           <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
-            <h2 className="text-base font-semibold">Quick add</h2>
+            <h2 className="text-base font-semibold">{t.quickAdd}</h2>
             <div className="mt-4 grid gap-4">
               <div className="rounded-2xl border border-[var(--mp-border)] bg-white p-4">
-                <div className="text-xs font-semibold text-[var(--mp-muted)]">Ingredient</div>
+                <div className="text-xs font-semibold text-[var(--mp-muted)]">{t.ingredientSection}</div>
                 <div className="mt-2 grid gap-2">
-                  <div className="text-xs text-[var(--mp-muted)]">Ingredient name</div>
+                  <div className="text-xs text-[var(--mp-muted)]">{t.ingredientName}</div>
                   <input
                     value={newIngredientName}
                     onChange={(e) => setNewIngredientName(e.target.value)}
-                    placeholder="Beef"
+                    placeholder={isEs ? "Res" : "Beef"}
                     className="h-10 w-full rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)]"
                   />
-                  <div className="text-xs text-[var(--mp-muted)]">Unit (lb, oz, each)</div>
+                  <div className="text-xs text-[var(--mp-muted)]">{t.unitHint}</div>
                   <input
                     value={newIngredientUnit}
                     onChange={(e) => setNewIngredientUnit(e.target.value)}
@@ -490,21 +564,21 @@ export default function AdminFoodCostPage() {
                     onClick={() => void onAddIngredient()}
                     className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-4 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
                   >
-                    Add ingredient
+                    {t.addIngredient}
                   </button>
                 </div>
               </div>
 
               <div className="rounded-2xl border border-[var(--mp-border)] bg-white p-4">
-                <div className="text-xs font-semibold text-[var(--mp-muted)]">Purchase</div>
+                <div className="text-xs font-semibold text-[var(--mp-muted)]">{t.purchase}</div>
                 <div className="mt-2 grid gap-2">
-                  <div className="text-xs text-[var(--mp-muted)]">Ingredient</div>
+                  <div className="text-xs text-[var(--mp-muted)]">{t.ingredientLabel}</div>
                   <select
                     value={purchaseIngredientId}
                     onChange={(e) => setPurchaseIngredientId(e.target.value)}
                     className="h-10 w-full rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)]"
                   >
-                    <option value="">Select ingredient</option>
+                    <option value="">{t.selectIngredient}</option>
                     {ingredients
                       .filter((i) => i.is_active)
                       .map((i) => (
@@ -513,27 +587,27 @@ export default function AdminFoodCostPage() {
                         </option>
                       ))}
                   </select>
-                  <div className="text-xs text-[var(--mp-muted)]">Qty purchased</div>
+                  <div className="text-xs text-[var(--mp-muted)]">{t.qtyPurchased}</div>
                   <input
                     inputMode="decimal"
                     value={purchaseQty}
                     onChange={(e) => setPurchaseQty(e.target.value)}
-                    placeholder="Qty"
+                    placeholder={isEs ? "Cant." : "Qty"}
                     className="h-10 w-full rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)]"
                   />
-                  <div className="text-xs text-[var(--mp-muted)]">Total cost ($)</div>
+                  <div className="text-xs text-[var(--mp-muted)]">{t.totalCost}</div>
                   <input
                     inputMode="decimal"
                     value={purchaseTotalCost}
                     onChange={(e) => setPurchaseTotalCost(e.target.value)}
-                    placeholder="Total cost"
+                    placeholder={isEs ? "Costo total" : "Total cost"}
                     className="h-10 w-full rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)]"
                   />
-                  <div className="text-xs text-[var(--mp-muted)]">Vendor (optional)</div>
+                  <div className="text-xs text-[var(--mp-muted)]">{t.vendorOptional}</div>
                   <input
                     value={purchaseVendor}
                     onChange={(e) => setPurchaseVendor(e.target.value)}
-                    placeholder="Vendor (optional)"
+                    placeholder={t.vendorOptional}
                     className="h-10 w-full rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)]"
                   />
                   <button
@@ -541,21 +615,21 @@ export default function AdminFoodCostPage() {
                     onClick={() => void onAddPurchase()}
                     className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm font-semibold hover:bg-white"
                   >
-                    Add purchase
+                    {t.addPurchase}
                   </button>
                 </div>
               </div>
 
               <div className="rounded-2xl border border-[var(--mp-border)] bg-white p-4">
-                <div className="text-xs font-semibold text-[var(--mp-muted)]">Inventory count</div>
+                <div className="text-xs font-semibold text-[var(--mp-muted)]">{t.inventoryCount}</div>
                 <div className="mt-2 grid gap-2">
-                  <div className="text-xs text-[var(--mp-muted)]">Ingredient</div>
+                  <div className="text-xs text-[var(--mp-muted)]">{t.ingredientLabel}</div>
                   <select
                     value={countIngredientId}
                     onChange={(e) => setCountIngredientId(e.target.value)}
                     className="h-10 w-full rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)]"
                   >
-                    <option value="">Select ingredient</option>
+                    <option value="">{t.selectIngredient}</option>
                     {ingredients
                       .filter((i) => i.is_active)
                       .map((i) => (
@@ -564,12 +638,12 @@ export default function AdminFoodCostPage() {
                         </option>
                       ))}
                   </select>
-                  <div className="text-xs text-[var(--mp-muted)]">Qty on hand (count)</div>
+                  <div className="text-xs text-[var(--mp-muted)]">{t.qtyOnHand}</div>
                   <input
                     inputMode="decimal"
                     value={countQty}
                     onChange={(e) => setCountQty(e.target.value)}
-                    placeholder="Qty on hand"
+                    placeholder={isEs ? "Cant. en mano" : "Qty on hand"}
                     className="h-10 w-full rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)]"
                   />
                   <button
@@ -577,7 +651,7 @@ export default function AdminFoodCostPage() {
                     onClick={() => void onAddCount()}
                     className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm font-semibold hover:bg-white"
                   >
-                    Save count
+                    {t.saveCount}
                   </button>
                 </div>
               </div>
@@ -587,10 +661,10 @@ export default function AdminFoodCostPage() {
 
         <div className="mt-8 grid gap-4 lg:grid-cols-2">
           <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
-            <h2 className="text-base font-semibold">Ingredients</h2>
+            <h2 className="text-base font-semibold">{t.ingredientsTitle}</h2>
             <div className="mt-4 flex flex-col gap-2">
               {ingredients.length === 0 ? (
-                <div className="text-sm text-[var(--mp-muted)]">No ingredients yet.</div>
+                <div className="text-sm text-[var(--mp-muted)]">{t.noIngredients}</div>
               ) : (
                 ingredients.map((ing) => (
                   <div
@@ -599,7 +673,9 @@ export default function AdminFoodCostPage() {
                   >
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">{ing.name}</div>
-                      <div className="text-xs text-[var(--mp-muted)]">Unit: {ing.unit}</div>
+                      <div className="text-xs text-[var(--mp-muted)]">
+                        {t.unitLabel}: {ing.unit}
+                      </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <label className="flex items-center gap-2 text-sm">
@@ -608,7 +684,7 @@ export default function AdminFoodCostPage() {
                           checked={ing.is_active}
                           onChange={(e) => void onToggleIngredientActive(ing.id, e.target.checked)}
                         />
-                        Active
+                        {t.active}
                       </label>
                     </div>
                   </div>
@@ -618,14 +694,14 @@ export default function AdminFoodCostPage() {
           </div>
 
           <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
-            <h2 className="text-base font-semibold">Recipe builder</h2>
+            <h2 className="text-base font-semibold">{t.recipeBuilder}</h2>
             <div className="mt-4 grid gap-3">
               <select
                 value={recipeMenuItemId}
                 onChange={(e) => setRecipeMenuItemId(e.target.value)}
                 className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)]"
               >
-                <option value="">Select menu item</option>
+                <option value="">{t.selectMenuItem}</option>
                 {menuItems.map((it) => (
                   <option key={it.id} value={it.id}>
                     {it.name}
@@ -636,17 +712,17 @@ export default function AdminFoodCostPage() {
               {recipeMenuItemId ? (
                 <div className="rounded-2xl border border-[var(--mp-border)] bg-white p-4">
                   <div className="text-xs font-semibold text-[var(--mp-muted)]">
-                    {menuItemById[recipeMenuItemId]?.name ?? "Menu item"} recipe
+                    {(menuItemById[recipeMenuItemId]?.name ?? t.menuItemFallback) + ` ${t.recipeLabel}`}
                   </div>
 
                   <div className="mt-3 grid gap-2">
-                    <div className="text-xs text-[var(--mp-muted)]">Ingredient</div>
+                    <div className="text-xs text-[var(--mp-muted)]">{t.ingredientLabel}</div>
                     <select
                       value={recipeIngredientId}
                       onChange={(e) => setRecipeIngredientId(e.target.value)}
                       className="h-10 w-full rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)]"
                     >
-                      <option value="">Select ingredient</option>
+                      <option value="">{t.selectIngredient}</option>
                       {ingredients
                         .filter((i) => i.is_active)
                         .map((i) => (
@@ -655,12 +731,12 @@ export default function AdminFoodCostPage() {
                           </option>
                         ))}
                     </select>
-                    <div className="text-xs text-[var(--mp-muted)]">Qty per menu item sold</div>
+                    <div className="text-xs text-[var(--mp-muted)]">{t.qtyPerItem}</div>
                     <input
                       inputMode="decimal"
                       value={recipeQty}
                       onChange={(e) => setRecipeQty(e.target.value)}
-                      placeholder="Qty per item"
+                      placeholder={t.qtyPerItemPlaceholder}
                       className="h-10 w-full rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm outline-none focus:border-[var(--mp-primary)]"
                     />
                     <button
@@ -668,13 +744,13 @@ export default function AdminFoodCostPage() {
                       onClick={() => void onUpsertRecipeLine()}
                       className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-4 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
                     >
-                      Add / update recipe line
+                      {t.addUpdateRecipeLine}
                     </button>
                   </div>
 
                   <div className="mt-4 flex flex-col gap-2">
                     {recipeLinesForSelectedMenuItem.length === 0 ? (
-                      <div className="text-sm text-[var(--mp-muted)]">No recipe lines yet.</div>
+                      <div className="text-sm text-[var(--mp-muted)]">{t.noRecipeLines}</div>
                     ) : (
                       recipeLinesForSelectedMenuItem.map((l) => (
                         <div
@@ -682,7 +758,9 @@ export default function AdminFoodCostPage() {
                           className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3"
                         >
                           <div className="min-w-0">
-                            <div className="text-sm font-medium truncate">{ingredientById[l.ingredient_id]?.name ?? "Ingredient"}</div>
+                            <div className="text-sm font-medium truncate">
+                              {ingredientById[l.ingredient_id]?.name ?? t.ingredient}
+                            </div>
                             <div className="text-xs text-[var(--mp-muted)]">{Number(l.qty).toFixed(4)}</div>
                           </div>
                           <button
@@ -690,7 +768,7 @@ export default function AdminFoodCostPage() {
                             onClick={() => void onDeleteRecipeLine(l.id)}
                             className="inline-flex h-9 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold hover:bg-white"
                           >
-                            Remove
+                            {t.remove}
                           </button>
                         </div>
                       ))
@@ -698,7 +776,7 @@ export default function AdminFoodCostPage() {
                   </div>
                 </div>
               ) : (
-                <div className="text-sm text-[var(--mp-muted)]">Select a menu item to add ingredient lines.</div>
+                <div className="text-sm text-[var(--mp-muted)]">{t.selectMenuItemHint}</div>
               )}
             </div>
           </div>
@@ -706,10 +784,10 @@ export default function AdminFoodCostPage() {
 
         <div className="mt-8 grid gap-4 lg:grid-cols-2">
           <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
-            <h2 className="text-base font-semibold">Recent purchases</h2>
+            <h2 className="text-base font-semibold">{t.recentPurchases}</h2>
             <div className="mt-4 flex flex-col gap-2">
               {purchases.length === 0 ? (
-                <div className="text-sm text-[var(--mp-muted)]">No purchases yet.</div>
+                <div className="text-sm text-[var(--mp-muted)]">{t.noPurchases}</div>
               ) : (
                 purchases.slice(0, 20).map((p) => (
                   <div
@@ -717,7 +795,9 @@ export default function AdminFoodCostPage() {
                     className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3"
                   >
                     <div className="min-w-0">
-                      <div className="text-sm font-medium truncate">{ingredientById[p.ingredient_id]?.name ?? "Ingredient"}</div>
+                      <div className="text-sm font-medium truncate">
+                        {ingredientById[p.ingredient_id]?.name ?? t.ingredient}
+                      </div>
                       <div className="text-xs text-[var(--mp-muted)]">
                         {new Date(p.purchased_at).toLocaleString()} • {Number(p.qty).toFixed(3)} • ${Number(p.total_cost).toFixed(2)}
                         {p.vendor ? ` • ${p.vendor}` : ""}
@@ -730,10 +810,10 @@ export default function AdminFoodCostPage() {
           </div>
 
           <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-7 shadow-sm">
-            <h2 className="text-base font-semibold">Recent counts</h2>
+            <h2 className="text-base font-semibold">{t.recentCounts}</h2>
             <div className="mt-4 flex flex-col gap-2">
               {counts.length === 0 ? (
-                <div className="text-sm text-[var(--mp-muted)]">No counts yet.</div>
+                <div className="text-sm text-[var(--mp-muted)]">{t.noCounts}</div>
               ) : (
                 counts.slice(0, 20).map((c) => (
                   <div
@@ -741,7 +821,9 @@ export default function AdminFoodCostPage() {
                     className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3"
                   >
                     <div className="min-w-0">
-                      <div className="text-sm font-medium truncate">{ingredientById[c.ingredient_id]?.name ?? "Ingredient"}</div>
+                      <div className="text-sm font-medium truncate">
+                        {ingredientById[c.ingredient_id]?.name ?? t.ingredient}
+                      </div>
                       <div className="text-xs text-[var(--mp-muted)]">{new Date(c.counted_at).toLocaleString()} • {Number(c.qty).toFixed(3)}</div>
                     </div>
                   </div>

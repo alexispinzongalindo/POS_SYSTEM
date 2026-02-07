@@ -24,6 +24,24 @@ const PROVIDERS: ProviderRow[] = [
 
 export default function AdminDeliveryIntegrationsPage() {
   const router = useRouter();
+  const { lang } = useMarketingLang();
+  const isEs = lang === "es";
+  const t = {
+    loading: isEs ? "Cargando…" : "Loading…",
+    title: isEs ? "Integraciones de delivery" : "Delivery Integrations",
+    subtitle: isEs ? "Habilita proveedores por negocio y guarda credenciales." : "Enable providers per business and store credentials.",
+    back: isEs ? "← Volver" : "Back",
+    enabled: isEs ? "Activo" : "Enabled",
+    providerKey: isEs ? "Clave del proveedor" : "Provider key",
+    credentials: isEs ? "Credenciales (JSON)" : "Credentials (JSON)",
+    settings: isEs ? "Configuración (JSON)" : "Settings (JSON)",
+    save: isEs ? "Guardar" : "Save",
+    saved: isEs ? "Guardado." : "Saved.",
+    credentialsLabel: isEs ? "Credenciales" : "Credentials",
+    settingsLabel: isEs ? "Configuración" : "Settings",
+    jsonObjectError: isEs ? "debe ser un objeto JSON" : "must be a JSON object",
+    jsonValidError: isEs ? "debe ser JSON válido" : "must be valid JSON",
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -136,11 +154,11 @@ export default function AdminDeliveryIntegrationsPage() {
     try {
       const parsed = JSON.parse(value);
       if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-        return { data: null as Record<string, unknown> | null, error: `${label} must be a JSON object` };
+        return { data: null as Record<string, unknown> | null, error: `${label} ${t.jsonObjectError}` };
       }
       return { data: parsed as Record<string, unknown>, error: null as string | null };
     } catch {
-      return { data: null as Record<string, unknown> | null, error: `${label} must be valid JSON` };
+      return { data: null as Record<string, unknown> | null, error: `${label} ${t.jsonValidError}` };
     }
   }
 
@@ -153,13 +171,13 @@ export default function AdminDeliveryIntegrationsPage() {
       return;
     }
 
-    const creds = parseJson("Credentials", credentialsText[provider]);
+    const creds = parseJson(t.credentialsLabel, credentialsText[provider]);
     if (creds.error) {
       setError(`${provider}: ${creds.error}`);
       return;
     }
 
-    const settings = parseJson("Settings", settingsText[provider]);
+    const settings = parseJson(t.settingsLabel, settingsText[provider]);
     if (settings.error) {
       setError(`${provider}: ${settings.error}`);
       return;
@@ -180,13 +198,13 @@ export default function AdminDeliveryIntegrationsPage() {
     }
 
     setRows((prev) => ({ ...prev, [provider]: res.data ?? null }));
-    setSuccess("Saved.");
+    setSuccess(t.saved);
   }
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</div>
+        <div className="text-sm text-zinc-600 dark:text-zinc-400">{t.loading}</div>
       </div>
     );
   }
@@ -196,16 +214,14 @@ export default function AdminDeliveryIntegrationsPage() {
       <div className="mx-auto w-full max-w-5xl px-6 py-10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Delivery Integrations</h1>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              Enable providers per business and store credentials.
-            </p>
+            <h1 className="text-2xl font-semibold tracking-tight">{t.title}</h1>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">{t.subtitle}</p>
           </div>
           <button
             onClick={() => router.push("/admin")}
             className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
           >
-            Back
+            {t.back}
           </button>
         </div>
 
@@ -230,7 +246,9 @@ export default function AdminDeliveryIntegrationsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-base font-semibold">{p.label}</h2>
-                  <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Provider key: {p.provider}</div>
+                  <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                    {t.providerKey}: {p.provider}
+                  </div>
                 </div>
                 <label className="flex items-center gap-2 text-sm">
                   <input
@@ -243,13 +261,13 @@ export default function AdminDeliveryIntegrationsPage() {
                       }))
                     }
                   />
-                  Enabled
+                  {t.enabled}
                 </label>
               </div>
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <div className="grid gap-2">
-                  <label className="text-sm font-medium">Credentials (JSON)</label>
+                  <label className="text-sm font-medium">{t.credentials}</label>
                   <textarea
                     value={credentialsText[p.provider]}
                     onChange={(e) =>
@@ -264,7 +282,7 @@ export default function AdminDeliveryIntegrationsPage() {
                 </div>
 
                 <div className="grid gap-2">
-                  <label className="text-sm font-medium">Settings (JSON)</label>
+                  <label className="text-sm font-medium">{t.settings}</label>
                   <textarea
                     value={settingsText[p.provider]}
                     onChange={(e) =>
@@ -284,7 +302,7 @@ export default function AdminDeliveryIntegrationsPage() {
                   onClick={() => void saveProvider(p.provider)}
                   className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
                 >
-                  Save
+                  {t.save}
                 </button>
               </div>
             </div>

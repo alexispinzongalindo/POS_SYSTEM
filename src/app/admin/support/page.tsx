@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
+import { useMarketingLang } from "@/lib/useMarketingLang";
 
 type SupportCaseStatus = "open" | "in_progress" | "closed";
 
@@ -26,6 +27,51 @@ type SupportCaseRow = {
 
 export default function AdminSupportPage() {
   const router = useRouter();
+  const { lang } = useMarketingLang();
+  const isEs = lang === "es";
+  const t = {
+    loading: isEs ? "Cargando…" : "Loading…",
+    forbidden: isEs ? "Prohibido" : "Forbidden",
+    title: isEs ? "Centro de soporte" : "Support Station",
+    subtitle: isEs ? "Crea y da seguimiento a los casos de soporte." : "Create and track support cases.",
+    back: isEs ? "← Volver" : "Back",
+    whatsapp: "WhatsApp",
+    newCase: isEs ? "Nuevo caso" : "New case",
+    customerNameOptional: isEs ? "Nombre del cliente (opcional)" : "Customer name (optional)",
+    customerPhoneOptional: isEs ? "Teléfono del cliente (opcional)" : "Customer phone (optional)",
+    subject: isEs ? "Asunto" : "Subject",
+    descriptionOptional: isEs ? "Descripción (opcional)" : "Description (optional)",
+    priorityLow: isEs ? "Baja" : "Low",
+    priorityNormal: isEs ? "Normal" : "Normal",
+    priorityHigh: isEs ? "Alta" : "High",
+    createCase: isEs ? "Crear caso" : "Create case",
+    refresh: isEs ? "Actualizar" : "Refresh",
+    cases: isEs ? "Casos" : "Cases",
+    searchCases: isEs ? "Buscar casos" : "Search cases",
+    noCases: isEs ? "Sin casos." : "No cases.",
+    noName: isEs ? "(sin nombre)" : "(no name)",
+    statusOpen: isEs ? "Abierto" : "Open",
+    statusInProgress: isEs ? "En progreso" : "In progress",
+    statusClosed: isEs ? "Cerrado" : "Closed",
+    internalNotes: isEs ? "Notas internas" : "Internal notes",
+    resolution: isEs ? "Resolución" : "Resolution",
+    notSignedIn: isEs ? "No has iniciado sesión" : "Not signed in",
+    failedPermissions: isEs ? "No se pudieron verificar permisos" : "Failed to check permissions",
+    failedLoadCases: isEs ? "No se pudieron cargar los casos" : "Failed to load cases",
+    subjectRequired: isEs ? "El asunto es obligatorio" : "Subject is required",
+    failedCreateCase: isEs ? "No se pudo crear el caso" : "Failed to create case",
+    caseCreated: isEs ? "Caso creado." : "Case created.",
+    failedUpdateCase: isEs ? "No se pudo actualizar el caso" : "Failed to update case",
+    updated: isEs ? "Actualizado." : "Updated.",
+    failedLoad: isEs ? "No se pudo cargar" : "Failed to load",
+    waTitle: isEs ? "Soporte IslaPOS" : "IslaPOS Support",
+    waRestaurant: isEs ? "Restaurante" : "Restaurant",
+    waCaseId: isEs ? "ID de caso" : "Case ID",
+    waSubject: isEs ? "Asunto" : "Subject",
+    waCustomer: isEs ? "Cliente" : "Customer",
+    waPhone: isEs ? "Teléfono" : "Phone",
+    waDetails: isEs ? "Detalles" : "Details",
+  };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,25 +114,25 @@ export default function AdminSupportPage() {
   const waText = useMemo(() => {
     const mostRecent = rows[0] ?? null;
     const lines: string[] = [];
-    lines.push("IslaPOS Support");
-    if (restaurantId) lines.push(`Restaurant: ${restaurantId}`);
+    lines.push(t.waTitle);
+    if (restaurantId) lines.push(`${t.waRestaurant}: ${restaurantId}`);
     if (mostRecent) {
-      lines.push(`Case ID: ${mostRecent.id}`);
-      lines.push(`Subject: ${mostRecent.subject}`);
-      if (mostRecent.customer_name) lines.push(`Customer: ${mostRecent.customer_name}`);
-      if (mostRecent.customer_phone) lines.push(`Phone: ${mostRecent.customer_phone}`);
+      lines.push(`${t.waCaseId}: ${mostRecent.id}`);
+      lines.push(`${t.waSubject}: ${mostRecent.subject}`);
+      if (mostRecent.customer_name) lines.push(`${t.waCustomer}: ${mostRecent.customer_name}`);
+      if (mostRecent.customer_phone) lines.push(`${t.waPhone}: ${mostRecent.customer_phone}`);
     } else {
       const subject = newSubject.trim();
       const customer = newCustomerName.trim();
       const phone = newCustomerPhone.trim();
       const desc = newDescription.trim();
-      if (subject) lines.push(`Subject: ${subject}`);
-      if (customer) lines.push(`Customer: ${customer}`);
-      if (phone) lines.push(`Phone: ${phone}`);
-      if (desc) lines.push(`Details: ${desc}`);
+      if (subject) lines.push(`${t.waSubject}: ${subject}`);
+      if (customer) lines.push(`${t.waCustomer}: ${customer}`);
+      if (phone) lines.push(`${t.waPhone}: ${phone}`);
+      if (desc) lines.push(`${t.waDetails}: ${desc}`);
     }
     return lines.join("\n");
-  }, [newCustomerName, newCustomerPhone, newDescription, newSubject, restaurantId, rows]);
+  }, [newCustomerName, newCustomerPhone, newDescription, newSubject, restaurantId, rows, t]);
 
   const waHref = whatsappDigits ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(waText)}` : "https://wa.me/";
 
@@ -95,7 +141,7 @@ export default function AdminSupportPage() {
     const token = data.session?.access_token;
     if (!token) {
       router.replace("/login");
-      throw new Error("Not signed in");
+      throw new Error(t.notSignedIn);
     }
 
     return fetch(path, {
@@ -112,7 +158,7 @@ export default function AdminSupportPage() {
     const json = (await res.json().catch(() => null)) as
       | { canAccessSupport?: boolean; restaurantId?: string; error?: string }
       | null;
-    if (!res.ok || json?.error) throw new Error(json?.error ?? "Failed to check permissions");
+    if (!res.ok || json?.error) throw new Error(json?.error ?? t.failedPermissions);
     return { ok: !!json?.canAccessSupport, restaurantId: typeof json?.restaurantId === "string" ? json.restaurantId : null };
   }
 
@@ -124,7 +170,7 @@ export default function AdminSupportPage() {
     const json = (await res.json().catch(() => null)) as { cases?: SupportCaseRow[]; error?: string } | null;
 
     if (!res.ok || json?.error) {
-      throw new Error(json?.error ?? "Failed to load cases");
+      throw new Error(json?.error ?? t.failedLoadCases);
     }
 
     setRows(json?.cases ?? []);
@@ -136,7 +182,7 @@ export default function AdminSupportPage() {
 
     const subject = newSubject.trim();
     if (!subject) {
-      setError("Subject is required");
+      setError(t.subjectRequired);
       return;
     }
 
@@ -154,7 +200,7 @@ export default function AdminSupportPage() {
 
     const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
     if (!res.ok || json?.error) {
-      setError(json?.error ?? "Failed to create case");
+      setError(json?.error ?? t.failedCreateCase);
       return;
     }
 
@@ -165,7 +211,7 @@ export default function AdminSupportPage() {
     setNewPriority("normal");
 
     await loadCases();
-    setSuccess("Case created.");
+    setSuccess(t.caseCreated);
   }
 
   async function updateCase(id: string, patch: Partial<SupportCaseRow> & { internal_notes?: string | null }) {
@@ -190,12 +236,12 @@ export default function AdminSupportPage() {
 
     const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
     if (!res.ok || json?.error) {
-      setError(json?.error ?? "Failed to update case");
+      setError(json?.error ?? t.failedUpdateCase);
       return;
     }
 
     await loadCases();
-    setSuccess("Updated.");
+    setSuccess(t.updated);
   }
 
   useEffect(() => {
@@ -225,14 +271,14 @@ export default function AdminSupportPage() {
         setCanAccessSupport(access.ok);
         setRestaurantId(access.restaurantId);
         if (!access.ok) {
-          setError("Forbidden");
+          setError(t.forbidden);
           setLoading(false);
           return;
         }
 
         await loadCases();
       } catch (e) {
-        const msg = e instanceof Error ? e.message : "Failed to load";
+        const msg = e instanceof Error ? e.message : t.failedLoad;
         setError(msg);
       } finally {
         setLoading(false);
@@ -254,7 +300,7 @@ export default function AdminSupportPage() {
   if (loading) {
     return (
       <div className="islapos-marketing flex min-h-screen items-center justify-center bg-[var(--mp-bg)] text-[var(--mp-fg)]">
-        <div className="text-sm text-[var(--mp-muted)]">Loading...</div>
+        <div className="text-sm text-[var(--mp-muted)]">{t.loading}</div>
       </div>
     );
   }
@@ -262,7 +308,7 @@ export default function AdminSupportPage() {
   if (!canAccessSupport) {
     return (
       <div className="islapos-marketing flex min-h-screen items-center justify-center bg-[var(--mp-bg)] text-[var(--mp-fg)]">
-        <div className="text-sm text-[var(--mp-muted)]">{error ?? "Forbidden"}</div>
+        <div className="text-sm text-[var(--mp-muted)]">{error ?? t.forbidden}</div>
       </div>
     );
   }
@@ -272,8 +318,8 @@ export default function AdminSupportPage() {
       <div className="mx-auto w-full max-w-6xl px-6 py-10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-semibold tracking-tight">Support Station</h1>
-            <p className="text-sm text-[var(--mp-muted)]">Create and track support cases.</p>
+            <h1 className="text-3xl font-semibold tracking-tight">{t.title}</h1>
+            <p className="text-sm text-[var(--mp-muted)]">{t.subtitle}</p>
           </div>
           <div className="flex gap-2">
             <a
@@ -282,13 +328,13 @@ export default function AdminSupportPage() {
               rel="noreferrer"
               className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
             >
-              WhatsApp
+              {t.whatsapp}
             </a>
             <button
               onClick={() => router.push("/admin")}
               className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
             >
-              Back
+              {t.back}
             </button>
           </div>
         </div>
@@ -305,30 +351,30 @@ export default function AdminSupportPage() {
 
         <div className="mt-8 grid gap-4 lg:grid-cols-3">
           <div className="rounded-3xl border border-[var(--mp-border)] bg-white p-6 shadow-sm lg:col-span-1">
-            <div className="text-base font-semibold">New case</div>
+            <div className="text-base font-semibold">{t.newCase}</div>
             <div className="mt-4 grid gap-3">
               <input
                 value={newCustomerName}
                 onChange={(e) => setNewCustomerName(e.target.value)}
-                placeholder="Customer name (optional)"
+                placeholder={t.customerNameOptional}
                 className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
               />
               <input
                 value={newCustomerPhone}
                 onChange={(e) => setNewCustomerPhone(e.target.value)}
-                placeholder="Customer phone (optional)"
+                placeholder={t.customerPhoneOptional}
                 className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
               />
               <input
                 value={newSubject}
                 onChange={(e) => setNewSubject(e.target.value)}
-                placeholder="Subject"
+                placeholder={t.subject}
                 className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
               />
               <textarea
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
-                placeholder="Description (optional)"
+                placeholder={t.descriptionOptional}
                 className="min-h-28 rounded-xl border border-[var(--mp-border)] bg-white px-4 py-3 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
               />
               <select
@@ -336,32 +382,32 @@ export default function AdminSupportPage() {
                 onChange={(e) => setNewPriority(e.target.value as SupportCasePriority)}
                 className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
               >
-                <option value="low">Low</option>
-                <option value="normal">Normal</option>
-                <option value="high">High</option>
+                <option value="low">{t.priorityLow}</option>
+                <option value="normal">{t.priorityNormal}</option>
+                <option value="high">{t.priorityHigh}</option>
               </select>
               <button
                 onClick={() => void createCase()}
                 className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
               >
-                Create case
+                {t.createCase}
               </button>
               <button
                 onClick={() => void loadCases()}
                 className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-zinc-50"
               >
-                Refresh
+                {t.refresh}
               </button>
             </div>
           </div>
 
           <div className="rounded-3xl border border-[var(--mp-border)] bg-white p-6 shadow-sm lg:col-span-2">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-base font-semibold">Cases</div>
+              <div className="text-base font-semibold">{t.cases}</div>
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search cases"
+                placeholder={t.searchCases}
                 className="h-11 w-72 max-w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
               />
             </div>
@@ -369,7 +415,7 @@ export default function AdminSupportPage() {
             <div className="mt-4 grid gap-3">
               {filtered.length === 0 ? (
                 <div className="rounded-2xl border border-[var(--mp-border)] bg-white px-4 py-3 text-sm text-[var(--mp-muted)]">
-                  No cases.
+                  {t.noCases}
                 </div>
               ) : (
                 filtered.map((c) => (
@@ -378,7 +424,7 @@ export default function AdminSupportPage() {
                       <div className="flex flex-col gap-1">
                         <div className="text-sm font-semibold">{c.subject}</div>
                         <div className="text-xs text-[var(--mp-muted)]">
-                          {c.customer_name ? c.customer_name : "(no name)"}
+                          {c.customer_name ? c.customer_name : t.noName}
                           {c.customer_phone ? ` • ${c.customer_phone}` : ""}
                           {` • ${new Date(c.created_at).toLocaleString()}`}
                         </div>
@@ -389,18 +435,18 @@ export default function AdminSupportPage() {
                           onChange={(e) => void updateCase(c.id, { status: e.target.value as SupportCaseStatus })}
                           className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold"
                         >
-                          <option value="open">Open</option>
-                          <option value="in_progress">In progress</option>
-                          <option value="closed">Closed</option>
+                          <option value="open">{t.statusOpen}</option>
+                          <option value="in_progress">{t.statusInProgress}</option>
+                          <option value="closed">{t.statusClosed}</option>
                         </select>
                         <select
                           value={c.priority}
                           onChange={(e) => void updateCase(c.id, { priority: e.target.value as SupportCasePriority })}
                           className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-xs font-semibold"
                         >
-                          <option value="low">Low</option>
-                          <option value="normal">Normal</option>
-                          <option value="high">High</option>
+                          <option value="low">{t.priorityLow}</option>
+                          <option value="normal">{t.priorityNormal}</option>
+                          <option value="high">{t.priorityHigh}</option>
                         </select>
                       </div>
                     </div>
@@ -412,7 +458,7 @@ export default function AdminSupportPage() {
                     <div className="mt-4 grid gap-3 md:grid-cols-2">
                       <textarea
                         defaultValue={c.internal_notes ?? ""}
-                        placeholder="Internal notes"
+                        placeholder={t.internalNotes}
                         onBlur={(e) => {
                           const next = e.target.value;
                           if ((c.internal_notes ?? "") === next) return;
@@ -422,7 +468,7 @@ export default function AdminSupportPage() {
                       />
                       <textarea
                         defaultValue={c.resolution ?? ""}
-                        placeholder="Resolution"
+                        placeholder={t.resolution}
                         onBlur={(e) => {
                           const next = e.target.value;
                           if ((c.resolution ?? "") === next) return;

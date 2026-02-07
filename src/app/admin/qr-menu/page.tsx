@@ -6,6 +6,7 @@ import QRCode from "qrcode";
 
 import { supabase } from "@/lib/supabaseClient";
 import { getOrCreateAppConfig } from "@/lib/appConfig";
+import { useMarketingLang } from "@/lib/useMarketingLang";
 
 type Restaurant = {
   id: string;
@@ -14,6 +15,30 @@ type Restaurant = {
 
 export default function QRMenuPage() {
   const router = useRouter();
+  const { lang } = useMarketingLang();
+  const isEs = lang === "es";
+  const t = {
+    loading: isEs ? "Cargando…" : "Loading…",
+    title: isEs ? "Menú con código QR" : "QR Code Menu",
+    subtitle: isEs ? "Genera códigos QR para que tus clientes vean el menú" : "Generate QR codes for customers to view your menu",
+    back: isEs ? "← Volver" : "← Back",
+    noRestaurant: isEs ? "No hay restaurante seleccionado" : "No restaurant selected",
+    restaurantNotFound: isEs ? "Restaurante no encontrado" : "Restaurant not found",
+    qrFailed: isEs ? "No se pudo generar el código QR" : "Failed to generate QR code",
+    scanToView: isEs ? "Escanea para ver el menú" : "Scan to view menu",
+    menuUrl: isEs ? "URL del menú" : "Menu URL",
+    copy: isEs ? "Copiar" : "Copy",
+    download: isEs ? "Descargar PNG" : "Download PNG",
+    print: isEs ? "Imprimir" : "Print",
+    preview: isEs ? "Ver página del menú →" : "Preview menu page →",
+    howToUse: isEs ? "Cómo usarlo" : "How to use",
+    step1: isEs ? "Descarga o imprime el código QR de arriba" : "Download or print the QR code above",
+    step2: isEs ? "Colócalo en mesas, en la entrada o en tu material de marketing" : "Place it on tables, at the entrance, or on your marketing materials",
+    step3: isEs ? "Los clientes escanean con la cámara del teléfono para ver el menú al instante" : "Customers scan with their phone camera to view your menu instantly",
+    notSignedIn: isEs ? "No has iniciado sesión" : "Not signed in",
+    qrTitle: isEs ? "Menú QR" : "QR Menu",
+    poweredBy: isEs ? "Impulsado por IslaPOS" : "Powered by IslaPOS",
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -63,7 +88,7 @@ export default function QRMenuPage() {
 
       const restaurantId = cfg.data.restaurant_id;
       if (!restaurantId) {
-        setError("No restaurant selected");
+        setError(t.noRestaurant);
         setLoading(false);
         return;
       }
@@ -83,7 +108,7 @@ export default function QRMenuPage() {
       }
 
       if (!restaurantData) {
-        setError("Restaurant not found");
+        setError(t.restaurantNotFound);
         setLoading(false);
         return;
       }
@@ -107,7 +132,7 @@ export default function QRMenuPage() {
         });
         setQrDataUrl(dataUrl);
       } catch (qrErr) {
-        setError(qrErr instanceof Error ? qrErr.message : "Failed to generate QR code");
+        setError(qrErr instanceof Error ? qrErr.message : t.qrFailed);
       }
 
       setLoading(false);
@@ -139,7 +164,7 @@ export default function QRMenuPage() {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>QR Menu - ${restaurant.name}</title>
+          <title>${t.qrTitle} - ${restaurant.name}</title>
           <style>
             body {
               display: flex;
@@ -177,9 +202,9 @@ export default function QRMenuPage() {
         <body>
           <div class="container">
             <h1>${restaurant.name}</h1>
-            <p>Scan to view our menu</p>
+            <p>${t.scanToView}</p>
             <img src="${qrDataUrl}" alt="QR Code" />
-            <div class="footer">Powered by IslaPOS</div>
+            <div class="footer">${t.poweredBy}</div>
           </div>
           <script>
             window.onload = function() {
@@ -198,7 +223,7 @@ export default function QRMenuPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--mp-bg)] flex items-center justify-center">
-        <div className="text-[var(--mp-muted)]">Loading...</div>
+        <div className="text-[var(--mp-muted)]">{t.loading}</div>
       </div>
     );
   }
@@ -209,16 +234,16 @@ export default function QRMenuPage() {
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">QR Code Menu</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t.title}</h1>
             <p className="mt-1 text-sm text-[var(--mp-muted)]">
-              Generate QR codes for customers to view your menu
+              {t.subtitle}
             </p>
           </div>
           <a
             href="/admin"
             className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm font-medium hover:bg-zinc-50"
           >
-            ← Back
+            {t.back}
           </a>
         </div>
 
@@ -233,7 +258,7 @@ export default function QRMenuPage() {
             <div className="flex flex-col items-center">
               {/* Restaurant name */}
               <h2 className="text-xl font-semibold">{restaurant.name}</h2>
-              <p className="mt-1 text-sm text-[var(--mp-muted)]">Scan to view menu</p>
+              <p className="mt-1 text-sm text-[var(--mp-muted)]">{t.scanToView}</p>
 
               {/* QR Code */}
               <div className="mt-6 rounded-2xl border border-[var(--mp-border)] bg-white p-4">
@@ -246,7 +271,7 @@ export default function QRMenuPage() {
 
               {/* Menu URL */}
               <div className="mt-6 w-full">
-                <label className="text-sm font-medium text-[var(--mp-muted)]">Menu URL</label>
+                <label className="text-sm font-medium text-[var(--mp-muted)]">{t.menuUrl}</label>
                 <div className="mt-1 flex items-center gap-2">
                   <input
                     type="text"
@@ -260,7 +285,7 @@ export default function QRMenuPage() {
                     }}
                     className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm font-medium hover:bg-zinc-50"
                   >
-                    Copy
+                    {t.copy}
                   </button>
                 </div>
               </div>
@@ -274,7 +299,7 @@ export default function QRMenuPage() {
                   <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
-                  Download PNG
+                  {t.download}
                 </button>
                 <button
                   onClick={printQR}
@@ -283,7 +308,7 @@ export default function QRMenuPage() {
                   <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                   </svg>
-                  Print
+                  {t.print}
                 </button>
               </div>
 
@@ -295,7 +320,7 @@ export default function QRMenuPage() {
                   rel="noopener noreferrer"
                   className="text-sm text-[var(--mp-primary)] hover:underline"
                 >
-                  Preview menu page →
+                  {t.preview}
                 </a>
               </div>
             </div>
@@ -304,19 +329,19 @@ export default function QRMenuPage() {
 
         {/* Instructions */}
         <div className="mt-8 rounded-3xl border border-[var(--mp-border)] bg-white p-6 shadow-sm">
-          <h3 className="text-base font-semibold">How to use</h3>
+          <h3 className="text-base font-semibold">{t.howToUse}</h3>
           <ul className="mt-3 space-y-2 text-sm text-[var(--mp-muted)]">
             <li className="flex items-start gap-2">
               <span className="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-[var(--mp-primary)] text-xs font-semibold text-white">1</span>
-              <span>Download or print the QR code above</span>
+              <span>{t.step1}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-[var(--mp-primary)] text-xs font-semibold text-white">2</span>
-              <span>Place it on tables, at the entrance, or on your marketing materials</span>
+              <span>{t.step2}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-[var(--mp-primary)] text-xs font-semibold text-white">3</span>
-              <span>Customers scan with their phone camera to view your menu instantly</span>
+              <span>{t.step3}</span>
             </li>
           </ul>
         </div>

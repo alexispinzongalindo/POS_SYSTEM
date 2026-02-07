@@ -36,6 +36,31 @@ type TrainingCard = {
 export default function AdminTrainingPage() {
   const router = useRouter();
   const { lang } = useMarketingLang();
+  const isEs = lang === "es";
+  const t = {
+    loading: isEs ? "Cargando…" : "Loading…",
+    title: isEs ? "Entrenamiento" : "Training",
+    subtitle: isEs ? "Guías paso a paso para personal y configuración." : "Step-by-step guides for staff and setup.",
+    back: isEs ? "← Volver" : "Back",
+    searchLabel: isEs ? "Buscar" : "Search",
+    searchPlaceholder: isEs ? "Buscar videos y artículos..." : "Search videos and articles...",
+    searchButton: isEs ? "Buscar" : "Search",
+    categoryLabel: isEs ? "Categoría" : "Category",
+    all: isEs ? "Todo" : "All",
+    noResults: isEs ? "No hay resultados." : "No results.",
+    close: isEs ? "Cerrar" : "Close",
+    categoryLabels: {
+      All: isEs ? "Todo" : "All",
+      "Getting Started": isEs ? "Comenzando" : "Getting Started",
+      "POS Basics": isEs ? "POS Básico" : "POS Basics",
+      "KDS Setup": isEs ? "Configuración KDS" : "KDS Setup",
+      "Online Ordering": isEs ? "Pedidos en línea" : "Online Ordering",
+      "Staff Scheduling": isEs ? "Horarios del personal" : "Staff Scheduling",
+      "Account & Billing": isEs ? "Cuenta y facturación" : "Account & Billing",
+      "Menu Setup": isEs ? "Configuración del menú" : "Menu Setup",
+      Tables: isEs ? "Mesas" : "Tables",
+    } as Record<TrainingCategory, string>,
+  };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -784,7 +809,7 @@ export default function AdminTrainingPage() {
   if (loading) {
     return (
       <div className="islapos-marketing flex min-h-screen items-center justify-center bg-[var(--mp-bg)] text-[var(--mp-fg)]">
-        <div className="text-sm text-[var(--mp-muted)]">Loading...</div>
+        <div className="text-sm text-[var(--mp-muted)]">{t.loading}</div>
       </div>
     );
   }
@@ -794,14 +819,14 @@ export default function AdminTrainingPage() {
       <div className="mx-auto w-full max-w-6xl px-6 py-10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-semibold tracking-tight">Training</h1>
-            <p className="text-sm text-[var(--mp-muted)]">Step-by-step guides for staff and setup.</p>
+            <h1 className="text-3xl font-semibold tracking-tight">{t.title}</h1>
+            <p className="text-sm text-[var(--mp-muted)]">{t.subtitle}</p>
           </div>
           <button
             onClick={() => router.push("/admin")}
             className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
           >
-            Back
+            {t.back}
           </button>
         </div>
 
@@ -812,12 +837,12 @@ export default function AdminTrainingPage() {
         <div className="mt-8 rounded-3xl border border-[var(--mp-border)] bg-white/90 p-6 shadow-sm">
           <div className="grid gap-4 md:grid-cols-[1fr_220px]">
             <div className="grid gap-2">
-              <div className="text-sm font-semibold">Search</div>
+              <div className="text-sm font-semibold">{t.searchLabel}</div>
               <div className="grid grid-cols-[1fr_auto] gap-2">
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder={lang === "es" ? "Buscar videos y artículos..." : "Search videos and articles..."}
+                  placeholder={t.searchPlaceholder}
                   className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                 />
                 <button
@@ -825,13 +850,13 @@ export default function AdminTrainingPage() {
                   onClick={() => null}
                   className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-5 text-sm font-semibold hover:bg-white"
                 >
-                  {lang === "es" ? "Buscar" : "Search"}
+                  {t.searchButton}
                 </button>
               </div>
             </div>
 
             <div className="grid gap-2">
-              <div className="text-sm font-semibold">Category</div>
+              <div className="text-sm font-semibold">{t.categoryLabel}</div>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as TrainingCategory)}
@@ -839,7 +864,7 @@ export default function AdminTrainingPage() {
               >
                 {categories.map((c) => (
                   <option key={c} value={c}>
-                    {c}
+                    {t.categoryLabels[c]}
                   </option>
                 ))}
               </select>
@@ -860,12 +885,12 @@ export default function AdminTrainingPage() {
                       active
                         ? "border-[var(--mp-primary)] bg-[var(--mp-primary)] text-[var(--mp-primary-contrast)]"
                         : "border-[var(--mp-border)] bg-white text-[var(--mp-fg)] hover:bg-black/[0.03]"
-                    }`}
-                  >
-                    {c}
-                  </button>
-                );
-              })}
+                  }`}
+                >
+                  {t.categoryLabels[c]}
+                </button>
+              );
+            })}
             <button
               type="button"
               onClick={() => setCategory("All")}
@@ -875,7 +900,7 @@ export default function AdminTrainingPage() {
                   : "border-[var(--mp-border)] bg-white text-[var(--mp-fg)] hover:bg-black/[0.03]"
               }`}
             >
-              {lang === "es" ? "Todo" : "All"}
+              {t.all}
             </button>
           </div>
         </div>
@@ -883,7 +908,7 @@ export default function AdminTrainingPage() {
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredCards.length === 0 ? (
             <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-6 text-sm text-[var(--mp-muted)] sm:col-span-2 lg:col-span-3">
-              {lang === "es" ? "No hay resultados." : "No results."}
+              {t.noResults}
             </div>
           ) : (
             filteredCards.map((c) => (
@@ -907,7 +932,7 @@ export default function AdminTrainingPage() {
                   }`}
                 />
                 <div className="p-5">
-                  <div className="text-xs font-semibold text-[var(--mp-muted)]">{c.category}</div>
+                  <div className="text-xs font-semibold text-[var(--mp-muted)]">{t.categoryLabels[c.category]}</div>
                   <div className="mt-1 text-base font-semibold text-[var(--mp-fg)]">{c.title}</div>
                   <div className="mt-1 line-clamp-2 text-sm text-[var(--mp-muted)]">{c.description}</div>
                 </div>
@@ -928,7 +953,7 @@ export default function AdminTrainingPage() {
           <div className="absolute left-1/2 top-1/2 w-[min(720px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-[var(--mp-border)] bg-[#fffdf7] p-6 shadow-xl">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-xs font-semibold text-[var(--mp-muted)]">{openCard.category}</div>
+                <div className="text-xs font-semibold text-[var(--mp-muted)]">{t.categoryLabels[openCard.category]}</div>
                 <div className="mt-1 text-xl font-semibold">{openCard.title}</div>
                 <div className="mt-2 text-sm text-[var(--mp-muted)]">{openCard.description}</div>
               </div>
@@ -937,7 +962,7 @@ export default function AdminTrainingPage() {
                 onClick={() => setOpenCardId(null)}
                 className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-xs font-semibold hover:bg-white"
               >
-                Close
+                {t.close}
               </button>
             </div>
 

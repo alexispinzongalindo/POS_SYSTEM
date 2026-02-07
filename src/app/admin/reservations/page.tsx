@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
 import { getSetupContext } from "@/lib/setupData";
+import { useMarketingLang } from "@/lib/useMarketingLang";
 
 type Reservation = {
   id: string;
@@ -41,6 +42,38 @@ function saveReservations(restaurantId: string, reservations: Reservation[]) {
 
 export default function AdminReservationsPage() {
   const router = useRouter();
+  const { lang } = useMarketingLang();
+  const isEs = lang === "es";
+  const t = {
+    loading: isEs ? "Cargando…" : "Loading…",
+    title: isEs ? "Reservaciones" : "Reservations",
+    subtitle: isEs ? "Administra las reservaciones del restaurante activo." : "Manage reservations for the active restaurant.",
+    back: isEs ? "← Volver" : "Back",
+    createTitle: isEs ? "Crear reservación" : "Create reservation",
+    namePlaceholder: isEs ? "Nombre" : "Name",
+    phonePlaceholder: isEs ? "Teléfono" : "Phone",
+    partySizePlaceholder: isEs ? "Tamaño del grupo" : "Party size",
+    tablePlaceholder: isEs ? "Mesa (opcional)" : "Table (optional)",
+    notesPlaceholder: isEs ? "Notas (opcional)" : "Notes (optional)",
+    create: isEs ? "Crear" : "Create",
+    storedNote: isEs
+      ? "Guardado en este dispositivo (almacenamiento local). Lo moveremos a la base de datos después."
+      : "Stored on this device (local storage). We will move this to the database later.",
+    upcoming: isEs ? "Próximas" : "Upcoming",
+    noReservations: isEs ? "No hay reservaciones." : "No reservations.",
+    party: (count: number) => (isEs ? `Grupo ${count}` : `Party ${count}`),
+    table: (tableNumber: number) => (isEs ? `Mesa ${tableNumber}` : `Table ${tableNumber}`),
+    cancel: isEs ? "Cancelar" : "Cancel",
+    canceledTitle: isEs ? "Canceladas" : "Canceled",
+    noCanceled: isEs ? "No hay reservaciones canceladas." : "No canceled reservations.",
+    partySizeError: isEs ? "El tamaño del grupo debe ser un número entre 1 y 100" : "Party size must be a number between 1 and 100",
+    missingDate: isEs ? "Falta la fecha y la hora" : "Missing date/time",
+    tableError: isEs ? "El número de mesa debe estar entre 1 y 200" : "Table number must be between 1 and 200",
+    missingName: isEs ? "Falta el nombre" : "Missing name",
+    storageError: isEs ? "No se pudo guardar la reservación (error de almacenamiento)" : "Failed to save reservation (storage error)",
+    created: isEs ? "Reservación creada." : "Reservation created.",
+    canceled: isEs ? "Reservación cancelada." : "Reservation canceled.",
+  };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -125,20 +158,20 @@ export default function AdminReservationsPage() {
 
     const party = Number(partySize);
     if (!Number.isFinite(party) || party <= 0 || party > 100) {
-      setError("Party size must be a number between 1 and 100");
+      setError(t.partySizeError);
       return;
     }
 
     const start = startAt.trim();
     if (!start) {
-      setError("Missing date/time");
+      setError(t.missingDate);
       return;
     }
 
     const tnRaw = tableNumber.trim();
     const tnNumber = tnRaw ? Number(tnRaw) : NaN;
     if (tnRaw && (!Number.isFinite(tnNumber) || tnNumber <= 0 || tnNumber > 200)) {
-      setError("Table number must be between 1 and 200");
+      setError(t.tableError);
       return;
     }
 
@@ -156,7 +189,7 @@ export default function AdminReservationsPage() {
     };
 
     if (!res.name) {
-      setError("Missing name");
+      setError(t.missingName);
       return;
     }
 
@@ -166,7 +199,7 @@ export default function AdminReservationsPage() {
     try {
       saveReservations(restaurantId, next);
     } catch {
-      setError("Failed to save reservation (storage error)");
+      setError(t.storageError);
       return;
     }
 
@@ -176,7 +209,7 @@ export default function AdminReservationsPage() {
     setStartAt("");
     setTableNumber("");
     setNotes("");
-    setSuccess("Reservation created.");
+    setSuccess(t.created);
   }
 
   async function cancelReservation(id: string) {
@@ -190,17 +223,17 @@ export default function AdminReservationsPage() {
     try {
       saveReservations(restaurantId, next);
     } catch {
-      setError("Failed to save reservation (storage error)");
+      setError(t.storageError);
       return;
     }
 
-    setSuccess("Reservation canceled.");
+    setSuccess(t.canceled);
   }
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 text-zinc-900 dark:bg-black dark:text-zinc-50">
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</div>
+        <div className="text-sm text-zinc-600 dark:text-zinc-400">{t.loading}</div>
       </div>
     );
   }
@@ -210,14 +243,14 @@ export default function AdminReservationsPage() {
       <div className="mx-auto w-full max-w-5xl px-6 py-10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Reservations</h1>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Manage reservations for the active restaurant.</p>
+            <h1 className="text-2xl font-semibold tracking-tight">{t.title}</h1>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">{t.subtitle}</p>
           </div>
           <button
             onClick={() => router.push("/admin")}
             className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
           >
-            Back
+            {t.back}
           </button>
         </div>
 
@@ -235,19 +268,19 @@ export default function AdminReservationsPage() {
 
         <div className="mt-8 grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <h2 className="text-base font-semibold">Create reservation</h2>
+            <h2 className="text-base font-semibold">{t.createTitle}</h2>
 
             <form onSubmit={onCreate} className="mt-4 grid gap-3">
               <input
                 className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
-                placeholder="Name"
+                placeholder={t.namePlaceholder}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
 
               <input
                 className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
-                placeholder="Phone"
+                placeholder={t.phonePlaceholder}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
               />
@@ -256,7 +289,7 @@ export default function AdminReservationsPage() {
                 <input
                   inputMode="numeric"
                   className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
-                  placeholder="Party size"
+                  placeholder={t.partySizePlaceholder}
                   value={partySize}
                   onChange={(e) => setPartySize(e.target.value)}
                 />
@@ -264,7 +297,7 @@ export default function AdminReservationsPage() {
                 <input
                   inputMode="numeric"
                   className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
-                  placeholder="Table (optional)"
+                  placeholder={t.tablePlaceholder}
                   value={tableNumber}
                   onChange={(e) => setTableNumber(e.target.value)}
                 />
@@ -279,7 +312,7 @@ export default function AdminReservationsPage() {
 
               <textarea
                 className="min-h-24 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-black"
-                placeholder="Notes (optional)"
+                placeholder={t.notesPlaceholder}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
@@ -289,21 +322,21 @@ export default function AdminReservationsPage() {
                 className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-white"
                 disabled={!name.trim() || !startAt.trim()}
               >
-                Create
+                {t.create}
               </button>
             </form>
 
             <div className="mt-4 text-xs text-zinc-600 dark:text-zinc-400">
-              Stored on this device (local storage). We will move this to the database later.
+              {t.storedNote}
             </div>
           </div>
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <h2 className="text-base font-semibold">Upcoming</h2>
+            <h2 className="text-base font-semibold">{t.upcoming}</h2>
 
             <div className="mt-4 flex flex-col gap-2">
               {activeRows.length === 0 ? (
-                <div className="text-sm text-zinc-600 dark:text-zinc-400">No reservations.</div>
+                <div className="text-sm text-zinc-600 dark:text-zinc-400">{t.noReservations}</div>
               ) : (
                 activeRows.map((r) => (
                   <div
@@ -315,15 +348,15 @@ export default function AdminReservationsPage() {
                         <div className="text-sm font-medium">{r.name}</div>
                         <div className="text-xs text-zinc-600 dark:text-zinc-400">
                           {r.phone ? `${r.phone} • ` : ""}
-                          Party {r.partySize}
-                          {r.tableNumber ? ` • Table ${r.tableNumber}` : ""}
+                          {t.party(r.partySize)}
+                          {r.tableNumber ? ` • ${t.table(r.tableNumber)}` : ""}
                         </div>
                       </div>
                       <button
                         onClick={() => void cancelReservation(r.id)}
                         className="inline-flex h-9 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:hover:bg-zinc-900"
                       >
-                        Cancel
+                        {t.cancel}
                       </button>
                     </div>
 
@@ -338,10 +371,10 @@ export default function AdminReservationsPage() {
             </div>
 
             <div className="mt-8">
-              <h3 className="text-sm font-semibold">Canceled</h3>
+              <h3 className="text-sm font-semibold">{t.canceledTitle}</h3>
               <div className="mt-3 flex flex-col gap-2">
                 {canceledRows.length === 0 ? (
-                  <div className="text-sm text-zinc-600 dark:text-zinc-400">No canceled reservations.</div>
+                  <div className="text-sm text-zinc-600 dark:text-zinc-400">{t.noCanceled}</div>
                 ) : (
                   canceledRows.slice(0, 10).map((r) => (
                     <div key={r.id} className="rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-800">

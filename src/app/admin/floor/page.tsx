@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabaseClient";
+import { useMarketingLang } from "@/lib/useMarketingLang";
 
 import {
   addFloorArea,
@@ -37,6 +38,52 @@ function clamp(n: number, min: number, max: number) {
 
 export default function AdminFloorPlanPage() {
   const router = useRouter();
+  const { lang } = useMarketingLang();
+  const isEs = lang === "es";
+  const t = {
+    loading: isEs ? "Cargando…" : "Loading…",
+    notSignedIn: isEs ? "No has iniciado sesión" : "Not signed in",
+    failedLoadFloor: isEs ? "No se pudo cargar el plano" : "Failed to load floor plan",
+    failedLoadArea: isEs ? "No se pudo cargar el área" : "Failed to load area",
+    failedDeleteArea: isEs ? "No se pudo eliminar el área" : "Failed to delete area",
+    failedDeleteTable: isEs ? "No se pudo eliminar la mesa" : "Failed to delete table",
+    failedDeleteObject: isEs ? "No se pudo eliminar el objeto" : "Failed to delete object",
+    title: isEs ? "Plano del local" : "Floor Plan",
+    subtitle: isEs ? "Crea áreas y organiza mesas, puertas y barras." : "Create areas and arrange tables, doors, and bar counters.",
+    back: isEs ? "← Volver" : "Back",
+    noEdit: isEs ? "Tu rol no permite editar el plano." : "Your role does not allow editing the floor plan.",
+    newAreaPlaceholder: isEs ? "Nueva área (ej. Principal, Patio)" : "New area (e.g. Main, Patio)",
+    add: isEs ? "Agregar" : "Add",
+    door: isEs ? "Puerta" : "Door",
+    bar: isEs ? "Barra" : "Bar",
+    addTable: isEs ? "Agregar mesa" : "Add table",
+    addDoor: isEs ? "Agregar puerta" : "Add door",
+    addBar: isEs ? "Agregar barra" : "Add bar",
+    deleteSelected: isEs ? "Eliminar seleccionado" : "Delete selected",
+    deleteSelectedHint: isEs ? "Elimina el elemento seleccionado (o presiona Delete)" : "Delete selected item (or press Delete)",
+    selectToDelete: isEs ? "Selecciona un elemento para eliminar" : "Select an item to delete",
+    deleteArea: isEs ? "Eliminar área" : "Delete area",
+    areaSettings: isEs ? "Configuración del área" : "Area settings",
+    width: isEs ? "Ancho" : "Width",
+    height: isEs ? "Alto" : "Height",
+    selected: isEs ? "Seleccionado" : "Selected",
+    clickToEdit: isEs
+      ? "Haz clic en una mesa/objeto para editarlo. Consejo: presiona Delete para eliminar el seleccionado."
+      : "Click a table/object to edit it. Tip: press Delete to remove the selected item.",
+    tableNumber: isEs ? "Número de mesa" : "Table number",
+    seats: isEs ? "Asientos" : "Seats",
+    shape: isEs ? "Forma" : "Shape",
+    shapeRound: isEs ? "Redonda" : "Round",
+    shapeSquare: isEs ? "Cuadrada" : "Square",
+    shapeRectangle: isEs ? "Rectangular" : "Rectangle",
+    label: isEs ? "Etiqueta" : "Label",
+    deleteTable: isEs ? "Eliminar mesa" : "Delete table",
+    deleteObject: isEs ? "Eliminar objeto" : "Delete object",
+    addAreaToStart: isEs ? "Agrega un área para comenzar (ej. Principal)." : "Add an area to start (e.g. Main).",
+    confirmDeleteTable: isEs ? "¿Eliminar esta mesa del plano?" : "Delete this table from the floor plan?",
+    confirmDeleteObject: isEs ? "¿Eliminar este objeto del plano?" : "Delete this object from the floor plan?",
+    entrance: isEs ? "Entrada" : "Entrance",
+  };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +131,7 @@ export default function AdminFloorPlanPage() {
     const token = data.session?.access_token;
     if (!token) {
       router.replace("/login");
-      throw new Error("Not signed in");
+      throw new Error(t.notSignedIn);
     }
 
     return fetch(path, {
@@ -169,7 +216,7 @@ export default function AdminFloorPlanPage() {
       try {
         await refreshAreas(rid);
       } catch (e) {
-        const msg = e instanceof Error ? e.message : "Failed to load floor plan";
+        const msg = e instanceof Error ? e.message : t.failedLoadFloor;
         setError(msg);
       } finally {
         setLoading(false);
@@ -199,7 +246,7 @@ export default function AdminFloorPlanPage() {
         await refreshAreaContents(areaId);
       } catch (e) {
         if (cancelled) return;
-        const msg = e instanceof Error ? e.message : "Failed to load area";
+        const msg = e instanceof Error ? e.message : t.failedLoadArea;
         setError(msg);
       }
     }
@@ -242,7 +289,7 @@ export default function AdminFloorPlanPage() {
 
     const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
     if (!res.ok || json?.error) {
-      setError(json?.error ?? "Failed to delete area");
+      setError(json?.error ?? t.failedDeleteArea);
       return;
     }
 
@@ -307,7 +354,7 @@ export default function AdminFloorPlanPage() {
       restaurant_id: restaurantId,
       area_id: activeAreaId,
       kind,
-      label: kind === "door" ? "Entrance" : "Bar",
+      label: kind === "door" ? t.entrance : t.bar,
       x: 40,
       y: 200,
     });
@@ -359,7 +406,7 @@ export default function AdminFloorPlanPage() {
     setError(null);
 
     const confirmed = window.confirm(
-      selected.kind === "table" ? "Delete this table from the floor plan?" : "Delete this object from the floor plan?",
+      selected.kind === "table" ? t.confirmDeleteTable : t.confirmDeleteObject,
     );
     if (!confirmed) return;
 
@@ -372,7 +419,7 @@ export default function AdminFloorPlanPage() {
 
       const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
       if (!res.ok || json?.error) {
-        setError(json?.error ?? "Failed to delete table");
+        setError(json?.error ?? t.failedDeleteTable);
         return;
       }
       await refreshAreaContents(activeAreaId);
@@ -387,7 +434,7 @@ export default function AdminFloorPlanPage() {
 
     const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
     if (!res.ok || json?.error) {
-      setError(json?.error ?? "Failed to delete object");
+      setError(json?.error ?? t.failedDeleteObject);
       return;
     }
     await refreshAreaContents(activeAreaId);
@@ -472,7 +519,7 @@ export default function AdminFloorPlanPage() {
   if (loading) {
     return (
       <div className="islapos-marketing flex min-h-screen items-center justify-center bg-[var(--mp-bg)] text-[var(--mp-fg)]">
-        <div className="text-sm text-[var(--mp-muted)]">Loading...</div>
+        <div className="text-sm text-[var(--mp-muted)]">{t.loading}</div>
       </div>
     );
   }
@@ -482,20 +529,20 @@ export default function AdminFloorPlanPage() {
       <div className="mx-auto w-full max-w-6xl px-6 py-10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Floor Plan</h1>
-            <p className="text-sm text-[var(--mp-muted)]">Create areas and arrange tables, doors, and bar counters.</p>
+            <h1 className="text-2xl font-semibold tracking-tight">{t.title}</h1>
+            <p className="text-sm text-[var(--mp-muted)]">{t.subtitle}</p>
           </div>
           <button
             onClick={() => router.push("/admin")}
             className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
           >
-            Back
+            {t.back}
           </button>
         </div>
 
         {!canEdit ? (
           <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            Your role does not allow editing the floor plan.
+            {t.noEdit}
           </div>
         ) : null}
 
@@ -527,7 +574,7 @@ export default function AdminFloorPlanPage() {
                 value={newAreaName}
                 onChange={(e) => setNewAreaName(e.target.value)}
                 disabled={!canEdit}
-                placeholder="New area (e.g. Main, Patio)"
+                placeholder={t.newAreaPlaceholder}
                 className="h-10 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
               />
               <button
@@ -535,7 +582,7 @@ export default function AdminFloorPlanPage() {
                 disabled={!canEdit || !newAreaName.trim()}
                 className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-4 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
               >
-                Add
+                {t.add}
               </button>
             </form>
           </div>
@@ -564,7 +611,7 @@ export default function AdminFloorPlanPage() {
                         style={{ left: o.x, top: o.y, width: o.width, height: o.height }}
                         title={o.kind}
                       >
-                        {o.kind === "door" ? "Door" : "Bar"}
+                        {o.kind === "door" ? t.door : t.bar}
                         {o.label ? `: ${o.label}` : ""}
                       </div>
                     ))}
@@ -594,7 +641,7 @@ export default function AdminFloorPlanPage() {
                     disabled={!canEdit}
                     className="inline-flex h-10 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-4 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)] disabled:opacity-60"
                   >
-                    Add table
+                    {t.addTable}
                   </button>
                   <button
                     type="button"
@@ -602,7 +649,7 @@ export default function AdminFloorPlanPage() {
                     disabled={!canEdit}
                     className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
                   >
-                    Add door
+                    {t.addDoor}
                   </button>
                   <button
                     type="button"
@@ -610,7 +657,7 @@ export default function AdminFloorPlanPage() {
                     disabled={!canEdit}
                     className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
                   >
-                    Add bar
+                    {t.addBar}
                   </button>
 
                   <button
@@ -618,9 +665,9 @@ export default function AdminFloorPlanPage() {
                     onClick={() => void onDeleteSelected()}
                     disabled={!canEdit || !selected}
                     className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
-                    title={selected ? "Delete selected item (or press Delete)" : "Select an item to delete"}
+                    title={selected ? t.deleteSelectedHint : t.selectToDelete}
                   >
-                    Delete selected
+                    {t.deleteSelected}
                   </button>
 
                   <button
@@ -629,17 +676,17 @@ export default function AdminFloorPlanPage() {
                     disabled={!canEdit}
                     className="ml-auto inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
                   >
-                    Delete area
+                    {t.deleteArea}
                   </button>
                 </div>
               </div>
 
               <div className="rounded-3xl border border-[var(--mp-border)] bg-white/90 p-5 shadow-sm">
-                <div className="text-sm font-semibold">Area settings</div>
+                <div className="text-sm font-semibold">{t.areaSettings}</div>
 
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <label className="flex flex-col gap-1 text-xs font-semibold text-[var(--mp-muted)]">
-                    Width
+                    {t.width}
                     <input
                       type="number"
                       defaultValue={activeArea.width}
@@ -652,7 +699,7 @@ export default function AdminFloorPlanPage() {
                   </label>
 
                   <label className="flex flex-col gap-1 text-xs font-semibold text-[var(--mp-muted)]">
-                    Height
+                    {t.height}
                     <input
                       type="number"
                       defaultValue={activeArea.height}
@@ -665,14 +712,14 @@ export default function AdminFloorPlanPage() {
                   </label>
                 </div>
 
-                <div className="mt-6 text-sm font-semibold">Selected</div>
+                <div className="mt-6 text-sm font-semibold">{t.selected}</div>
 
                 {!selected ? (
-                  <div className="mt-2 text-sm text-[var(--mp-muted)]">Click a table/object to edit it. Tip: press Delete to remove the selected item.</div>
+                  <div className="mt-2 text-sm text-[var(--mp-muted)]">{t.clickToEdit}</div>
                 ) : selected.kind === "table" ? (
                   <div className="mt-3 flex flex-col gap-3">
                     <label className="flex flex-col gap-1 text-xs font-semibold text-[var(--mp-muted)]">
-                      Table number
+                      {t.tableNumber}
                       <input
                         type="number"
                         value={selected.row.table_number}
@@ -690,7 +737,7 @@ export default function AdminFloorPlanPage() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <label className="flex flex-col gap-1 text-xs font-semibold text-[var(--mp-muted)]">
-                        Seats
+                        {t.seats}
                         <input
                           type="number"
                           value={selected.row.seats}
@@ -704,7 +751,7 @@ export default function AdminFloorPlanPage() {
                       </label>
 
                       <label className="flex flex-col gap-1 text-xs font-semibold text-[var(--mp-muted)]">
-                        Shape
+                        {t.shape}
                         <select
                           value={selected.row.shape}
                           disabled={!canEdit}
@@ -717,16 +764,16 @@ export default function AdminFloorPlanPage() {
                           onBlur={() => void persistSelected(selected)}
                           className="h-10 rounded-xl border border-[var(--mp-border)] bg-white px-3 text-sm font-medium outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                         >
-                          <option value="round">Round</option>
-                          <option value="square">Square</option>
-                          <option value="rectangle">Rectangle</option>
+                          <option value="round">{t.shapeRound}</option>
+                          <option value="square">{t.shapeSquare}</option>
+                          <option value="rectangle">{t.shapeRectangle}</option>
                         </select>
                       </label>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <label className="flex flex-col gap-1 text-xs font-semibold text-[var(--mp-muted)]">
-                        Width
+                        {t.width}
                         <input
                           type="number"
                           value={selected.row.width}
@@ -739,7 +786,7 @@ export default function AdminFloorPlanPage() {
                         />
                       </label>
                       <label className="flex flex-col gap-1 text-xs font-semibold text-[var(--mp-muted)]">
-                        Height
+                        {t.height}
                         <input
                           type="number"
                           value={selected.row.height}
@@ -784,7 +831,7 @@ export default function AdminFloorPlanPage() {
                       disabled={!canEdit}
                       className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
                     >
-                      Delete table
+                      {t.deleteTable}
                     </button>
                   </div>
                 ) : (
@@ -792,7 +839,7 @@ export default function AdminFloorPlanPage() {
                     <div className="text-xs font-semibold text-[var(--mp-muted)]">{selected.row.kind.toUpperCase()}</div>
 
                     <label className="flex flex-col gap-1 text-xs font-semibold text-[var(--mp-muted)]">
-                      Label
+                      {t.label}
                       <input
                         value={selected.row.label ?? ""}
                         disabled={!canEdit}
@@ -809,7 +856,7 @@ export default function AdminFloorPlanPage() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <label className="flex flex-col gap-1 text-xs font-semibold text-[var(--mp-muted)]">
-                        Width
+                        {t.width}
                         <input
                           type="number"
                           value={selected.row.width}
@@ -820,7 +867,7 @@ export default function AdminFloorPlanPage() {
                         />
                       </label>
                       <label className="flex flex-col gap-1 text-xs font-semibold text-[var(--mp-muted)]">
-                        Height
+                        {t.height}
                         <input
                           type="number"
                           value={selected.row.height}
@@ -863,14 +910,14 @@ export default function AdminFloorPlanPage() {
                       disabled={!canEdit}
                       className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
                     >
-                      Delete object
+                      {t.deleteObject}
                     </button>
                   </div>
                 )}
               </div>
             </div>
           ) : (
-            <div className="mt-6 text-sm text-[var(--mp-muted)]">Add an area to start (e.g. Main).</div>
+            <div className="mt-6 text-sm text-[var(--mp-muted)]">{t.addAreaToStart}</div>
           )}
         </div>
       </div>
