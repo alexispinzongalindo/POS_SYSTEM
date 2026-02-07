@@ -10,6 +10,51 @@
       }
     },
     {
+      "id": "login-setup",
+      "keywords": ["login", "sign in", "setup", "onboarding", "account", "verificar", "verificación", "correo", "email", "configuracion", "configuración", "crear cuenta"],
+      "title": { "en": "Login & Setup", "es": "Login y Configuración" },
+      "answer": {
+        "en": "Create your account, verify email, and complete Setup (restaurant name, location/timezone, IVU). You can revisit Setup in Admin.",
+        "es": "Crea tu cuenta, verifica el correo y completa Setup (nombre, ubicación/zona horaria, IVU). Puedes volver a Setup en Admin."
+      }
+    },
+    {
+      "id": "menu-setup",
+      "keywords": ["menu", "category", "product", "modifier", "menu setup", "producto", "categoría", "modificador", "menu", "menú"],
+      "title": { "en": "Menu setup", "es": "Configuración del menú" },
+      "answer": {
+        "en": "Go to Admin → Menu to create categories and products. Add modifiers in Admin → Modifiers and assign them to products.",
+        "es": "Ve a Admin → Menú para crear categorías y productos. Agrega modificadores en Admin → Modificadores y asígnalos."
+      }
+    },
+    {
+      "id": "pos-orders",
+      "keywords": ["pos", "order", "orders", "checkout", "payment", "order type", "caja", "orden", "órdenes", "cobro", "pago", "tipo"],
+      "title": { "en": "POS orders", "es": "Órdenes en POS" },
+      "answer": {
+        "en": "In POS, add items, select order type (Counter/Pickup/Delivery/Dine-in), then collect payment and mark as paid.",
+        "es": "En POS, agrega productos, selecciona tipo (Mostrador/Pickup/Delivery/Mesa), cobra y marca como pagada."
+      }
+    },
+    {
+      "id": "tables-floor",
+      "keywords": ["table", "tables", "floor plan", "seats", "shape", "mesa", "mesas", "plano", "sillas", "forma"],
+      "title": { "en": "Tables & Floor Plan", "es": "Mesas y Plano de Piso" },
+      "answer": {
+        "en": "Use Admin → Floor Plan to create areas and edit table seats, size, and shape. POS → Tables is for opening tickets.",
+        "es": "Usa Admin → Floor Plan para crear áreas y editar sillas, tamaño y forma. POS → Mesas es para abrir tickets."
+      }
+    },
+    {
+      "id": "kds-setup",
+      "keywords": ["kds", "kitchen display", "qr", "pantalla cocina", "cocina", "kds qr"],
+      "title": { "en": "KDS setup", "es": "Configuración KDS" },
+      "answer": {
+        "en": "Go to Admin → KDS QR Codes, create a link per station, and scan the QR on a kitchen device.",
+        "es": "Ve a Admin → KDS QR Codes, crea un link por estación y escanea el QR en la cocina."
+      }
+    },
+    {
       "id": "trial",
       "keywords": ["trial", "free trial", "start", "demo", "prueba", "gratis", "comenzar", "demo"],
       "title": { "en": "Free trial", "es": "Prueba gratis" },

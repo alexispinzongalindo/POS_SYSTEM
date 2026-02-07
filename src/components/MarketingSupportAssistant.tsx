@@ -29,6 +29,7 @@ export default function MarketingSupportAssistant() {
       ? "No encontré una respuesta exacta. Puedes escribirnos en Contacto."
       : "I couldn’t find an exact answer. You can reach us on the Contact page.",
     contact: isEs ? "Abrir Contacto" : "Open Contact",
+    manual: isEs ? "Manual de Usuario" : "User Manual",
     you: isEs ? "Tú" : "You",
     assistant: isEs ? "Asistente" : "Assistant",
   };
@@ -112,9 +113,12 @@ export default function MarketingSupportAssistant() {
         </button>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 flex items-center gap-4">
         <a className="text-sm font-medium text-[var(--mp-muted)] hover:text-[var(--mp-fg)]" href="/contact">
           {t.contact}
+        </a>
+        <a className="text-sm font-medium text-[var(--mp-muted)] hover:text-[var(--mp-fg)]" href="/knowledge/user-manual.md" target="_blank" rel="noreferrer">
+          {t.manual}
         </a>
       </div>
     </div>
