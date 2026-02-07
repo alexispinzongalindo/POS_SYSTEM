@@ -222,7 +222,7 @@ export default function AdminFoodCostPage() {
     if (!restaurantId) return;
     if (loading) return;
 
-    const t = window.setTimeout(() => {
+    const timerId = window.setTimeout(() => {
       void (async () => {
         setReportLoading(true);
         setError(null);
@@ -239,7 +239,7 @@ export default function AdminFoodCostPage() {
       })();
     }, 150);
 
-    return () => window.clearTimeout(t);
+    return () => window.clearTimeout(timerId);
   }, [loading, rangeStartEnd, restaurantId]);
 
   const menuItemById = useMemo(() => {
