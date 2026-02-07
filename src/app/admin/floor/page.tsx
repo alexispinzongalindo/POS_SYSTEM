@@ -669,15 +669,6 @@ export default function AdminFloorPlanPage() {
                   >
                     {t.deleteSelected}
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={() => void onDeleteArea(activeArea.id)}
-                    disabled={!canEdit}
-                    className="ml-auto inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
-                  >
-                    {t.deleteArea}
-                  </button>
                 </div>
               </div>
 
@@ -914,6 +905,17 @@ export default function AdminFloorPlanPage() {
                     </button>
                   </div>
                 )}
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => void onDeleteArea(activeArea.id)}
+                    disabled={!canEdit}
+                    className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-4 text-sm font-semibold hover:bg-white disabled:opacity-60"
+                  >
+                    {t.deleteArea}
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
