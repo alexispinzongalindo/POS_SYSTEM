@@ -41,14 +41,19 @@ export default function MarketingSupportAssistant() {
 
   const [kb, setKb] = useState<KBEntry[]>([]);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<ChatMsg[]>([
-    {
-      role: "assistant",
-      text: isEs
-        ? "Hola. Soy el asistente de IslaPOS. ¿En qué puedo ayudarle hoy?"
-        : "Hi. I’m the IslaPOS assistant. How can I help you today?",
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
+
+  useEffect(() => {
+    setMessages([
+      {
+        role: "assistant",
+        text: isEs
+          ? "Hola. Soy el asistente de IslaPOS. ¿En qué puedo ayudarle hoy?"
+          : "Hi. I’m the IslaPOS assistant. How can I help you today?",
+      },
+    ]);
+    setInput("");
+  }, [isEs]);
 
   useEffect(() => {
     let cancelled = false;
