@@ -3299,45 +3299,6 @@ export default function PosPage() {
                   <option value="dine_in">Dine-in</option>
                 </select>
 
-                <div className="relative">
-                  <input
-                    value={customerQuery}
-                    onChange={(e) => {
-                      setCustomerQuery(e.target.value);
-                      setCustomerOptionsOpen(true);
-                    }}
-                    onFocus={() => setCustomerOptionsOpen(true)}
-                    placeholder="Search customer (name, email, phone)"
-                    className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                  />
-                  {customerOptionsOpen && (customerOptionsLoading || customerOptions.length > 0) ? (
-                    <div className="absolute z-10 mt-2 w-full rounded-xl border border-[var(--mp-border)] bg-white shadow-lg">
-                      {customerOptionsLoading ? (
-                        <div className="px-4 py-3 text-xs text-[var(--mp-muted)]">Searching…</div>
-                      ) : null}
-                      {customerOptions.map((c) => (
-                        <button
-                          key={c.id}
-                          onClick={() => {
-                            setCustomerId(c.id);
-                            setCustomerName(c.name ?? "");
-                            setCustomerEmail(c.email ?? "");
-                            setCustomerPhone(c.phone ?? "");
-                            setCustomerQuery(`${c.name} • ${c.email}`);
-                            setCustomerOptionsOpen(false);
-                          }}
-                          className="flex w-full flex-col items-start gap-1 px-4 py-2 text-left text-sm hover:bg-[var(--mp-soft)]"
-                        >
-                          <span className="font-semibold">{c.name}</span>
-                          <span className="text-xs text-[var(--mp-muted)]">
-                            {c.email} • {c.phone}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-
                 <input
                   value={customerName}
                   onChange={(e) => {
@@ -3359,6 +3320,44 @@ export default function PosPage() {
 
                 {orderType !== "dine_in" ? (
                   <div className="grid gap-2">
+                    <div className="relative">
+                      <input
+                        value={customerQuery}
+                        onChange={(e) => {
+                          setCustomerQuery(e.target.value);
+                          setCustomerOptionsOpen(true);
+                        }}
+                        onFocus={() => setCustomerOptionsOpen(true)}
+                        placeholder="Search customer (name, email, phone)"
+                        className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                      />
+                      {customerOptionsOpen && (customerOptionsLoading || customerOptions.length > 0) ? (
+                        <div className="absolute z-10 mt-2 w-full rounded-xl border border-[var(--mp-border)] bg-white shadow-lg">
+                          {customerOptionsLoading ? (
+                            <div className="px-4 py-3 text-xs text-[var(--mp-muted)]">Searching…</div>
+                          ) : null}
+                          {customerOptions.map((c) => (
+                            <button
+                              key={c.id}
+                              onClick={() => {
+                                setCustomerId(c.id);
+                                setCustomerName(c.name ?? "");
+                                setCustomerEmail(c.email ?? "");
+                                setCustomerPhone(c.phone ?? "");
+                                setCustomerQuery(`${c.name} • ${c.email}`);
+                                setCustomerOptionsOpen(false);
+                              }}
+                              className="flex w-full flex-col items-start gap-1 px-4 py-2 text-left text-sm hover:bg-[var(--mp-soft)]"
+                            >
+                              <span className="font-semibold">{c.name}</span>
+                              <span className="text-xs text-[var(--mp-muted)]">
+                                {c.email} • {c.phone}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
                     <input
                       value={customerPhone}
                       onChange={(e) => {
