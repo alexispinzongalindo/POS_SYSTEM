@@ -170,6 +170,7 @@ export default function PosPage() {
   const [customerPhone, setCustomerPhone] = useState<string>("");
   const [customerEmail, setCustomerEmail] = useState<string>("");
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [tableLabel, setTableLabel] = useState<string>("");
   const [customerQuery, setCustomerQuery] = useState<string>("");
   const [customerOptions, setCustomerOptions] = useState<Array<{ id: string; name: string; email: string; phone: string }>>([]);
   const [customerOptionsOpen, setCustomerOptionsOpen] = useState(false);
@@ -1072,7 +1073,7 @@ export default function PosPage() {
 
     const label = formatTableLabel(Math.floor(t));
     setOrderType("dine_in");
-    setCustomerName(label);
+    setTableLabel(label);
 
     void (async () => {
       const offlineNow = typeof navigator !== "undefined" ? !navigator.onLine : false;
@@ -1082,7 +1083,7 @@ export default function PosPage() {
           (o) =>
             o.status === "open" &&
             (o.payload.order_type ?? "counter") === "dine_in" &&
-            (o.payload.customer_name ?? "") === label,
+            ((o.payload.table_label ?? "") || (o.payload.customer_name ?? "")) === label,
         );
 
         if (match?.local_id) {
@@ -1361,6 +1362,7 @@ export default function PosPage() {
     setCustomerPhone("");
     setCustomerEmail("");
     setCustomerId(null);
+    setTableLabel("");
     setCustomerQuery("");
     setIdVerified(false);
     setDeliveryAddress1("");
@@ -1534,7 +1536,7 @@ export default function PosPage() {
       const splitOrderType: OrderType = orderType === "dine_in" ? "counter" : orderType;
       const splitCustomerName =
         orderType === "dine_in"
-          ? `${customerName.trim() || "Table"} (Split)`
+          ? `${tableLabel.trim() || "Table"} (Split)`
           : customerName.trim()
             ? customerName.trim()
             : null;
@@ -1828,6 +1830,7 @@ export default function PosPage() {
       setCustomerPhone(String(offline.payload.customer_phone ?? ""));
       setCustomerEmail(String((offline.payload as { customer_email?: string | null } | undefined)?.customer_email ?? ""));
       setCustomerId(String((offline.payload as { customer_id?: string | null } | undefined)?.customer_id ?? "") || null);
+      setTableLabel(String((offline.payload as { table_label?: string | null } | undefined)?.table_label ?? ""));
       setCustomerQuery(String(offline.payload.customer_name ?? ""));
       setDeliveryAddress1(String(offline.payload.delivery_address1 ?? ""));
       setDeliveryAddress2(String(offline.payload.delivery_address2 ?? ""));
@@ -1895,6 +1898,7 @@ export default function PosPage() {
     setCustomerEmail(meta?.customer_email ?? "");
     setCustomerId(meta?.customer_id ?? null);
     setCustomerQuery(meta?.customer_name ? `${meta.customer_name}` : "");
+    setTableLabel(meta?.table_label ?? (meta?.order_type === "dine_in" ? meta?.customer_name ?? "" : ""));
     setIdVerified(Boolean(meta?.id_verified));
     setDeliveryAddress1(meta?.delivery_address1 ?? "");
     setDeliveryAddress2(meta?.delivery_address2 ?? "");
@@ -2141,6 +2145,7 @@ export default function PosPage() {
       customer_phone: customerPhone.trim() ? customerPhone.trim() : null,
       customer_email: customerEmail.trim() ? customerEmail.trim() : null,
       customer_id: customerId,
+      table_label: orderType === "dine_in" ? (tableLabel.trim() ? tableLabel.trim() : null) : null,
       id_verified: orderType === "dine_in" ? null : idVerified,
       id_verified_at: orderType === "dine_in" || !idVerified ? null : new Date().toISOString(),
       id_verified_by_user_id: null,
@@ -2437,6 +2442,11 @@ export default function PosPage() {
         return;
       }
     }
+    if (orderType === "dine_in" && !tableLabel.trim()) {
+      setError("Table label is required for dine-in");
+      setPlacing(false);
+      return;
+    }
 
     let userId: string | null = null;
     let payload: CreateOrderInput | null = null;
@@ -2459,6 +2469,7 @@ export default function PosPage() {
         customer_phone: customerPhone.trim() ? customerPhone.trim() : null,
         customer_email: customerEmail.trim() ? customerEmail.trim() : null,
         customer_id: customerId,
+        table_label: orderType === "dine_in" ? (tableLabel.trim() ? tableLabel.trim() : null) : null,
         id_verified: orderType === "dine_in" ? null : idVerified,
         id_verified_at: orderType === "dine_in" || !idVerified ? null : new Date().toISOString(),
         id_verified_by_user_id: null,
@@ -3265,127 +3276,118 @@ export default function PosPage() {
                 <div>
                   <div className="text-base font-semibold">Order</div>
                   <div className="mt-1 text-xs text-[var(--mp-muted)]">
-                    {orderType === "dine_in" && customerName.trim() ? customerName.trim() : orderType.replace("_", " ")}
+                    {orderType === "dine_in"
+                      ? tableLabel.trim() || "Dine-in"
+                      : orderType.replace("_", " ")}
                     {activeOrderId ? " • editing" : ""}
                   </div>
+                  {orderType === "dine_in" && customerName.trim() ? (
+                    <div className="mt-1 text-xs text-[var(--mp-muted)]">Guest: {customerName.trim()}</div>
+                  ) : null}
                 </div>
               </div>
 
               <div className="mt-4 grid gap-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <select
-                    value={orderType}
-                    onChange={(e) => setOrderType(e.target.value as OrderType)}
-                    className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                  >
-                    <option value="counter">Counter</option>
-                    <option value="pickup">Pickup</option>
-                    <option value="delivery">Delivery</option>
-                    <option value="dine_in">Dine-in</option>
-                  </select>
+                <select
+                  value={orderType}
+                  onChange={(e) => setOrderType(e.target.value as OrderType)}
+                  className="h-11 rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                >
+                  <option value="counter">Counter</option>
+                  <option value="pickup">Pickup</option>
+                  <option value="delivery">Delivery</option>
+                  <option value="dine_in">Dine-in</option>
+                </select>
+
+                <div className="relative">
                   <input
-                    value={scanCode}
-                    onChange={(e) => setScanCode(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key !== "Enter") return;
-                      e.preventDefault();
-                      setError(null);
-                      setSuccess(null);
-                      void addByCode(scanCode);
-                      setScanCode("");
+                    value={customerQuery}
+                    onChange={(e) => {
+                      setCustomerQuery(e.target.value);
+                      setCustomerOptionsOpen(true);
                     }}
-                    placeholder="Scan barcode / SKU"
+                    onFocus={() => setCustomerOptionsOpen(true)}
+                    placeholder="Search customer (name, email, phone)"
                     className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                   />
+                  {customerOptionsOpen && (customerOptionsLoading || customerOptions.length > 0) ? (
+                    <div className="absolute z-10 mt-2 w-full rounded-xl border border-[var(--mp-border)] bg-white shadow-lg">
+                      {customerOptionsLoading ? (
+                        <div className="px-4 py-3 text-xs text-[var(--mp-muted)]">Searching…</div>
+                      ) : null}
+                      {customerOptions.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => {
+                            setCustomerId(c.id);
+                            setCustomerName(c.name ?? "");
+                            setCustomerEmail(c.email ?? "");
+                            setCustomerPhone(c.phone ?? "");
+                            setCustomerQuery(`${c.name} • ${c.email}`);
+                            setCustomerOptionsOpen(false);
+                          }}
+                          className="flex w-full flex-col items-start gap-1 px-4 py-2 text-left text-sm hover:bg-[var(--mp-soft)]"
+                        >
+                          <span className="font-semibold">{c.name}</span>
+                          <span className="text-xs text-[var(--mp-muted)]">
+                            {c.email} • {c.phone}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
 
-              {orderType === "dine_in" ? (
                 <input
                   value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Table 1"
+                  onChange={(e) => {
+                    setCustomerName(e.target.value);
+                    setCustomerId(null);
+                  }}
+                  placeholder={orderType === "dine_in" ? "Customer name (optional)" : "Customer name"}
                   className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                 />
-              ) : null}
 
-              {orderType !== "dine_in" ? (
-                <div className="grid gap-2">
-                  <div className="relative">
+                {orderType === "dine_in" ? (
+                  <input
+                    value={tableLabel}
+                    onChange={(e) => setTableLabel(e.target.value)}
+                    placeholder="Table label (e.g., Table 1)"
+                    className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                  />
+                ) : null}
+
+                {orderType !== "dine_in" ? (
+                  <div className="grid gap-2">
                     <input
-                      value={customerQuery}
+                      value={customerPhone}
                       onChange={(e) => {
-                        setCustomerQuery(e.target.value);
-                        setCustomerOptionsOpen(true);
+                        setCustomerPhone(e.target.value);
+                        setCustomerId(null);
                       }}
-                      onFocus={() => setCustomerOptionsOpen(true)}
-                      placeholder="Search customer (name, email, phone)"
+                      placeholder="Customer phone"
                       className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                     />
-                    {customerOptionsOpen && (customerOptionsLoading || customerOptions.length > 0) ? (
-                      <div className="absolute z-10 mt-2 w-full rounded-xl border border-[var(--mp-border)] bg-white shadow-lg">
-                        {customerOptionsLoading ? (
-                          <div className="px-4 py-3 text-xs text-[var(--mp-muted)]">Searching…</div>
-                        ) : null}
-                        {customerOptions.map((c) => (
-                          <button
-                            key={c.id}
-                            onClick={() => {
-                              setCustomerId(c.id);
-                              setCustomerName(c.name ?? "");
-                              setCustomerEmail(c.email ?? "");
-                              setCustomerPhone(c.phone ?? "");
-                              setCustomerQuery(`${c.name} • ${c.email}`);
-                              setCustomerOptionsOpen(false);
-                            }}
-                            className="flex w-full flex-col items-start gap-1 px-4 py-2 text-left text-sm hover:bg-[var(--mp-soft)]"
-                          >
-                            <span className="font-semibold">{c.name}</span>
-                            <span className="text-xs text-[var(--mp-muted)]">
-                              {c.email} • {c.phone}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                  <input
-                    value={customerName}
-                    onChange={(e) => {
-                      setCustomerName(e.target.value);
-                      setCustomerId(null);
-                    }}
-                    placeholder="Customer name"
-                    className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                  />
-                  <input
-                    value={customerPhone}
-                    onChange={(e) => {
-                      setCustomerPhone(e.target.value);
-                      setCustomerId(null);
-                    }}
-                    placeholder="Customer phone"
-                    className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                  />
-                  <input
-                    value={customerEmail}
-                    onChange={(e) => {
-                      setCustomerEmail(e.target.value);
-                      setCustomerId(null);
-                    }}
-                    placeholder="Customer email"
-                    className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
-                  />
-                  <label className="flex items-center gap-2 text-sm">
                     <input
-                      type="checkbox"
-                      checked={idVerified}
-                      onChange={(e) => setIdVerified(e.target.checked)}
-                      className="h-4 w-4"
+                      value={customerEmail}
+                      onChange={(e) => {
+                        setCustomerEmail(e.target.value);
+                        setCustomerId(null);
+                      }}
+                      placeholder="Customer email"
+                      className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                     />
-                    <span>Driver&apos;s license verified (staff)</span>
-                  </label>
-                </div>
-              ) : null}
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={idVerified}
+                        onChange={(e) => setIdVerified(e.target.checked)}
+                        className="h-4 w-4"
+                      />
+                      <span>Driver&apos;s license verified (staff)</span>
+                    </label>
+                  </div>
+                ) : null}
 
               <div className="rounded-2xl border border-[var(--mp-border)] bg-white p-3">
                 <div className="flex items-center justify-between gap-3">

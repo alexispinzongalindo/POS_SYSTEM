@@ -361,7 +361,7 @@ export default function PosTablesPage() {
   const tables = useMemo(() => {
     const map = new Map<string, DineInTableOrder>();
     for (const o of orders) {
-      const label = (o.customer_name ?? "").trim();
+      const label = (o.table_label ?? o.customer_name ?? "").trim();
       if (!label) continue;
       if (!map.has(label)) map.set(label, o);
     }
@@ -378,7 +378,7 @@ export default function PosTablesPage() {
   const openOrdersByNumber = useMemo(() => {
     const map = new Map<number, DineInTableOrder>();
     for (const o of orders) {
-      const label = (o.customer_name ?? "").trim();
+      const label = (o.table_label ?? o.customer_name ?? "").trim();
       if (!label) continue;
       const m = /^Table\s+(\d+)$/i.exec(label);
       if (!m) continue;
@@ -431,7 +431,7 @@ export default function PosTablesPage() {
     setError(null);
     try {
       const nextLabel = `Table ${Math.floor(to)}`;
-      const res = await supabase.from("orders").update({ customer_name: nextLabel }).eq("id", order.id);
+      const res = await supabase.from("orders").update({ table_label: nextLabel }).eq("id", order.id);
       if (res.error) throw res.error;
       upsertTableMeta(restaurantId, fromTable, { status: "available", guests: null, server: null });
       upsertTableMeta(restaurantId, to, { status: "order_in_progress" });

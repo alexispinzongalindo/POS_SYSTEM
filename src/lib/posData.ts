@@ -143,6 +143,7 @@ export type CreateOrderInput = {
   customer_phone?: string | null;
   customer_email?: string | null;
   customer_id?: string | null;
+  table_label?: string | null;
   id_verified?: boolean | null;
   id_verified_at?: string | null;
   id_verified_by_user_id?: string | null;
@@ -190,6 +191,7 @@ export type DineInTableOrder = {
   total: number;
   created_at: string;
   customer_name: string | null;
+  table_label?: string | null;
 };
 
 export type OrderItemRow = {
@@ -221,6 +223,7 @@ export type OrderReceipt = {
     customer_phone?: string | null;
     customer_email?: string | null;
     customer_id?: string | null;
+    table_label?: string | null;
     delivery_address1?: string | null;
     delivery_address2?: string | null;
     delivery_city?: string | null;
@@ -334,6 +337,7 @@ export async function createOrder(input: CreateOrderInput) {
       customer_phone: input.customer_phone ?? null,
       customer_email: input.customer_email ?? null,
       customer_id: input.customer_id ?? null,
+      table_label: input.table_label ?? null,
       id_verified: input.id_verified ?? null,
       id_verified_at: input.id_verified_at ?? null,
       id_verified_by_user_id: input.id_verified_by_user_id ?? null,
@@ -516,7 +520,7 @@ export function formatTableLabel(tableNumber: number) {
 export async function listOpenDineInOrders(restaurantId: string) {
   return supabase
     .from("orders")
-    .select("id, ticket_no, status, total, created_at, customer_name")
+    .select("id, ticket_no, status, total, created_at, customer_name, table_label")
     .eq("restaurant_id", restaurantId)
     .eq("status", "open")
     .eq("order_type", "dine_in")
@@ -530,14 +534,28 @@ export async function findOpenDineInOrderByTable(restaurantId: string, tableLabe
 
   const res = await supabase
     .from("orders")
-    .select("id, ticket_no, status, total, created_at, customer_name")
+    .select("id, ticket_no, status, total, created_at, customer_name, table_label")
     .eq("restaurant_id", restaurantId)
     .eq("status", "open")
     .eq("order_type", "dine_in")
-    .eq("customer_name", q)
+    .eq("table_label", q)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle<DineInTableOrder>();
+
+  if (!res.data) {
+    const fallback = await supabase
+      .from("orders")
+      .select("id, ticket_no, status, total, created_at, customer_name, table_label")
+      .eq("restaurant_id", restaurantId)
+      .eq("status", "open")
+      .eq("order_type", "dine_in")
+      .eq("customer_name", q)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle<DineInTableOrder>();
+    return { data: fallback.data ?? null, error: fallback.error };
+  }
 
   return { data: res.data ?? null, error: res.error };
 }
@@ -662,7 +680,7 @@ export async function getOrderReceipt(orderId: string) {
   const orderRes = await supabase
     .from("orders")
     .select(
-      "id, ticket_no, restaurant_id, status, created_at, discount_amount, discount_reason, subtotal, tax, total, order_type, customer_name, customer_phone, customer_email, customer_id, delivery_address1, delivery_address2, delivery_city, delivery_state, delivery_postal_code, delivery_instructions, delivery_status, delivery_provider, delivery_tracking_url, payment_method, paid_at, amount_tendered, change_due",
+      "id, ticket_no, restaurant_id, status, created_at, discount_amount, discount_reason, subtotal, tax, total, order_type, customer_name, customer_phone, customer_email, customer_id, table_label, delivery_address1, delivery_address2, delivery_city, delivery_state, delivery_postal_code, delivery_instructions, delivery_status, delivery_provider, delivery_tracking_url, payment_method, paid_at, amount_tendered, change_due",
     )
     .eq("id", orderId)
     .maybeSingle<{
@@ -681,6 +699,7 @@ export async function getOrderReceipt(orderId: string) {
       customer_phone?: string | null;
       customer_email?: string | null;
       customer_id?: string | null;
+      table_label?: string | null;
       delivery_address1?: string | null;
       delivery_address2?: string | null;
       delivery_city?: string | null;
@@ -775,6 +794,7 @@ export async function updateOrder(
       customer_phone: input.customer_phone ?? null,
       customer_email: input.customer_email ?? null,
       customer_id: input.customer_id ?? null,
+      table_label: input.table_label ?? null,
       id_verified: input.id_verified ?? null,
       id_verified_at: input.id_verified_at ?? null,
       id_verified_by_user_id: input.id_verified_by_user_id ?? null,
