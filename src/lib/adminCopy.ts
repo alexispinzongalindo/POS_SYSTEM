@@ -14,6 +14,7 @@ export type AdminCopy = {
     foodCost: { title: string; body: string; action: string };
     reservations: { title: string; body: string; action: string };
     inventory: { title: string; body: string; action: string };
+    customers: { title: string; body: string; action: string };
     settings: { title: string; body: string; action: string };
     integrations: { title: string; body: string; action: string };
     qrMenu: { title: string; body: string; action: string };
@@ -117,6 +118,11 @@ export function adminCopy(lang: "en" | "es"): AdminCopy {
           title: "Inventario",
           body: "Controlar stock de productos.",
           action: "Administrar inventario",
+        },
+        customers: {
+          title: "Clientes",
+          body: "Guardar y administrar tu base de clientes.",
+          action: "Administrar clientes",
         },
         settings: {
           title: "Configuración",
@@ -253,6 +259,11 @@ export function adminCopy(lang: "en" | "es"): AdminCopy {
         title: "Inventory",
         body: "Track stock for products.",
         action: "Manage inventory",
+      },
+      customers: {
+        title: "Customers",
+        body: "Store and manage your customer database.",
+        action: "Manage customers",
       },
       settings: {
         title: "Settings",

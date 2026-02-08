@@ -142,6 +142,7 @@ export type CreateOrderInput = {
   customer_name?: string | null;
   customer_phone?: string | null;
   customer_email?: string | null;
+  customer_id?: string | null;
   id_verified?: boolean | null;
   id_verified_at?: string | null;
   id_verified_by_user_id?: string | null;
@@ -219,6 +220,7 @@ export type OrderReceipt = {
     customer_name?: string | null;
     customer_phone?: string | null;
     customer_email?: string | null;
+    customer_id?: string | null;
     delivery_address1?: string | null;
     delivery_address2?: string | null;
     delivery_city?: string | null;
@@ -331,6 +333,7 @@ export async function createOrder(input: CreateOrderInput) {
       customer_name: input.customer_name ?? null,
       customer_phone: input.customer_phone ?? null,
       customer_email: input.customer_email ?? null,
+      customer_id: input.customer_id ?? null,
       id_verified: input.id_verified ?? null,
       id_verified_at: input.id_verified_at ?? null,
       id_verified_by_user_id: input.id_verified_by_user_id ?? null,
@@ -659,7 +662,7 @@ export async function getOrderReceipt(orderId: string) {
   const orderRes = await supabase
     .from("orders")
     .select(
-      "id, ticket_no, restaurant_id, status, created_at, discount_amount, discount_reason, subtotal, tax, total, order_type, customer_name, customer_phone, customer_email, delivery_address1, delivery_address2, delivery_city, delivery_state, delivery_postal_code, delivery_instructions, delivery_status, delivery_provider, delivery_tracking_url, payment_method, paid_at, amount_tendered, change_due",
+      "id, ticket_no, restaurant_id, status, created_at, discount_amount, discount_reason, subtotal, tax, total, order_type, customer_name, customer_phone, customer_email, customer_id, delivery_address1, delivery_address2, delivery_city, delivery_state, delivery_postal_code, delivery_instructions, delivery_status, delivery_provider, delivery_tracking_url, payment_method, paid_at, amount_tendered, change_due",
     )
     .eq("id", orderId)
     .maybeSingle<{
@@ -677,6 +680,7 @@ export async function getOrderReceipt(orderId: string) {
       customer_name?: string | null;
       customer_phone?: string | null;
       customer_email?: string | null;
+      customer_id?: string | null;
       delivery_address1?: string | null;
       delivery_address2?: string | null;
       delivery_city?: string | null;
@@ -729,7 +733,7 @@ export async function getOrderDeliveryMeta(orderId: string) {
   return supabase
     .from("orders")
     .select(
-      "id, order_type, customer_name, customer_phone, customer_email, id_verified, id_verified_at, id_verified_by_user_id, delivery_address1, delivery_address2, delivery_city, delivery_state, delivery_postal_code, delivery_instructions, delivery_status, delivery_provider, delivery_tracking_url",
+      "id, order_type, customer_name, customer_phone, customer_email, customer_id, id_verified, id_verified_at, id_verified_by_user_id, delivery_address1, delivery_address2, delivery_city, delivery_state, delivery_postal_code, delivery_instructions, delivery_status, delivery_provider, delivery_tracking_url",
     )
     .eq("id", orderId)
     .maybeSingle<{
@@ -738,6 +742,7 @@ export async function getOrderDeliveryMeta(orderId: string) {
       customer_name?: string | null;
       customer_phone?: string | null;
       customer_email?: string | null;
+      customer_id?: string | null;
       id_verified?: boolean | null;
       id_verified_at?: string | null;
       id_verified_by_user_id?: string | null;
@@ -769,6 +774,7 @@ export async function updateOrder(
       customer_name: input.customer_name ?? null,
       customer_phone: input.customer_phone ?? null,
       customer_email: input.customer_email ?? null,
+      customer_id: input.customer_id ?? null,
       id_verified: input.id_verified ?? null,
       id_verified_at: input.id_verified_at ?? null,
       id_verified_by_user_id: input.id_verified_by_user_id ?? null,

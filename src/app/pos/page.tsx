@@ -169,6 +169,11 @@ export default function PosPage() {
   const [customerName, setCustomerName] = useState<string>("");
   const [customerPhone, setCustomerPhone] = useState<string>("");
   const [customerEmail, setCustomerEmail] = useState<string>("");
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [customerQuery, setCustomerQuery] = useState<string>("");
+  const [customerOptions, setCustomerOptions] = useState<Array<{ id: string; name: string; email: string; phone: string }>>([]);
+  const [customerOptionsOpen, setCustomerOptionsOpen] = useState(false);
+  const [customerOptionsLoading, setCustomerOptionsLoading] = useState(false);
   const [deliveryAddress1, setDeliveryAddress1] = useState<string>("");
   const [deliveryAddress2, setDeliveryAddress2] = useState<string>("");
   const [deliveryCity, setDeliveryCity] = useState<string>("");
@@ -1354,6 +1359,9 @@ export default function PosPage() {
     setOrderType("counter");
     setCustomerName("");
     setCustomerPhone("");
+    setCustomerEmail("");
+    setCustomerId(null);
+    setCustomerQuery("");
     setIdVerified(false);
     setDeliveryAddress1("");
     setDeliveryAddress2("");
@@ -1379,8 +1387,18 @@ export default function PosPage() {
       }
 
       const name = customerName.trim();
+      const email = customerEmail.trim();
+      const phone = customerPhone.trim();
       if (!name) {
         setError("Customer name is required to open a ticket");
+        return;
+      }
+      if (!email) {
+        setError("Customer email is required to open a ticket");
+        return;
+      }
+      if (!phone) {
+        setError("Customer phone is required to open a ticket");
         return;
       }
 
@@ -1396,6 +1414,7 @@ export default function PosPage() {
         router.replace("/login");
         return;
       }
+      const ensuredCustomerId = await ensureCustomerRecord();
 
       const payload: CreateOrderInput = {
         restaurant_id: data.restaurantId,
@@ -1405,7 +1424,9 @@ export default function PosPage() {
         total: 0,
         order_type: orderType,
         customer_name: name,
-        customer_phone: customerPhone.trim() ? customerPhone.trim() : null,
+        customer_phone: phone,
+        customer_email: email,
+        customer_id: ensuredCustomerId ?? customerId,
         id_verified: true,
         id_verified_at: new Date().toISOString(),
         id_verified_by_user_id: userId,
@@ -1806,6 +1827,8 @@ export default function PosPage() {
       setCustomerName(String(offline.payload.customer_name ?? ""));
       setCustomerPhone(String(offline.payload.customer_phone ?? ""));
       setCustomerEmail(String((offline.payload as { customer_email?: string | null } | undefined)?.customer_email ?? ""));
+      setCustomerId(String((offline.payload as { customer_id?: string | null } | undefined)?.customer_id ?? "") || null);
+      setCustomerQuery(String(offline.payload.customer_name ?? ""));
       setDeliveryAddress1(String(offline.payload.delivery_address1 ?? ""));
       setDeliveryAddress2(String(offline.payload.delivery_address2 ?? ""));
       setDeliveryCity(String(offline.payload.delivery_city ?? ""));
@@ -1870,6 +1893,8 @@ export default function PosPage() {
     setCustomerName(meta?.customer_name ?? "");
     setCustomerPhone(meta?.customer_phone ?? "");
     setCustomerEmail(meta?.customer_email ?? "");
+    setCustomerId(meta?.customer_id ?? null);
+    setCustomerQuery(meta?.customer_name ? `${meta.customer_name}` : "");
     setIdVerified(Boolean(meta?.id_verified));
     setDeliveryAddress1(meta?.delivery_address1 ?? "");
     setDeliveryAddress2(meta?.delivery_address2 ?? "");
@@ -2006,6 +2031,86 @@ export default function PosPage() {
     }
   }
 
+  useEffect(() => {
+    let active = true;
+    const trimmed = customerQuery.trim();
+    if (trimmed.length < 2) {
+      setCustomerOptions([]);
+      setCustomerOptionsOpen(false);
+      return;
+    }
+
+    const handle = setTimeout(() => {
+      void (async () => {
+        try {
+          setCustomerOptionsLoading(true);
+          const { data: sessionData } = await supabase.auth.getSession();
+          const token = sessionData.session?.access_token;
+          if (!token) return;
+          const res = await fetch(`/api/pos/customers?query=${encodeURIComponent(trimmed)}`, {
+            headers: { authorization: `Bearer ${token}` },
+          });
+          const json = (await res.json().catch(() => null)) as { customers?: Array<{ id: string; name: string; email: string; phone: string }> } | null;
+          if (!active) return;
+          setCustomerOptions(Array.isArray(json?.customers) ? json!.customers! : []);
+          setCustomerOptionsOpen(true);
+        } finally {
+          if (active) setCustomerOptionsLoading(false);
+        }
+      })();
+    }, 300);
+
+    return () => {
+      active = false;
+      clearTimeout(handle);
+    };
+  }, [customerQuery]);
+
+  async function ensureCustomerRecord() {
+    const name = customerName.trim();
+    const email = customerEmail.trim();
+    const phone = customerPhone.trim();
+    if (!name || !email || !phone) return null;
+    if (typeof navigator !== "undefined" && !navigator.onLine) return null;
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) return null;
+      const res = await fetch("/api/pos/customers", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name, email, phone }),
+      });
+      const json = (await res.json().catch(() => null)) as { customer?: { id: string } | null; error?: string } | null;
+      if (!res.ok || json?.error) return null;
+      const id = json?.customer?.id ?? null;
+      if (id) setCustomerId(id);
+      return id;
+    } catch {
+      return null;
+    }
+  }
+
+  async function syncCustomerToOrder(orderId: string, nextCustomerId: string | null) {
+    try {
+      await supabase
+        .from("orders")
+        .update({
+          customer_name: customerName.trim() ? customerName.trim() : null,
+          customer_phone: customerPhone.trim() ? customerPhone.trim() : null,
+          customer_email: customerEmail.trim() ? customerEmail.trim() : null,
+          customer_id: nextCustomerId ?? customerId,
+        })
+        .eq("id", orderId);
+    } catch {
+      // ignore
+    }
+  }
+
   function toFixedMoney(n: number) {
     return Number(n.toFixed(2));
   }
@@ -2034,6 +2139,8 @@ export default function PosPage() {
       order_type: orderType,
       customer_name: customerName.trim() ? customerName.trim() : null,
       customer_phone: customerPhone.trim() ? customerPhone.trim() : null,
+      customer_email: customerEmail.trim() ? customerEmail.trim() : null,
+      customer_id: customerId,
       id_verified: orderType === "dine_in" ? null : idVerified,
       id_verified_at: orderType === "dine_in" || !idVerified ? null : new Date().toISOString(),
       id_verified_by_user_id: null,
@@ -2052,6 +2159,21 @@ export default function PosPage() {
 
     const paymentOrderId = paymentTarget === "split" ? splitPayOrderId : activeOrderId;
     if (!paymentOrderId) return;
+
+    if (orderType !== "dine_in") {
+      if (!customerName.trim()) {
+        setError("Customer name is required");
+        return;
+      }
+      if (!customerEmail.trim()) {
+        setError("Customer email is required");
+        return;
+      }
+      if (!customerPhone.trim()) {
+        setError("Customer phone is required");
+        return;
+      }
+    }
 
     const tendered = Number(amountTendered);
     const isCash = paymentMethod === "cash";
@@ -2130,6 +2252,11 @@ export default function PosPage() {
             : `Ticket marked paid OFFLINE (${paymentMethod.replace("_", " ")})`,
         );
         return;
+      }
+
+      const ensuredCustomerId = await ensureCustomerRecord();
+      if (ensuredCustomerId || customerId) {
+        await syncCustomerToOrder(paymentOrderId, ensuredCustomerId ?? customerId);
       }
 
       const res = await markOrderPaid(paymentOrderId, {
@@ -2294,6 +2421,16 @@ export default function PosPage() {
         setPlacing(false);
         return;
       }
+      if (!customerEmail.trim()) {
+        setError("Customer email is required");
+        setPlacing(false);
+        return;
+      }
+      if (!customerPhone.trim()) {
+        setError("Customer phone is required");
+        setPlacing(false);
+        return;
+      }
       if (!idVerified) {
         setError("Driver's license must be verified by staff");
         setPlacing(false);
@@ -2321,6 +2458,7 @@ export default function PosPage() {
         customer_name: customerName.trim() ? customerName.trim() : null,
         customer_phone: customerPhone.trim() ? customerPhone.trim() : null,
         customer_email: customerEmail.trim() ? customerEmail.trim() : null,
+        customer_id: customerId,
         id_verified: orderType === "dine_in" ? null : idVerified,
         id_verified_at: orderType === "dine_in" || !idVerified ? null : new Date().toISOString(),
         id_verified_by_user_id: null,
@@ -2359,6 +2497,7 @@ export default function PosPage() {
         router.replace("/login");
         return;
       }
+      const ensuredCustomerId = await ensureCustomerRecord();
 
       payload = {
         restaurant_id: data.restaurantId,
@@ -2372,6 +2511,7 @@ export default function PosPage() {
         customer_name: customerName.trim() ? customerName.trim() : null,
         customer_phone: customerPhone.trim() ? customerPhone.trim() : null,
         customer_email: customerEmail.trim() ? customerEmail.trim() : null,
+        customer_id: ensuredCustomerId ?? customerId,
         id_verified: orderType === "dine_in" ? null : idVerified,
         id_verified_at: orderType === "dine_in" || !idVerified ? null : new Date().toISOString(),
         id_verified_by_user_id: orderType === "dine_in" || !idVerified ? null : userId,
@@ -3170,16 +3310,69 @@ export default function PosPage() {
 
               {orderType !== "dine_in" ? (
                 <div className="grid gap-2">
+                  <div className="relative">
+                    <input
+                      value={customerQuery}
+                      onChange={(e) => {
+                        setCustomerQuery(e.target.value);
+                        setCustomerOptionsOpen(true);
+                      }}
+                      onFocus={() => setCustomerOptionsOpen(true)}
+                      placeholder="Search customer (name, email, phone)"
+                      className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                    />
+                    {customerOptionsOpen && (customerOptionsLoading || customerOptions.length > 0) ? (
+                      <div className="absolute z-10 mt-2 w-full rounded-xl border border-[var(--mp-border)] bg-white shadow-lg">
+                        {customerOptionsLoading ? (
+                          <div className="px-4 py-3 text-xs text-[var(--mp-muted)]">Searching…</div>
+                        ) : null}
+                        {customerOptions.map((c) => (
+                          <button
+                            key={c.id}
+                            onClick={() => {
+                              setCustomerId(c.id);
+                              setCustomerName(c.name ?? "");
+                              setCustomerEmail(c.email ?? "");
+                              setCustomerPhone(c.phone ?? "");
+                              setCustomerQuery(`${c.name} • ${c.email}`);
+                              setCustomerOptionsOpen(false);
+                            }}
+                            className="flex w-full flex-col items-start gap-1 px-4 py-2 text-left text-sm hover:bg-[var(--mp-soft)]"
+                          >
+                            <span className="font-semibold">{c.name}</span>
+                            <span className="text-xs text-[var(--mp-muted)]">
+                              {c.email} • {c.phone}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
                   <input
                     value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
+                    onChange={(e) => {
+                      setCustomerName(e.target.value);
+                      setCustomerId(null);
+                    }}
                     placeholder="Customer name"
                     className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                   />
                   <input
+                    value={customerPhone}
+                    onChange={(e) => {
+                      setCustomerPhone(e.target.value);
+                      setCustomerId(null);
+                    }}
+                    placeholder="Customer phone"
+                    className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                  />
+                  <input
                     value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                    placeholder="Customer email (optional)"
+                    onChange={(e) => {
+                      setCustomerEmail(e.target.value);
+                      setCustomerId(null);
+                    }}
+                    placeholder="Customer email"
                     className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                   />
                   <label className="flex items-center gap-2 text-sm">
@@ -3764,6 +3957,18 @@ export default function PosPage() {
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="Customer name"
+                className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+              />
+              <input
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                placeholder="Customer phone"
+                className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+              />
+              <input
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                placeholder="Customer email"
                 className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
               />
 

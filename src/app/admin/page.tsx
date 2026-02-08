@@ -575,6 +575,30 @@ export default function AdminPage() {
             <div className="flex items-start gap-4">
               <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">{t.cards.customers.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{t.cards.customers.body}</p>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <button
+                onClick={() => router.push("/admin/customers")}
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 text-sm font-semibold text-white shadow-md transition hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg"
+              >
+                {t.cards.customers.action}
+              </button>
+            </div>
+          </div>
+
+          <div className="group rounded-3xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/40 p-8 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-emerald-300/60">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">
+                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" />
                   <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-1.42 3.42h-.1a1.65 1.65 0 0 0-1.81 1.17 1.65 1.65 0 0 0-.05.42V22a2 2 0 0 1-4 0v-.1a1.65 1.65 0 0 0-1.18-1.81 1.65 1.65 0 0 0-.42-.05H9.1A2 2 0 0 1 7 18.6l.06-.06A1.65 1.65 0 0 0 7.4 15a1.65 1.65 0 0 0-1.57-1.15H5.7A2 2 0 0 1 4 10.4v-.1A2 2 0 0 1 5.7 8.6h.1A1.65 1.65 0 0 0 7.4 7a1.65 1.65 0 0 0-.34-1.82L7 5.12A2 2 0 0 1 8.4 2h.1A2 2 0 0 1 10.4 3.7v.1A1.65 1.65 0 0 0 12 5.4a1.65 1.65 0 0 0 1.6-1.6V3.7A2 2 0 0 1 15.6 2h.1A2 2 0 0 1 17 3.12l-.06.06A1.65 1.65 0 0 0 16.6 7a1.65 1.65 0 0 0 1.57 1.15h.1A2 2 0 0 1 22 10.4v.1a2 2 0 0 1-1.7 1.95h-.1A1.65 1.65 0 0 0 19.4 15Z" />
                 </svg>
