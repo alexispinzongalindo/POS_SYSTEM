@@ -177,8 +177,8 @@ export function adminCopy(lang: "en" | "es"): AdminCopy {
           action: "Abrir entrenamiento",
         },
       },
-      sidebar: {
-        viewTutorial: "Ver tutorial",
+    sidebar: {
+      viewTutorial: "Entrenamiento",
       },
       ai: {
         buttonLabel: "Abrir asistente AI",
@@ -319,7 +319,7 @@ export function adminCopy(lang: "en" | "es"): AdminCopy {
       },
     },
     sidebar: {
-      viewTutorial: "View Tutorial",
+      viewTutorial: "Training",
     },
     ai: {
       buttonLabel: "Open AI Assistant",

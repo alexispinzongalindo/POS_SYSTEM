@@ -858,7 +858,7 @@ export default function AdminPage() {
       <div className="fixed right-3 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-3 md:flex">
         <button
           type="button"
-          onClick={() => router.push("/see-app-in-action")}
+          onClick={() => router.push("/admin/training/slides")}
           className="group flex items-center gap-3 rounded-2xl border border-emerald-200/60 bg-white/90 backdrop-blur px-4 py-3 shadow-lg transition hover:bg-white hover:shadow-xl hover:border-emerald-300/60"
         >
           <span className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md">

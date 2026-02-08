@@ -42,6 +42,7 @@ export default function AdminTrainingPage() {
     title: isEs ? "Entrenamiento" : "Training",
     subtitle: isEs ? "Guías paso a paso para personal y configuración." : "Step-by-step guides for staff and setup.",
     back: isEs ? "← Volver" : "Back",
+    openTraining: isEs ? "Abrir entrenamiento" : "Open training",
     searchLabel: isEs ? "Buscar" : "Search",
     searchPlaceholder: isEs ? "Buscar videos y artículos..." : "Search videos and articles...",
     searchButton: isEs ? "Buscar" : "Search",
@@ -119,13 +120,13 @@ export default function AdminTrainingPage() {
                     "Entra a Admin → Training",
                     "Usa Search y Category para encontrar guías",
                     "Comparte estas guías con gerentes y cajeros",
-                    "Tip: usa el botón 'View Tutorial' en el lado derecho del Admin",
+                    "Tip: usa el botón 'Training' en el lado derecho del Admin",
                   ]
                 : [
                     "Go to Admin → Training",
                     "Use Search and Category to find guides",
                     "Share these guides with managers and cashiers",
-                    "Tip: use the 'View Tutorial' button on the right side of Admin",
+                    "Tip: use the 'Training' button on the right side of Admin",
                   ],
           },
         ],
@@ -822,12 +823,20 @@ export default function AdminTrainingPage() {
             <h1 className="text-3xl font-semibold tracking-tight">{t.title}</h1>
             <p className="text-sm text-[var(--mp-muted)]">{t.subtitle}</p>
           </div>
-          <button
-            onClick={() => router.push("/admin")}
-            className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
-          >
-            {t.back}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push("/admin/training/slides")}
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--mp-primary)] px-5 text-sm font-semibold text-[var(--mp-primary-contrast)] hover:bg-[var(--mp-primary-hover)]"
+            >
+              {t.openTraining}
+            </button>
+            <button
+              onClick={() => router.push("/admin")}
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white/90 px-5 text-sm font-semibold hover:bg-white"
+            >
+              {t.back}
+            </button>
+          </div>
         </div>
 
         {error ? (

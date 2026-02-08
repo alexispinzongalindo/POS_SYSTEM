@@ -1,0 +1,128 @@
+[
+  {
+    "id": "login-setup",
+    "img": "/islapos-tour/en/slide_v2_01.png",
+    "title": { "en": "Login and Setup", "es": "Login y Configuración" },
+    "body": {
+      "en": "Sign in, complete setup, and confirm tax settings before daily operations.",
+      "es": "Inicia sesión, completa la configuración y confirma impuestos antes de operar."
+    }
+  },
+  {
+    "id": "admin-overview",
+    "img": "/islapos-tour/en/slide_v2_02.png",
+    "title": { "en": "Admin Overview", "es": "Resumen de Admin" },
+    "body": {
+      "en": "Use Admin as your control center for menu, reports, staff, support, and training.",
+      "es": "Usa Admin como centro de control para menú, reportes, personal, soporte y entrenamiento."
+    }
+  },
+  {
+    "id": "restaurants",
+    "img": "/islapos-tour/en/slide_v2_03.png",
+    "title": { "en": "Restaurants and Branches", "es": "Restaurantes y Sucursales" },
+    "body": {
+      "en": "Configure each location with its own users, settings, and operational data.",
+      "es": "Configura cada ubicación con usuarios, ajustes y datos operativos propios."
+    }
+  },
+  {
+    "id": "menu-products",
+    "img": "/islapos-tour/en/slide_v2_04.png",
+    "title": { "en": "Menu and Products", "es": "Menú y Productos" },
+    "body": {
+      "en": "Create categories, products, prices, and modifiers used directly by POS and KDS.",
+      "es": "Crea categorías, productos, precios y modificadores usados por POS y KDS."
+    }
+  },
+  {
+    "id": "pos-orders",
+    "img": "/islapos-tour/en/slide_v2_05.png",
+    "title": { "en": "POS Order Flow", "es": "Flujo de Órdenes POS" },
+    "body": {
+      "en": "Open tickets, add items, set quantities, discounts, tax, and complete payment quickly.",
+      "es": "Abre tickets, agrega artículos, cantidades, descuentos, IVU y completa el pago rápido."
+    }
+  },
+  {
+    "id": "customers",
+    "img": "/islapos-tour/en/slide_v2_06.png",
+    "title": { "en": "Customers and Receipts", "es": "Clientes y Recibos" },
+    "body": {
+      "en": "Attach customer name, email, and phone to orders for lookup and email receipts.",
+      "es": "Asocia nombre, email y teléfono del cliente a órdenes para búsqueda y recibos por email."
+    }
+  },
+  {
+    "id": "tables-floorplan",
+    "img": "/islapos-tour/en/slide_v2_07.png",
+    "title": { "en": "Tables and Floor Plan", "es": "Mesas y Plano de Piso" },
+    "body": {
+      "en": "Manage table map, sections, seat counts, and service status across the dining room.",
+      "es": "Gestiona mapa de mesas, áreas, asientos y estado de servicio del salón."
+    }
+  },
+  {
+    "id": "kds",
+    "img": "/islapos-tour/en/slide_v2_08.png",
+    "title": { "en": "Kitchen Display System", "es": "KDS de Cocina" },
+    "body": {
+      "en": "Send kitchen tickets in real time and use station QR setup for each prep area.",
+      "es": "Envía tickets de cocina en tiempo real y usa QR por estación de preparación."
+    }
+  },
+  {
+    "id": "reports",
+    "img": "/islapos-tour/en/slide_v2_09.png",
+    "title": { "en": "Reports and Food Cost", "es": "Reportes y Costo de Comida" },
+    "body": {
+      "en": "Review sales, labor, and food cost reports to control margins and performance.",
+      "es": "Revisa ventas, mano de obra y costos para controlar márgenes y rendimiento."
+    }
+  },
+  {
+    "id": "inventory",
+    "img": "/islapos-tour/en/slide_v2_10.png",
+    "title": { "en": "Inventory and Recipes", "es": "Inventario y Recetas" },
+    "body": {
+      "en": "Track ingredients, recipe usage, purchases, and stock adjustments.",
+      "es": "Controla ingredientes, uso por receta, compras y ajustes de inventario."
+    }
+  },
+  {
+    "id": "staff-payroll",
+    "img": "/islapos-tour/en/slide_v2_01.png",
+    "title": { "en": "Staff, Time Clock, Payroll", "es": "Personal, Reloj y Nómina" },
+    "body": {
+      "en": "Manage users, permissions, clock-ins, and payroll review from Admin.",
+      "es": "Gestiona usuarios, permisos, entradas de tiempo y revisión de nómina desde Admin."
+    }
+  },
+  {
+    "id": "integrations",
+    "img": "/islapos-tour/en/slide_v2_02.png",
+    "title": { "en": "Integrations and Delivery", "es": "Integraciones y Delivery" },
+    "body": {
+      "en": "Connect delivery channels and monitor integration health before service hours.",
+      "es": "Conecta canales de delivery y monitorea integraciones antes del servicio."
+    }
+  },
+  {
+    "id": "support-station",
+    "img": "/islapos-tour/en/slide_v2_03.png",
+    "title": { "en": "Support Station", "es": "Estación de Soporte" },
+    "body": {
+      "en": "Create, track, update, and close support cases with notes and resolution details.",
+      "es": "Crea, rastrea, actualiza y cierra casos de soporte con notas y resolución."
+    }
+  },
+  {
+    "id": "training-library",
+    "img": "/islapos-tour/en/slide_v2_04.png",
+    "title": { "en": "Training Library", "es": "Biblioteca de Entrenamiento" },
+    "body": {
+      "en": "Use this training area for onboarding, refresher steps, and daily operating standards.",
+      "es": "Usa esta área de entrenamiento para onboarding, repaso y estándares diarios."
+    }
+  }
+]
