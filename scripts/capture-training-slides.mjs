@@ -7,6 +7,7 @@ import {
   getRecordingLang,
   ensureAuthState,
   gotoTourStep,
+  login,
 } from "./record-utils.mjs";
 
 function ensureDir(p) {
@@ -48,6 +49,10 @@ async function hasFatalUi(page) {
   ];
   const res = await Promise.all(checks);
   return res.some(Boolean);
+}
+
+function isLoginUrl(url) {
+  return /\/login(\?|$)/.test(String(url ?? ""));
 }
 
 async function launchSlidesContext({ lang, storageState }) {
@@ -110,7 +115,7 @@ async function captureLoginSlide({ baseUrl, lang, outDir }) {
   }
 }
 
-async function captureAuthedSlides({ baseUrl, lang, outDir, storageState }) {
+async function captureAuthedSlides({ baseUrl, lang, outDir, storageState, email, password }) {
   const { browser, context, page } = await launchSlidesContext({ lang, storageState });
 
   const slides = [];
@@ -283,13 +288,23 @@ async function captureAuthedSlides({ baseUrl, lang, outDir, storageState }) {
     for (let i = 0; i < steps.length; i += 1) {
       const step = steps[i];
       try {
-        await gotoTourStep(page, {
-          url: step.url,
-          readySelector: step.readySelector,
-          holdMs: 1500,
-          timeoutMs: step.timeoutMs ?? 60_000,
-          retries: 1,
-        });
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          await gotoTourStep(page, {
+            url: step.url,
+            readySelector: step.readySelector,
+            holdMs: 1500,
+            timeoutMs: step.timeoutMs ?? 60_000,
+            retries: 1,
+          });
+
+          const currentUrl = page.url();
+          if (isLoginUrl(currentUrl) && attempt === 0) {
+            process.stderr.write(`AUTH_REFRESH_${step.id}=login required; re-authenticating\n`);
+            await login(page, { baseUrl, email, password });
+            continue;
+          }
+          break;
+        }
 
         const url = page.url();
         if (isFatalUrl(url)) throw new Error(`Redirected to login/error: ${url}`);
@@ -340,7 +355,7 @@ async function main() {
   });
 
   const storageState = await ensureAuthState({ lang, baseUrl, email, password });
-  const authedSlides = await captureAuthedSlides({ baseUrl, lang, outDir, storageState });
+  const authedSlides = await captureAuthedSlides({ baseUrl, lang, outDir, storageState, email, password });
 
   const slides = [loginSlide, ...authedSlides].filter(Boolean);
 
