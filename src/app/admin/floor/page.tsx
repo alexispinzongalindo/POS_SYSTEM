@@ -12,7 +12,6 @@ import {
   addFloorTable,
   listFloorAreas,
   listFloorObjects,
-  listRestaurantFloorTables,
   listFloorTables,
   updateFloorArea,
   updateFloorObject,
@@ -316,15 +315,31 @@ export default function AdminFloorPlanPage() {
     if (!restaurantId || !activeAreaId || !canEdit) return;
     setError(null);
 
-    const allRes = await listRestaurantFloorTables(restaurantId);
-    if (allRes.error) {
-      setError(allRes.error.message);
-      return;
-    }
-
-    const used = new Set((allRes.data ?? []).map((t) => t.table_number));
+    const used = new Set(tables.map((t) => t.table_number));
     let nextNum = 1;
     while (used.has(nextNum)) nextNum += 1;
+
+    const tempId = `temp-${Date.now()}`;
+    const tempRow: FloorTable = {
+      id: tempId,
+      restaurant_id: restaurantId,
+      area_id: activeAreaId,
+      table_number: nextNum,
+      seats: 4,
+      shape: "square",
+      width: 120,
+      height: 120,
+      x: 40,
+      y: 40,
+      created_at: new Date().toISOString(),
+    };
+
+    setTables((prev) => {
+      const next = [...prev, tempRow];
+      next.sort((a, b) => a.table_number - b.table_number);
+      return next;
+    });
+    setSelected({ kind: "table", row: tempRow });
 
     const res = await addFloorTable({
       restaurant_id: restaurantId,
@@ -340,10 +355,15 @@ export default function AdminFloorPlanPage() {
 
     if (res.error) {
       setError(res.error.message);
+      setTables((prev) => prev.filter((t) => t.id !== tempId));
+      setSelected(null);
       return;
     }
 
-    await refreshAreaContents(activeAreaId);
+    if (res.data) {
+      setTables((prev) => prev.map((t) => (t.id === tempId ? res.data! : t)));
+      setSelected({ kind: "table", row: res.data });
+    }
   }
 
   async function onAddObject(kind: FloorObjectKind) {
