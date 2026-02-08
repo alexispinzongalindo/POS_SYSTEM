@@ -117,6 +117,9 @@ export default function PosPage() {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [receiptLoading, setReceiptLoading] = useState(false);
   const [receipt, setReceipt] = useState<OrderReceipt | null>(null);
+  const [receiptEmail, setReceiptEmail] = useState("");
+  const [receiptSending, setReceiptSending] = useState(false);
+  const [receiptStatus, setReceiptStatus] = useState<string | null>(null);
 
   const [showPrintHubModal, setShowPrintHubModal] = useState(false);
   const [printHubUrl, setPrintHubUrl] = useState("");
@@ -165,6 +168,7 @@ export default function PosPage() {
   const [orderType, setOrderType] = useState<OrderType>("counter");
   const [customerName, setCustomerName] = useState<string>("");
   const [customerPhone, setCustomerPhone] = useState<string>("");
+  const [customerEmail, setCustomerEmail] = useState<string>("");
   const [deliveryAddress1, setDeliveryAddress1] = useState<string>("");
   const [deliveryAddress2, setDeliveryAddress2] = useState<string>("");
   const [deliveryCity, setDeliveryCity] = useState<string>("");
@@ -1801,6 +1805,7 @@ export default function PosPage() {
       setOrderType(offline.payload.order_type ?? "counter");
       setCustomerName(String(offline.payload.customer_name ?? ""));
       setCustomerPhone(String(offline.payload.customer_phone ?? ""));
+      setCustomerEmail(String((offline.payload as { customer_email?: string | null } | undefined)?.customer_email ?? ""));
       setDeliveryAddress1(String(offline.payload.delivery_address1 ?? ""));
       setDeliveryAddress2(String(offline.payload.delivery_address2 ?? ""));
       setDeliveryCity(String(offline.payload.delivery_city ?? ""));
@@ -1864,6 +1869,7 @@ export default function PosPage() {
     setOrderType(meta?.order_type ?? "counter");
     setCustomerName(meta?.customer_name ?? "");
     setCustomerPhone(meta?.customer_phone ?? "");
+    setCustomerEmail(meta?.customer_email ?? "");
     setIdVerified(Boolean(meta?.id_verified));
     setDeliveryAddress1(meta?.delivery_address1 ?? "");
     setDeliveryAddress2(meta?.delivery_address2 ?? "");
@@ -1871,6 +1877,8 @@ export default function PosPage() {
     setDeliveryState(meta?.delivery_state ?? "PR");
     setDeliveryPostalCode(meta?.delivery_postal_code ?? "");
     setDeliveryInstructions(meta?.delivery_instructions ?? "");
+
+    setReceiptEmail(meta?.customer_email ?? "");
 
     setDiscountAmount(String(Number(receiptData?.order.discount_amount ?? 0)));
     setDiscountReason(String(receiptData?.order.discount_reason ?? ""));
@@ -1921,17 +1929,80 @@ export default function PosPage() {
     setReceipt(null);
     setReceiptLoading(true);
     setShowReceiptModal(true);
+    setReceiptStatus(null);
 
     try {
       const res = await getOrderReceipt(orderId);
       if (res.error) throw res.error;
       setReceipt(res.data);
+      setReceiptEmail(res.data?.order?.customer_email ?? "");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load receipt";
       setError(msg);
       setShowReceiptModal(false);
     } finally {
       setReceiptLoading(false);
+    }
+  }
+
+  async function sendReceiptEmail() {
+    if (!receipt?.order?.id) return;
+    const email = receiptEmail.trim();
+    if (!email) {
+      setReceiptStatus("Enter a customer email first.");
+      return;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      setReceiptStatus("Enter a valid email address.");
+      return;
+    }
+
+    setReceiptSending(true);
+    setReceiptStatus(null);
+
+    try {
+      const { data, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      const token = data.session?.access_token;
+      if (!token) throw new Error("No active session");
+
+      const res = await fetch("/api/pos/send-receipt", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ orderId: receipt.order.id, email }),
+      });
+
+      if (res.status === 401) {
+        const refreshed = await supabase.auth.refreshSession();
+        const nextToken = refreshed.data.session?.access_token;
+        if (!nextToken) throw new Error("Session expired");
+
+        const retry = await fetch("/api/pos/send-receipt", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${nextToken}`,
+          },
+          body: JSON.stringify({ orderId: receipt.order.id, email }),
+        });
+
+        const retryJson = (await retry.json().catch(() => null)) as { error?: string } | null;
+        if (!retry.ok) throw new Error(retryJson?.error ?? "Failed to send receipt");
+        setReceiptStatus("Receipt sent.");
+        return;
+      }
+
+      const json = (await res.json().catch(() => null)) as { error?: string } | null;
+      if (!res.ok) throw new Error(json?.error ?? "Failed to send receipt");
+      setReceiptStatus("Receipt sent.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to send receipt";
+      setReceiptStatus(msg);
+    } finally {
+      setReceiptSending(false);
     }
   }
 
@@ -2249,6 +2320,7 @@ export default function PosPage() {
         order_type: orderType,
         customer_name: customerName.trim() ? customerName.trim() : null,
         customer_phone: customerPhone.trim() ? customerPhone.trim() : null,
+        customer_email: customerEmail.trim() ? customerEmail.trim() : null,
         id_verified: orderType === "dine_in" ? null : idVerified,
         id_verified_at: orderType === "dine_in" || !idVerified ? null : new Date().toISOString(),
         id_verified_by_user_id: null,
@@ -2299,6 +2371,7 @@ export default function PosPage() {
         order_type: orderType,
         customer_name: customerName.trim() ? customerName.trim() : null,
         customer_phone: customerPhone.trim() ? customerPhone.trim() : null,
+        customer_email: customerEmail.trim() ? customerEmail.trim() : null,
         id_verified: orderType === "dine_in" ? null : idVerified,
         id_verified_at: orderType === "dine_in" || !idVerified ? null : new Date().toISOString(),
         id_verified_by_user_id: orderType === "dine_in" || !idVerified ? null : userId,
@@ -3103,6 +3176,12 @@ export default function PosPage() {
                     placeholder="Customer name"
                     className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
                   />
+                  <input
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    placeholder="Customer email (optional)"
+                    className="h-11 w-full rounded-xl border border-[var(--mp-border)] bg-white px-4 text-sm outline-none focus:border-[var(--mp-primary)] focus:ring-2 focus:ring-[var(--mp-ring)]"
+                  />
                   <label className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
@@ -3521,6 +3600,10 @@ export default function PosPage() {
                   </div>
                 ) : null}
 
+                {receipt.order.customer_email ? (
+                  <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Email: {receipt.order.customer_email}</div>
+                ) : null}
+
                 {receipt.order.order_type === "delivery" ? (
                   <div className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
                     {receipt.order.customer_name ? `${receipt.order.customer_name} • ` : ""}
@@ -3593,6 +3676,26 @@ export default function PosPage() {
                         Tendered: ${Number(receipt.order.amount_tendered).toFixed(2)} • Change: ${Number(receipt.order.change_due).toFixed(2)}
                       </div>
                     ) : null}
+
+                    <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+                      <div className="text-xs font-semibold text-zinc-700">Email receipt</div>
+                      <div className="mt-2 flex gap-2">
+                        <input
+                          value={receiptEmail}
+                          onChange={(e) => setReceiptEmail(e.target.value)}
+                          placeholder="customer@email.com"
+                          className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-xs outline-none focus:border-zinc-400"
+                        />
+                        <button
+                          onClick={sendReceiptEmail}
+                          disabled={receiptSending}
+                          className="inline-flex h-9 items-center justify-center rounded-lg bg-zinc-900 px-4 text-xs font-semibold text-white hover:bg-zinc-800 disabled:opacity-60"
+                        >
+                          {receiptSending ? "Sending..." : "Send"}
+                        </button>
+                      </div>
+                      {receiptStatus ? <div className="mt-2 text-[11px] text-zinc-600">{receiptStatus}</div> : null}
+                    </div>
                   </div>
                 </div>
 
