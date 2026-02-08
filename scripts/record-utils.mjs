@@ -210,10 +210,48 @@ export async function login(page, { baseUrl, email, password }) {
   await page.waitForSelector('[data-tour="login.email"]');
   await page.fill('[data-tour="login.email"]', email);
   await page.fill('[data-tour="login.password"]', password);
+
+  const authResponsePromise = page
+    .waitForResponse(
+      (res) =>
+        res.request().method() === "POST" &&
+        res.url().includes("/auth/v1/token") &&
+        res.url().includes("grant_type=password"),
+      { timeout: 30_000 },
+    )
+    .catch(() => null);
+
   await page.click('[data-tour="login.submit"]');
 
-  // Wait until we are inside the app.
-  await page.waitForURL(/\/(admin|pos|setup)/, { timeout: 60_000 });
+  const authResponse = await authResponsePromise;
+  if (authResponse && !authResponse.ok()) {
+    let body = "";
+    try {
+      body = await authResponse.text();
+    } catch {
+      body = "";
+    }
+    throw new Error(`Login failed with status ${authResponse.status()}${body ? `: ${body}` : ""}`);
+  }
+
+  // Wait until we are inside the app (path only, not query string matches).
+  await page.waitForURL(
+    (url) => {
+      try {
+        const pathname = new URL(url.toString()).pathname;
+        return /^\/(admin|pos|setup)(\/|$)/.test(pathname);
+      } catch {
+        return false;
+      }
+    },
+    { timeout: 60_000 },
+  );
+
+  await page.waitForLoadState("networkidle").catch(() => {});
+  const pathname = new URL(page.url()).pathname;
+  if (!/^\/(admin|pos|setup)(\/|$)/.test(pathname)) {
+    throw new Error(`Login did not reach app route (got ${pathname})`);
+  }
 }
 
 export async function settle(page, ms = 900) {
