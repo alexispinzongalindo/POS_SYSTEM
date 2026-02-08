@@ -752,7 +752,7 @@ export async function getOrderDeliveryMeta(orderId: string) {
   return supabase
     .from("orders")
     .select(
-      "id, order_type, customer_name, customer_phone, customer_email, customer_id, id_verified, id_verified_at, id_verified_by_user_id, delivery_address1, delivery_address2, delivery_city, delivery_state, delivery_postal_code, delivery_instructions, delivery_status, delivery_provider, delivery_tracking_url",
+      "id, order_type, customer_name, customer_phone, customer_email, customer_id, table_label, id_verified, id_verified_at, id_verified_by_user_id, delivery_address1, delivery_address2, delivery_city, delivery_state, delivery_postal_code, delivery_instructions, delivery_status, delivery_provider, delivery_tracking_url",
     )
     .eq("id", orderId)
     .maybeSingle<{
@@ -762,6 +762,7 @@ export async function getOrderDeliveryMeta(orderId: string) {
       customer_phone?: string | null;
       customer_email?: string | null;
       customer_id?: string | null;
+      table_label?: string | null;
       id_verified?: boolean | null;
       id_verified_at?: string | null;
       id_verified_by_user_id?: string | null;
