@@ -1,17 +1,18 @@
-# Training Script - Spanish (Placeholder)
-
-Este es un marcador de posición para la narración futura de videos de capacitación. Contenido por desarrollar.
-
-Introducción al módulo de capacitación de IslaPOS.
-
-Los objetivos de aprendizaje se definirán aquí.
-
-Las instrucciones paso a paso seguirán.
-
-Ejercicios de práctica y escenarios.
-
-Información de evaluación y certificación.
-
-Finalización de la capacitación y próximos pasos.
-
-Para más información, contacte con soporte.
+Bienvenido al Entrenamiento de IslaPOS.
+Este entrenamiento cubre toda la app, desde configuración hasta operación diaria.
+Comienza en Login y Configuración: inicia sesión, verifica tu negocio y confirma impuestos.
+En Resumen de Admin, gestionas ubicaciones, usuarios, permisos y ajustes del sistema.
+En Restaurantes y Sucursales, configuras cada ubicación y separas operaciones.
+En Menú y Productos, creas categorías, precios y modificadores antes de vender.
+En Flujo de Órdenes POS, abres un ticket, agregas artículos, ajustas cantidades y cobras.
+En Clientes y Recibos, asocias nombre, email y teléfono para búsqueda y recibos por correo.
+En Mesas y Plano de Piso, configuras áreas, capacidad de asientos y distribución de servicio.
+En Servicio de Mesas en Vivo, monitoreas mesas activas y reabres cuentas rápido.
+En KDS de Cocina, envías tickets a estaciones y sigues el estado en tiempo real.
+En Reportes y Costo de Comida, revisas ventas, márgenes y rendimiento diario.
+En Inventario y Recetas, controlas existencias, compras y uso de ingredientes.
+En Personal, Reloj y Nómina, controlas mano de obra, turnos y revisión de nómina.
+En Integraciones y Delivery, conectas canales y validas estado antes del servicio.
+En Estación de Soporte, creas, actualizas y cierras casos con notas de resolución.
+Usa la Biblioteca de Entrenamiento para capacitar personal nuevo y mantener procesos consistentes.
+Repite este entrenamiento regularmente para operar rápido y con precisión.

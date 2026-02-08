@@ -1,17 +1,18 @@
-# Training Script - English (Placeholder)
-
-This is a placeholder for future training video narration. Content to be developed.
-
-Introduction to IslaPOS training module.
-
-Learning objectives will be defined here.
-
-Step-by-step instructions will follow.
-
-Practice exercises and scenarios.
-
-Assessment and certification information.
-
-Training completion and next steps.
-
-For more information, contact support.
+Welcome to IslaPOS Training.
+This training covers the full app from setup to daily operations.
+Start with Login and Setup: sign in, verify your business information, and confirm taxes.
+In Admin Overview, you manage locations, users, permissions, and system settings.
+In Restaurants and Branches, configure each location and keep operations separated.
+In Menu and Products, build categories, prices, and modifiers before taking orders.
+In POS Order Flow, open a ticket, add items, adjust quantities, and complete payment.
+In Customers and Receipts, attach name, email, and phone for lookup and email receipts.
+In Tables and Floor Plan, configure sections, seat capacity, and service layout.
+In Live Table Service, monitor active tables and reopen checks quickly.
+In Kitchen Display System, send tickets to prep stations and track status in real time.
+In Reports and Food Cost, review sales, margins, and performance daily.
+In Inventory and Recipes, track stock movement, purchases, and ingredient usage.
+In Staff, Time Clock, and Payroll, control labor, shifts, and payroll review.
+In Integrations and Delivery, connect channels and verify status before service.
+In Support Station, create, update, and close support cases with resolution notes.
+Use the Training Library to onboard new staff and keep procedures consistent.
+Repeat this training regularly to maintain fast, accurate operations.

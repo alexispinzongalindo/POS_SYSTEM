@@ -1,0 +1,61 @@
+name: Training Video
+
+on:
+  workflow_dispatch:
+    inputs:
+      total_seconds:
+        description: "Total duration in seconds (default 180)"
+        required: false
+        type: string
+        default: "180"
+
+permissions:
+  contents: read
+
+jobs:
+  build-training:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Build English training video
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          TRAINING_TOTAL_SECONDS: ${{ inputs.total_seconds }}
+        run: |
+          npm run build:training:en
+
+      - name: Build Spanish training video
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          TRAINING_TOTAL_SECONDS: ${{ inputs.total_seconds }}
+        run: |
+          npm run build:training:es
+
+      - name: Upload training videos
+        uses: actions/upload-artifact@v4
+        with:
+          name: islapos-training-videos
+          path: |
+            public/videos/islapos-training-en.mp4
+            public/videos/islapos-training-es.mp4
+            public/videos/islapos-training-en.mp3
+            public/videos/islapos-training-es.mp3
+          retention-days: 30

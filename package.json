@@ -20,8 +20,12 @@
     "record:auto:training:es": "node scripts/record-auto.mjs training es",
     "capture:tour:slides:en": "RECORD_LANG=en node scripts/capture-tour-slides.mjs en",
     "capture:tour:slides:es": "RECORD_LANG=es node scripts/capture-tour-slides.mjs es",
+    "capture:training:slides:en": "RECORD_LANG=en node scripts/capture-training-slides.mjs en",
+    "capture:training:slides:es": "RECORD_LANG=es node scripts/capture-training-slides.mjs es",
     "build:tour:en": "node scripts/video/build_marketing_tour.mjs --lang en --total 60",
-    "build:tour:es": "node scripts/video/build_marketing_tour.mjs --lang es --total 60"
+    "build:tour:es": "node scripts/video/build_marketing_tour.mjs --lang es --total 60",
+    "build:training:en": "node scripts/video/build_training_video.mjs --lang en --total 180",
+    "build:training:es": "node scripts/video/build_training_video.mjs --lang es --total 180"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",
