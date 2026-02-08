@@ -59,6 +59,7 @@ export default function AdminCustomersPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<string | null>(null);
+  const [restaurantId, setRestaurantId] = useState<string | null>(null);
 
   const [draft, setDraft] = useState({
     name: "",
@@ -98,19 +99,39 @@ export default function AdminCustomersPage() {
         return;
       }
       const token = data.session.access_token;
+      if (restaurantId) {
+        try {
+          const cached = localStorage.getItem(`islapos_customers_cache_${restaurantId}`);
+          if (cached) {
+            const parsed = JSON.parse(cached) as CustomerRow[];
+            if (Array.isArray(parsed)) setCustomers(parsed);
+          }
+        } catch {
+          // ignore cache parse
+        }
+      }
       const res = await fetch(`/api/admin/customers?query=${encodeURIComponent(query.trim())}`, {
         headers: { authorization: `Bearer ${token}` },
       });
-      const json = (await res.json().catch(() => null)) as { customers?: CustomerRow[] } | null;
+      const json = (await res.json().catch(() => null)) as { customers?: CustomerRow[]; restaurantId?: string } | null;
       if (cancelled) return;
-      setCustomers(Array.isArray(json?.customers) ? json!.customers! : []);
+      const next = Array.isArray(json?.customers) ? json!.customers! : [];
+      setCustomers(next);
+      if (json?.restaurantId) {
+        setRestaurantId(json.restaurantId);
+        try {
+          localStorage.setItem(`islapos_customers_cache_${json.restaurantId}`, JSON.stringify(next));
+        } catch {
+          // ignore cache write
+        }
+      }
       setLoading(false);
     }
     void load();
     return () => {
       cancelled = true;
     };
-  }, [query, router]);
+  }, [query, router, restaurantId]);
 
   useEffect(() => {
     if (!selectedCustomer) return;
@@ -146,7 +167,35 @@ export default function AdminCustomersPage() {
       setStatus(t.failed);
       return;
     }
+    const createdJson = (await res.json().catch(() => null)) as { id?: string } | null;
+    const createdId = createdJson?.id ?? crypto.randomUUID();
     setStatus(t.created);
+    setCustomers((prev) => {
+      const fresh = {
+        id: createdId,
+        name: createDraft.name.trim(),
+        email: createDraft.email.trim(),
+        phone: createDraft.phone.trim(),
+        birthday: createDraft.birthday || null,
+        notes: createDraft.notes || null,
+        address_line1: createDraft.addressLine1 || null,
+        address_line2: createDraft.addressLine2 || null,
+        city: createDraft.city || null,
+        state: createDraft.state || null,
+        postal_code: createDraft.postalCode || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as CustomerRow;
+      const next = [fresh, ...prev];
+      if (restaurantId) {
+        try {
+          localStorage.setItem(`islapos_customers_cache_${restaurantId}`, JSON.stringify(next));
+        } catch {
+          // ignore cache write
+        }
+      }
+      return next;
+    });
     setCreateDraft({
       name: "",
       email: "",
@@ -182,7 +231,34 @@ export default function AdminCustomersPage() {
       return;
     }
     setStatus(t.updated);
-    setQuery(query);
+    setCustomers((prev) => {
+      const next = prev.map((c) =>
+        c.id === selectedCustomer.id
+          ? {
+              ...c,
+              name: draft.name.trim(),
+              email: draft.email.trim(),
+              phone: draft.phone.trim(),
+              birthday: draft.birthday || null,
+              notes: draft.notes || null,
+              address_line1: draft.addressLine1 || null,
+              address_line2: draft.addressLine2 || null,
+              city: draft.city || null,
+              state: draft.state || null,
+              postal_code: draft.postalCode || null,
+              updated_at: new Date().toISOString(),
+            }
+          : c,
+      );
+      if (restaurantId) {
+        try {
+          localStorage.setItem(`islapos_customers_cache_${restaurantId}`, JSON.stringify(next));
+        } catch {
+          // ignore cache write
+        }
+      }
+      return next;
+    });
   }
 
   async function deleteCustomer() {
@@ -202,6 +278,17 @@ export default function AdminCustomersPage() {
       return;
     }
     setStatus(t.deleted);
+    setCustomers((prev) => {
+      const next = prev.filter((c) => c.id !== selectedCustomer.id);
+      if (restaurantId) {
+        try {
+          localStorage.setItem(`islapos_customers_cache_${restaurantId}`, JSON.stringify(next));
+        } catch {
+          // ignore cache write
+        }
+      }
+      return next;
+    });
     setSelectedId(null);
     setQuery("");
   }
