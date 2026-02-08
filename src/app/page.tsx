@@ -62,45 +62,6 @@ export default function Home() {
             <p className="mt-5 text-sm font-semibold tracking-tight">{t.tagline}</p>
           </div>
 
-          <div className="mt-10">
-            <MarketingSection
-              eyebrow={lang === "es" ? "Tour de la app" : "Product tour"}
-              title={lang === "es" ? "Mira IslaPOS en 60 segundos" : "See IslaPOS in 60 seconds"}
-              subtitle={
-                lang === "es"
-                  ? "Video con voz femenina y resumen rápido de las funciones clave."
-                  : "A narrated, quick walkthrough of the key features."
-              }
-            >
-              <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
-                <div className="overflow-hidden rounded-3xl border border-[var(--mp-border)] bg-white shadow-sm">
-                  <img
-                    alt={lang === "es" ? "Vista del POS" : "POS preview"}
-                    src="/hero/PART2.png"
-                    className="aspect-video w-full object-cover"
-                  />
-                </div>
-
-                <div className="rounded-3xl border border-[var(--mp-border)] bg-[var(--mp-surface)] p-6 shadow-sm">
-                  <h3 className="text-lg font-semibold">
-                    {lang === "es" ? "Prefieres ver el slideshow interactivo?" : "Prefer the interactive slideshow?"}
-                  </h3>
-                  <p className="mt-2 text-sm text-[var(--mp-muted)]">
-                    {lang === "es"
-                      ? "Abre el tour con slides y textos sincronizados."
-                      : "Open the slide-based tour with synced narration text."}
-                  </p>
-                  <a
-                    href="/see-app-in-action"
-                    className="mt-4 inline-flex h-10 items-center justify-center rounded-lg border border-[var(--mp-border)] bg-white px-4 text-sm font-medium hover:bg-black/[0.03]"
-                  >
-                    {lang === "es" ? "Ver tour" : "View tour"}
-                  </a>
-                </div>
-              </div>
-            </MarketingSection>
-          </div>
-
           <div className="mt-8">
             <div className="mx-auto w-full max-w-6xl overflow-hidden rounded-3xl border border-[var(--mp-border)] bg-[var(--mp-surface)] shadow-[0_30px_80px_rgba(0,0,0,0.12)]">
               <div className="grid gap-6 p-4 sm:p-6 lg:grid-cols-12 lg:items-stretch">
