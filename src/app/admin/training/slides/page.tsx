@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useMarketingLang } from "@/lib/useMarketingLang";
@@ -10,6 +10,7 @@ type Slide = {
   img: string;
   title: { en: string; es: string };
   body: { en: string; es: string };
+  duration_sec?: number;
 };
 
 function pickPreferredVoice(lang: "en" | "es") {
@@ -41,6 +42,7 @@ export default function AdminTrainingSlidesPage() {
   const [playing, setPlaying] = useState(true);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [voiceReady, setVoiceReady] = useState(false);
+  const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const slide = slides.length ? slides[Math.min(Math.max(0, index), slides.length - 1)] : null;
   const slideSrc = slide ? `${slide.img}?v=20260208` : "";
@@ -84,7 +86,7 @@ export default function AdminTrainingSlidesPage() {
     return () => synth.removeEventListener?.("voiceschanged", onVoices);
   }, []);
 
-  function speakCurrent() {
+  function speakCurrent(onEnd?: () => void) {
     if (typeof window === "undefined") return;
     if (!voiceEnabled) return;
     if (!voiceReady) return;
@@ -100,29 +102,57 @@ export default function AdminTrainingSlidesPage() {
       if (v) u.voice = v;
       u.rate = 1;
       u.pitch = 1.05;
+      u.onend = () => {
+        if (onEnd) onEnd();
+      };
       synth.speak(u);
+      speechRef.current = u;
     } catch {
       // ignore
     }
   }
 
   useEffect(() => {
-    speakCurrent();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, langKey, voiceEnabled, voiceReady]);
+    if (typeof window === "undefined") return;
+    if (!playing || !slides.length || !slide) return;
 
-  useEffect(() => {
-    if (!playing) return;
-    if (!slides.length) return;
-    const t = window.setTimeout(() => {
+    const advance = () => {
       setIndex((i) => {
         const next = i + 1;
-        if (next >= slides.length) return i;
+        if (next >= slides.length) {
+          setPlaying(false);
+          return i;
+        }
         return next;
       });
-    }, 6500);
+    };
+
+    if (voiceEnabled && voiceReady) {
+      speakCurrent(advance);
+      return () => {
+        try {
+          window.speechSynthesis?.cancel?.();
+        } catch {
+          // ignore
+        }
+      };
+    }
+
+    const fallbackSeconds = slide.duration_sec && Number(slide.duration_sec) > 0 ? Number(slide.duration_sec) : 10;
+    const t = window.setTimeout(advance, Math.round(fallbackSeconds * 1000));
     return () => window.clearTimeout(t);
-  }, [playing, slides.length, index]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, langKey, voiceEnabled, voiceReady, playing, slides.length]);
+
+  useEffect(() => {
+    return () => {
+      try {
+        window.speechSynthesis?.cancel?.();
+      } catch {
+        // ignore
+      }
+    };
+  }, []);
 
   const atStart = index === 0;
   const atEnd = index >= slides.length - 1;
@@ -174,7 +204,7 @@ export default function AdminTrainingSlidesPage() {
 
             <button
               type="button"
-              onClick={speakCurrent}
+              onClick={() => speakCurrent()}
               className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--mp-border)] bg-white px-4 text-xs font-semibold hover:bg-zinc-50"
             >
               {langKey === "es" ? "Repetir" : "Replay"}

@@ -1,18 +1,17 @@
-Welcome to IslaPOS Training.
-This training covers the full app from setup to daily operations.
-Start with Login and Setup: sign in, verify your business information, and confirm taxes.
-In Admin Overview, you manage locations, users, permissions, and system settings.
-In Restaurants and Branches, configure each location and keep operations separated.
-In Menu and Products, build categories, prices, and modifiers before taking orders.
-In POS Order Flow, open a ticket, add items, adjust quantities, and complete payment.
-In Customers and Receipts, attach name, email, and phone for lookup and email receipts.
-In Tables and Floor Plan, configure sections, seat capacity, and service layout.
-In Live Table Service, monitor active tables and reopen checks quickly.
-In Kitchen Display System, send tickets to prep stations and track status in real time.
-In Reports and Food Cost, review sales, margins, and performance daily.
-In Inventory and Recipes, track stock movement, purchases, and ingredient usage.
-In Staff, Time Clock, and Payroll, control labor, shifts, and payroll review.
-In Integrations and Delivery, connect channels and verify status before service.
-In Support Station, create, update, and close support cases with resolution notes.
-Use the Training Library to onboard new staff and keep procedures consistent.
-Repeat this training regularly to maintain fast, accurate operations.
+Login and Setup: sign in and complete business setup before opening service.
+Admin Overview: manage operations, settings, users, and business controls.
+Restaurants and Branches: configure each location with its own setup, staff, and data.
+Menu and Products: create categories, prices, and modifiers for faster ordering.
+POS Order Flow: open tickets, add products, adjust quantities, and complete payment.
+Customers and Receipts: store contact details and link customers to receipts and order history.
+Tables and Floor Plan: organize sections, seat capacity, and table layout.
+Live Table Service: monitor active tables, open checks, and service status in real time.
+Kitchen Display System: send tickets to prep stations and track progress live.
+Order History: search past tickets, review details, and validate completed transactions.
+Reports and Analytics: review sales trends and performance.
+Food Cost: monitor ingredient costs, margins, and profitability controls.
+Inventory and Recipes: track stock movement, purchases, and ingredient usage.
+Staff, Time Clock, and Payroll: manage labor, shifts, and payroll review.
+Integrations and Delivery: connect channels and verify integration status.
+Support Station: create, update, and close support cases with notes and resolution.
+Training Library: use guided content to onboard staff and standardize operations.

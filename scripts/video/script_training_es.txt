@@ -1,18 +1,17 @@
-Bienvenido al Entrenamiento de IslaPOS.
-Este entrenamiento cubre toda la app, desde configuración hasta operación diaria.
-Comienza en Login y Configuración: inicia sesión, verifica tu negocio y confirma impuestos.
-En Resumen de Admin, gestionas ubicaciones, usuarios, permisos y ajustes del sistema.
-En Restaurantes y Sucursales, configuras cada ubicación y separas operaciones.
-En Menú y Productos, creas categorías, precios y modificadores antes de vender.
-En Flujo de Órdenes POS, abres un ticket, agregas artículos, ajustas cantidades y cobras.
-En Clientes y Recibos, asocias nombre, email y teléfono para búsqueda y recibos por correo.
-En Mesas y Plano de Piso, configuras áreas, capacidad de asientos y distribución de servicio.
-En Servicio de Mesas en Vivo, monitoreas mesas activas y reabres cuentas rápido.
-En KDS de Cocina, envías tickets a estaciones y sigues el estado en tiempo real.
-En Reportes y Costo de Comida, revisas ventas, márgenes y rendimiento diario.
-En Inventario y Recetas, controlas existencias, compras y uso de ingredientes.
-En Personal, Reloj y Nómina, controlas mano de obra, turnos y revisión de nómina.
-En Integraciones y Delivery, conectas canales y validas estado antes del servicio.
-En Estación de Soporte, creas, actualizas y cierras casos con notas de resolución.
-Usa la Biblioteca de Entrenamiento para capacitar personal nuevo y mantener procesos consistentes.
-Repite este entrenamiento regularmente para operar rápido y con precisión.
+Login y Configuración: inicia sesión y completa la configuración del negocio antes de abrir servicio.
+Resumen de Admin: gestiona operaciones, ajustes, usuarios y controles del negocio.
+Restaurantes y Sucursales: configura cada ubicación con su propio setup, personal y datos.
+Menú y Productos: crea categorías, precios y modificadores para ordenar más rápido.
+Flujo de Órdenes POS: abre tickets, agrega productos, ajusta cantidades y finaliza pagos.
+Clientes y Recibos: guarda datos del cliente y conéctalos con recibos e historial de órdenes.
+Mesas y Plano de Piso: organiza áreas, capacidad de asientos y layout de servicio.
+Servicio de Mesas en Vivo: monitorea mesas activas, cuentas abiertas y estado en tiempo real.
+KDS de Cocina: envía tickets a estaciones de preparación y sigue el progreso en vivo.
+Historial de Órdenes: busca tickets previos, revisa detalles y valida transacciones completadas.
+Reportes y Analítica: revisa tendencias de ventas y rendimiento.
+Costo de Comida: monitorea costos de ingredientes, márgenes y rentabilidad.
+Inventario y Recetas: controla existencias, compras y uso de ingredientes.
+Personal, Reloj y Nómina: gestiona turnos, control laboral y revisión de nómina.
+Integraciones y Delivery: conecta canales y valida el estado de integración.
+Estación de Soporte: crea, actualiza y cierra casos con notas y resolución.
+Biblioteca de Entrenamiento: usa contenido guiado para capacitar personal y estandarizar operaciones.

@@ -51,16 +51,76 @@ async function listSlides(slidesDir) {
     .map((f) => join(slidesDir, f));
 }
 
-async function buildVideoFromSlides({ slides, audioPath, outputPath, seconds }) {
-  const perSlide = Math.max(4, seconds / slides.length);
+function escapeForConcat(path) {
+  return path.replace(/'/g, "'\\''");
+}
+
+async function probeDurationSeconds(mediaPath) {
+  const out = await runShell(
+    `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${mediaPath}"`,
+    { ignoreStderr: true },
+  );
+  const seconds = Number.parseFloat(out);
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    throw new Error(`Could not read media duration: ${mediaPath}`);
+  }
+  return seconds;
+}
+
+async function readScriptLines(scriptPath) {
+  const scriptText = await runShell(`cat "${scriptPath}"`);
+  return scriptText
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+async function generateSegmentAudio({ lines, lang, outAudio }) {
+  const tempDir = join(tmpdir(), `islapos_training_segments_${lang}_${Date.now()}`);
+  await ensureDir(tempDir);
+
+  const segments = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    const index = String(i + 1).padStart(3, "0");
+    const scriptPath = join(tempDir, `line-${index}.txt`);
+    const audioPath = join(tempDir, `line-${index}.mp3`);
+    await writeFile(scriptPath, `${lines[i]}\n`);
+    await generateTTS(scriptPath, lang, audioPath);
+    const duration = await probeDurationSeconds(audioPath);
+    segments.push({ audioPath, duration });
+  }
+
+  const listPath = join(tempDir, "audio_concat.txt");
+  let listContent = "";
+  for (const segment of segments) {
+    listContent += `file '${escapeForConcat(segment.audioPath)}'\n`;
+  }
+  await writeFile(listPath, listContent);
+
+  await runShell(
+    `ffmpeg -y -f concat -safe 0 -i "${listPath}" -c:a libmp3lame -q:a 2 "${outAudio}"`,
+  );
+
+  return { segments, tempDir };
+}
+
+async function buildVideoFromSlides({ slides, slideDurations, audioPath, outputPath }) {
+  if (slides.length !== slideDurations.length) {
+    throw new Error(
+      `Slide/audio mismatch: slides=${slides.length}, lines=${slideDurations.length}`,
+    );
+  }
+
   const listPath = join(tmpdir(), `islapos_training_slides_${Date.now()}.txt`);
 
   let listContent = "";
-  for (const slide of slides) {
-    listContent += `file '${slide}'\n`;
-    listContent += `duration ${perSlide}\n`;
+  for (let i = 0; i < slides.length; i += 1) {
+    const slide = slides[i];
+    const duration = Math.max(1.2, slideDurations[i]);
+    listContent += `file '${escapeForConcat(slide)}'\n`;
+    listContent += `duration ${duration}\n`;
   }
-  listContent += `file '${slides[slides.length - 1]}'\n`;
+  listContent += `file '${escapeForConcat(slides[slides.length - 1])}'\n`;
 
   await writeFile(listPath, listContent);
 
@@ -87,18 +147,32 @@ async function main() {
 
   await ensureDir(join(repoRoot, "public", "videos"));
   const slides = await listSlides(slidesDir);
+  const lines = await readScriptLines(scriptPath);
 
   if (!slides.length) {
     throw new Error(`No slides found in ${slidesDir}`);
   }
 
-  await generateTTS(scriptPath, lang, outAudio);
+  if (lines.length !== slides.length) {
+    throw new Error(
+      `Training script lines (${lines.length}) must match slides (${slides.length}) in ${lang}.`,
+    );
+  }
+
+  const { segments, tempDir } = await generateSegmentAudio({
+    lines,
+    lang,
+    outAudio,
+  });
+
   await buildVideoFromSlides({
     slides,
+    slideDurations: segments.map((s) => s.duration),
     audioPath: outAudio,
     outputPath: outVideo,
-    seconds: options.totalSeconds,
   });
+
+  await runShell(`rm -rf "${tempDir}"`);
 
   console.log(`Training video created: ${outVideo}`);
 }
