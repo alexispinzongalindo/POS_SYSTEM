@@ -3,6 +3,8 @@
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { readdir } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { ensureDir, runShell, writeFile } from "./utils.mjs";
 import { generateTTS } from "./generate_tts.mjs";
 
@@ -101,7 +103,16 @@ async function main() {
   console.log(`Tour video created: ${outVideo}`);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+const isDirectRun = (() => {
+  try {
+    if (!process.argv[1]) return false;
+    return resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+})();
+
+if (isDirectRun) {
   main().catch((e) => {
     const msg = e instanceof Error ? e.message : String(e);
     console.error(`Tour build failed: ${msg}`);
