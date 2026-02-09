@@ -13,6 +13,7 @@ function parseArgs() {
   const options = {
     lang: "en",
     totalSeconds: Number(process.env.TRAINING_TOTAL_SECONDS || 180),
+    speechRate: Number(process.env.TRAINING_SPEECH_RATE || 1),
     slidesDir: null,
     outVideo: null,
     outAudio: null,
@@ -34,6 +35,9 @@ function parseArgs() {
         break;
       case "--total":
         options.totalSeconds = Number(args[++i] || 180);
+        break;
+      case "--speech-rate":
+        options.speechRate = Number(args[++i] || 1);
         break;
       default:
         break;
@@ -75,7 +79,19 @@ async function readScriptLines(scriptPath) {
     .filter(Boolean);
 }
 
-async function generateSegmentAudio({ lines, lang, outAudio }) {
+async function applyAudioRate(audioPath, rate) {
+  if (Math.abs(rate - 1) < 0.001) return;
+  if (!Number.isFinite(rate) || rate < 0.5 || rate > 2) {
+    throw new Error(`TRAINING_SPEECH_RATE must be between 0.5 and 2. Received: ${rate}`);
+  }
+  const adjustedPath = audioPath.replace(/\.mp3$/i, ".adjusted.mp3");
+  await runShell(
+    `ffmpeg -y -i "${audioPath}" -filter:a "atempo=${rate}" -c:a libmp3lame -q:a 2 "${adjustedPath}"`,
+  );
+  await runShell(`mv "${adjustedPath}" "${audioPath}"`);
+}
+
+async function generateSegmentAudio({ lines, lang, outAudio, speechRate }) {
   const tempDir = join(tmpdir(), `islapos_training_segments_${lang}_${Date.now()}`);
   await ensureDir(tempDir);
 
@@ -86,6 +102,7 @@ async function generateSegmentAudio({ lines, lang, outAudio }) {
     const audioPath = join(tempDir, `line-${index}.mp3`);
     await writeFile(scriptPath, `${lines[i]}\n`);
     await generateTTS(scriptPath, lang, audioPath);
+    await applyAudioRate(audioPath, speechRate);
     const duration = await probeDurationSeconds(audioPath);
     segments.push({ audioPath, duration });
   }
@@ -163,6 +180,7 @@ async function main() {
     lines,
     lang,
     outAudio,
+    speechRate: options.speechRate,
   });
 
   await buildVideoFromSlides({

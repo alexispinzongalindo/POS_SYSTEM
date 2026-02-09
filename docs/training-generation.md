@@ -49,6 +49,7 @@ Optional:
 export RECORD_HEADLESS="true"
 export RECORD_BROWSER="chromium"
 export TRAINING_TOTAL_SECONDS="180"
+export TRAINING_SPEECH_RATE="0.90"
 ```
 
 ## 2) Capture Training slides
@@ -70,6 +71,13 @@ Generated files:
 ```bash
 npm run build:training:en
 npm run build:training:es
+```
+
+To slow down narration while keeping sync exact:
+
+```bash
+TRAINING_SPEECH_RATE=0.90 npm run build:training:en
+TRAINING_SPEECH_RATE=0.90 npm run build:training:es
 ```
 
 Generated files:
