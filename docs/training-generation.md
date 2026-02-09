@@ -2,6 +2,31 @@
 
 This flow generates the full **Training** slideshow and videos in English and Spanish.
 
+## Quick start (saved workflow)
+
+1) One-time setup:
+
+```bash
+cp .env.training.example .env.training.local
+```
+
+Edit `.env.training.local` with real credentials/keys.
+
+2) Run everything with one command:
+
+```bash
+npm run training:full
+```
+
+Optional shortcuts:
+
+```bash
+npm run training:full:en
+npm run training:full:es
+npm run training:capture:all
+npm run training:build:all
+```
+
 ## 1) Required environment variables
 
 Set these for capture from a live app session:

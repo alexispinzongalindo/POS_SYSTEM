@@ -25,7 +25,12 @@
     "build:tour:en": "node scripts/video/build_marketing_tour.mjs --lang en --total 60",
     "build:tour:es": "node scripts/video/build_marketing_tour.mjs --lang es --total 60",
     "build:training:en": "node scripts/video/build_training_video.mjs --lang en --total 180",
-    "build:training:es": "node scripts/video/build_training_video.mjs --lang es --total 180"
+    "build:training:es": "node scripts/video/build_training_video.mjs --lang es --total 180",
+    "training:full": "node scripts/run-training-workflow.mjs all",
+    "training:full:en": "node scripts/run-training-workflow.mjs en",
+    "training:full:es": "node scripts/run-training-workflow.mjs es",
+    "training:capture:all": "node scripts/run-training-workflow.mjs all --capture-only",
+    "training:build:all": "node scripts/run-training-workflow.mjs all --build-only"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",
