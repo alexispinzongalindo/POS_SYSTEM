@@ -1,19 +1,10 @@
-Bienvenido a IslaPOS, el POS moderno para restaurantes en Puerto Rico.
-
-Empiece en el panel de Administración para configurar negocio, usuarios e IVU.
-
-Cree su menú con categorías, artículos y códigos de barra o SKU.
-
-Tome órdenes rápido en el POS con mesas, tickets abiertos y búsqueda ágil.
-
-Maneje la cocina con una pantalla en vivo que organiza los tickets.
-
-Revise ventas y tendencias con reportes confiables.
-
-Siga operando sin internet con el modo offline.
-
-Entrene a su equipo con onboarding guiado y soporte real.
-
-Agregue locales y escale cuando esté listo.
-
-Ese fue el tour de IslaPOS. Empiece su prueba gratis hoy.
+Inicia sesión para entrar a Admin y POS con tu cuenta.
+Punto de venta te permite tomar órdenes rápido con mesas y búsqueda.
+Mesas te deja manejar el servicio y los tickets abiertos.
+Modo offline mantiene la venta activa aun sin internet.
+Reportes te ayudan a revisar ventas y rendimiento del equipo.
+Flujo POS acelera la entrada de órdenes y el cobro.
+Vista de mesas muestra las mesas abiertas y el estado de servicio.
+Entrenamiento y soporte te ayudan a capacitar al equipo rápidamente.
+Inventario te ayuda a controlar existencias y evitar faltantes.
+Empieza tu prueba gratis y crea tu cuenta hoy.
